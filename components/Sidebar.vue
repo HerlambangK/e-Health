@@ -5,14 +5,14 @@
         <Logo class="logo-icon" role="img" />
         <!-- <span class="logo-text">Feedbackjar</span> -->
       </div>
-      <UButton
+      <!-- <UButton
         v-if="closeButton"
         icon="i-heroicons-x-mark"
         @click="$emit('close')"
         square
         color="white"
         variant="ghost"
-      />
+      /> -->
     </div>
     <nav class="menu">
       <ul role="list" class="menu-list">
@@ -66,7 +66,10 @@
             <button class="user-settings-button">
               <div class="user-avatar">
                 <!-- <UAvatar :src="user.avatarUrl" :alt="user.name" /> -->
-                <UAvatar src="/public/favicon.ico" alt="as" />
+                <UAvatar
+                  src="https://randomuser.me/api/portraits/thumb/men/75.jpg"
+                  alt="as"
+                />
               </div>
               <span class="user-name">Hahaha</span>
               <!-- <span class="user-name">{{ user.name }}</span> -->
@@ -87,7 +90,7 @@
 interface Props {
   closeButton: boolean;
   //   user: GithubUser;
-  clear: () => void;
+  // clear: () => void;
 }
 const props = defineProps<Props>();
 const route = useRoute();
@@ -122,7 +125,7 @@ const userSettings = [
     {
       label: "Sign out",
       icon: "i-heroicons-arrow-left-on-rectangle",
-      click: props.clear,
+      // click: props.clear,
     },
   ],
 ];

@@ -9,17 +9,27 @@
         List Dokter
       </h2>
 
-      <UInput v-model="q" placeholder="Filter people..." />
+      <UInput v-model="q" placeholder="Filter doctor..." />
     </div>
     <UTable v-model="selected" :rows="filteredRows" :columns="columns">
-      <template #name-data="{ row }">
+      <!-- <template #name-data="{ row }">
         <span
           :class="[
-            selected.find((person) => person.id === row.id) &&
+            selected.find((doctor) => doctor.id === row.id) &&
               'text-primary-500 dark:text-primary-400',
           ]"
           >{{ row.name }}</span
         >
+      </template> -->
+      <template #kehadiran-data="{ row }">
+        <UTooltip :text="row.jadwal" :popper="{ arrow: true }">
+          <UBadge
+            :label="row.kehadiran"
+            variant="outline"
+            :color="row.kehadiran === 'online' ? 'green' : 'red'"
+            class="cursor-pointer"
+          />
+        </UTooltip>
       </template>
       <template #actions-data="{ row }">
         <UDropdown :items="items(row)">
@@ -33,7 +43,7 @@
       <template #empty-state>
         <div class="flex flex-col items-center justify-center py-6 gap-3">
           <span class="italic text-sm">No one here!</span>
-          <UButton label="Add people" />
+          <UButton label="Add doctor" />
         </div>
       </template>
     </UTable>
@@ -46,17 +56,22 @@ const columns = [
     key: "name",
     label: "Name",
   },
+
   {
-    key: "title",
-    label: "Title",
+    key: "spesialist",
+    label: "Spesialist",
   },
   {
-    key: "email",
-    label: "Email",
+    key: "poli",
+    label: "Poli",
   },
   {
-    key: "role",
-    label: "Role",
+    key: "jadwal",
+    label: "jadwal",
+  },
+  {
+    key: "kehadiran",
+    label: "kehadiran",
   },
   {
     key: "actions",
@@ -92,48 +107,38 @@ const items = (row) => [
     },
   ],
 ];
-const people = [
+const doctor = [
   {
     id: 1,
     name: "Lindsay Walton",
-    title: "Front-end Developer",
-    email: "lindsay.walton@example.com",
-    role: "Member",
+    spesialist: "Penyakit dalam",
+    poli: "penyakit dalam",
+    jadwal: "senin - rabu",
+    kehadiran: "online",
   },
   {
-    id: 2,
-    name: "Courtney Henry",
-    title: "Designer",
-    email: "courtney.henry@example.com",
-    role: "Admin",
+    id: 1,
+    name: "Lindsay Walton",
+    spesialist: "Penyakit dalam",
+    poli: "penyakit dalam",
+    jadwal: "senin - rabu",
+    kehadiran: "offline",
   },
   {
-    id: 3,
-    name: "Tom Cook",
-    title: "Director of Product",
-    email: "tom.cook@example.com",
-    role: "Member",
+    id: 1,
+    name: "Lindsay Walton",
+    spesialist: "Penyakit dalam",
+    poli: "penyakit dalam",
+    jadwal: "senin - rabu",
+    kehadiran: "offline",
   },
   {
-    id: 4,
-    name: "Whitney Francis",
-    title: "Copywriter",
-    email: "whitney.francis@example.com",
-    role: "Admin",
-  },
-  {
-    id: 5,
-    name: "Leonard Krasner",
-    title: "Senior Designer",
-    email: "leonard.krasner@example.com",
-    role: "Owner",
-  },
-  {
-    id: 6,
-    name: "Floyd Miles",
-    title: "Principal Designer",
-    email: "floyd.miles@example.com",
-    role: "Member",
+    id: 1,
+    name: "Lindsay Walton",
+    spesialist: "Penyakit dalam",
+    poli: "penyakit dalam",
+    jadwal: "senin - rabu",
+    kehadiran: "online",
   },
 ];
 const q = ref("");
@@ -141,11 +146,11 @@ const selected = ref([]);
 
 const filteredRows = computed(() => {
   if (!q.value) {
-    return people;
+    return doctor;
   }
 
-  return people.filter((person) => {
-    return Object.values(person).some((value) => {
+  return doctor.filter((doctor) => {
+    return Object.values(doctor).some((value) => {
       return String(value).toLowerCase().includes(q.value.toLowerCase());
     });
   });

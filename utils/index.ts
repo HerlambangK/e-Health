@@ -78,8 +78,13 @@ export const accountNavigationLinks = [
     icon: "heroicons:credit-card",
   },
   {
-    name: "Account",
-    href: "/patient-record/account/[id]",
-    icon: "heroicons:cog-6-tooth",
+    name: "Appoitment",
+    href: "/patient-record/appoitment",
+    icon: "heroicons:calendar",
   },
+  // {
+  //   name: "Account",
+  //   href: "/patient-record/account/[id]",
+  //   icon: "heroicons:cog-6-tooth",
+  // },
 ];

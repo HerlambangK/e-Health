@@ -4,6 +4,19 @@
 
 // const { showSubscriptionModal, accessPortal } = useSubscription();
 
+import { ref, onMounted } from "vue";
+
+const currentTime = ref("");
+
+onMounted(() => {
+  updateCurrentTime();
+  setInterval(updateCurrentTime, 1000); // Perbarui setiap detik
+});
+
+function updateCurrentTime() {
+  const now = new Date();
+  currentTime.value = now.toLocaleTimeString();
+}
 const dropdownItems = ref([
   [
     {
@@ -54,8 +67,23 @@ async function handleSignout() {
             >
               <UIcon name="i-heroicons-star" />
             </UButton> -->
-
+            <UButton color="white" variant="solid" size="xs">
+              {{ currentTime }}
+            </UButton>
             <ColorSwitcher />
+            <UPopover>
+              <UButton
+                color="white"
+                trailing-icon="i-heroicons-bell"
+                size="xs"
+              />
+
+              <template #panel>
+                <div class="p-4">
+                  <DashboardHistory />
+                </div>
+              </template>
+            </UPopover>
             <UDropdown :items="dropdownItems">
               <UIcon name="i-heroicons-user-circle" class="w-6 h-6" />
 
