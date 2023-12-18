@@ -7,6 +7,10 @@ useHead({
   title: "Signup",
 });
 
+definePageMeta({
+  layout: "home",
+});
+
 const formState = ref({
   name: undefined,
   email: undefined,
@@ -44,7 +48,7 @@ async function handleSubmit(
   <WrapperAuth title="Create an account for free">
     <template #header>
       <span class="text-sm mr-px">Already have an account?</span>
-      <!-- <NuxtLink to="/auth/signin" class="text-primary-500"> Sign In </NuxtLink> -->
+      <NuxtLink to="/auth/signin" class="text-primary-500"> Sign In </NuxtLink>
     </template>
 
     <UForm :state="formState" :schema="SignupSchema" @submit="handleSubmit">

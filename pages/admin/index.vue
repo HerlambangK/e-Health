@@ -25,7 +25,7 @@
           <UMeter :value="24" color="gray" label="Rawat inap" />
           <UMeter :value="8" color="red" label="ICU / Urgent" />
           <UMeter :value="12" color="yellow" label="UGD / Rawat jalan" />
-          <UMeter :value="12" color="blue" label="On Going / Dalam antrian" />
+          <UMeter :value="12" color="green" label="On Going / Dalam antrian" />
           <UMeter :value="42" color="green" label="Telah ditanggani" />
           <!-- Total: 86 -->
         </UMeterGroup>
@@ -96,19 +96,21 @@
       </div>
 
       <!-- Header and Action buttons -->
-      <div class="flex justify-between items-center w-full px-4 py-3">
-        <div class="flex items-center gap-1.5">
+      <div
+        class="flex flex-col md:flex-row justify-between items-center w-full px-4 py-3"
+      >
+        <div class="flex flex-col md:flex-row items-center gap-1.5">
           <span class="text-sm leading-5">Rows per page:</span>
 
           <USelect
             v-model="pageCount"
             :options="[3, 5, 10, 20, 30, 40]"
-            class="me-2 w-20"
+            class="w-64 md:w-20 flex justify-center mt-1"
             size="xs"
           />
         </div>
 
-        <div class="flex gap-1.5 items-center">
+        <div class="flex flex-col md:flex-row gap-1.5 items-center">
           <UDropdown
             v-if="selectedRows.length > 1"
             :items="actions"
@@ -124,8 +126,18 @@
             </UButton>
           </UDropdown>
 
-          <USelectMenu v-model="selectedColumns" :options="columns" multiple>
-            <UButton icon="i-heroicons-view-columns" color="gray" size="xs">
+          <USelectMenu
+            v-model="selectedColumns"
+            :options="columns"
+            multiple
+            :ui="{ width: 'w-36' }"
+          >
+            <UButton
+              icon="i-heroicons-view-columns"
+              color="gray"
+              size="xs"
+              class="w-64 md:w-20 flex justify-center mt-1"
+            >
               Columns
             </UButton>
           </USelectMenu>
@@ -134,10 +146,21 @@
             icon="i-heroicons-funnel"
             color="gray"
             size="xs"
+            class="w-64 md:w-20 flex justify-center mt-1"
             :disabled="search === '' && selectedStatus.length === 0"
             @click="resetFilters"
           >
             Reset
+          </UButton>
+          <UButton
+            icon="i-heroicons-printer"
+            color="gray"
+            size="xs"
+            class="w-64 md:w-20 flex justify-center mt-1"
+            :disabled="selectedRows.length === 0"
+            @click="exportToExcel"
+          >
+            <UTooltip text="Please select one or more data"> Print </UTooltip>
           </UButton>
         </div>
       </div>
@@ -222,6 +245,11 @@
 </template>
 
 <script setup lang="ts">
+import * as XLSX from "xlsx";
+
+// import html2pdf from "html2pdf.js";
+// import jsPDF from "jspdf";
+// import "jspdf-autotable";
 // import type OverviewVue from "../../components/admin/Overview.vue";
 
 definePageMeta({
@@ -236,7 +264,7 @@ const columns = [
   },
   {
     key: "title",
-    label: "Title",
+    label: "Nama",
     sortable: true,
   },
   {
@@ -250,24 +278,6 @@ const columns = [
     sortable: false,
   },
 ];
-
-const selectedColumns = ref(columns);
-const columnsTable = computed(() =>
-  columns.filter((column) => selectedColumns.value.includes(column))
-);
-
-// Selected Rows
-const selectedRows = ref([]);
-
-function select(row: any) {
-  const index = selectedRows.value.findIndex((item: any) => item.id === row.id);
-  if (index === -1) {
-    selectedRows.value.push(row);
-  } else {
-    selectedRows.value.splice(index, 1);
-  }
-}
-
 // Actions
 const actions = [
   [
@@ -299,6 +309,26 @@ const todoStatus = [
     value: true,
   },
 ];
+const isOpen = ref(false);
+
+const selectedColumns = ref(columns);
+const columnsTable = computed(() =>
+  columns.filter((column) => selectedColumns.value.includes(column))
+);
+console.log(selectedColumns);
+
+// Selected Rows
+const selectedRows = ref([]);
+
+function select(row: any) {
+  const index = selectedRows.value.findIndex((item: any) => item.id === row.id);
+  if (index === -1) {
+    // console.log("selectedRows.value", selectedRows);
+    selectedRows.value.push(row);
+  } else {
+    selectedRows.value.splice(index, 1);
+  }
+}
 
 const search = ref("");
 const selectedStatus = ref([]);
@@ -319,6 +349,17 @@ const resetFilters = () => {
   selectedStatus.value = [];
 };
 
+const exportToExcel = () => {
+  const data = selectedRows.value.map((row: any) => ({
+    ID: row.id,
+    Title: row.title,
+    Completed: row.completed,
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Sheet 1");
+  XLSX.writeFile(wb, "your_document_patinet.xlsx");
+};
 // Pagination
 const page = ref(1);
 const pageCount = ref(10);

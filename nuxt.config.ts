@@ -25,9 +25,10 @@ export default defineNuxtConfig({
     "nuxt-server-utils",
     "@nuxtjs/tailwindcss",
     "@sidebase/nuxt-auth",
+    "@nuxt/image",
+    // "nuxt-pdf",
     // "@bg-dev/nuxt-naiveui",
     // "@huntersofbook/naive-ui-nuxt",
-    // "@nuxt/image",
   ],
 
   ui: {},

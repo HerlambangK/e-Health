@@ -13,7 +13,7 @@
       >
         <div class="flex flex-row justify-between">
           <h5
-            class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+            class="mb-2 text-md md:text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
           >
             Kontrol 1
           </h5>
@@ -31,7 +31,7 @@
       >
         <div class="flex flex-row justify-between">
           <h5
-            class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+            class="mb-2 text-md md:text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
           >
             Kontrol 1
           </h5>
@@ -49,7 +49,7 @@
       >
         <div class="flex flex-row justify-between">
           <h5
-            class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+            class="mb-2 text-md md:text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
           >
             Kontrol 1
           </h5>

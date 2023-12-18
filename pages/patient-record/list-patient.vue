@@ -82,16 +82,19 @@ const items = (row) => [
     {
       label: "Duplicate",
       icon: "i-heroicons-document-duplicate-20-solid",
+      click: () => development(),
     },
   ],
   [
     {
       label: "Archive",
       icon: "i-heroicons-archive-box-20-solid",
+      click: () => development(),
     },
     {
       label: "Move",
       icon: "i-heroicons-arrow-right-circle-20-solid",
+      click: () => development(),
     },
   ],
   [
@@ -134,6 +137,16 @@ const people = [
 ];
 const q = ref("");
 const selected = ref([]);
+
+const development = () => {
+  useToast().add({
+    color: "blue",
+    icon: "i-heroicons-exclamation-triangle-20-solid",
+    position: "top-1 bottom-auto",
+    title: "Development",
+    description: "This feature is under development.",
+  });
+};
 
 const filteredRows = computed(() => {
   if (!q.value) {

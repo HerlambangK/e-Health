@@ -1,7 +1,6 @@
 import { NuxtAuthHandler } from "#auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { User } from "~/server/models/User";
-// import { User } from "~/server/models/User";
 
 async function getUser(id: string) {
   const user = await User.findById(id);
@@ -22,7 +21,9 @@ export default NuxtAuthHandler({
       async authorize(credential: { email: string; password: string }) {
         // Authorize the user
 
-        const user = await User.findOne({ email: credential.email });
+        const user = await User.findOne({ email: credential.email }).select(
+          "+password"
+        );
 
         if (!user) {
           return null;

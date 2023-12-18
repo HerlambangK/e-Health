@@ -2,7 +2,7 @@
 <template>
   <div class="flex items-center gap-1">
     <div>
-      <svg
+      <!-- <svg
         class="text-primary-400 w-12 h-12"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -18,9 +18,14 @@
             opacity=".5"
           />
         </g>
-      </svg>
+      </svg> -->
+      <NuxtImg src="/img/logo.png" key="logo" class="mt-2" />
     </div>
-    <div class="text-2xl font-bold">eHealth</div>
+    <!-- <div
+      class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white"
+    >
+      eHealth
+    </div> -->
   </div>
 </template>
 

@@ -1,4 +1,4 @@
-export const useCollection = (props, emit) => {
+export const useCollection = (props: any, emit: any) => {
   // Listing page code
   const { data: collections } = useFetch("/api/collections");
   const isModalOpen = ref(false);
@@ -6,12 +6,14 @@ export const useCollection = (props, emit) => {
   const mode = ref("create");
   const toast = useToast();
 
-  const updateCollection = (collection) => {
+  const updateCollection = (collection: any) => {
     if (mode.value === "create") {
       collections.value.push({ ...collection, emailsCount: 0 });
     }
     if (mode.value === "edit") {
-      const index = collections.value.findIndex((c) => c.id === collection.id);
+      const index = collections.value.findIndex(
+        (c: any) => c.id === collection.id
+      );
       collections.value[index] = collection;
     }
     isModalOpen.value = false;
@@ -24,7 +26,7 @@ export const useCollection = (props, emit) => {
     selectedCollection.value = null;
   };
 
-  const editCollection = (collection) => {
+  const editCollection = (collection: any) => {
     mode.value = "edit";
     console.log("edit");
     alert("edit");
@@ -32,10 +34,12 @@ export const useCollection = (props, emit) => {
     isModalOpen.value = true;
   };
 
-  const deleteCollection = async (collection) => {
+  const deleteCollection = async (collection: any) => {
     try {
       await $fetch(`/api/collections/${collection.id}`, { method: "DELETE" });
-      const index = collections.value.findIndex((c) => c.id === collection.id);
+      const index = collections.value.findIndex(
+        (c: any) => c.id === collection.id
+      );
       collections.value.splice(index, 1);
       toast.add({
         icon: "i-heroicons-trash",
@@ -52,7 +56,7 @@ export const useCollection = (props, emit) => {
     }
   };
 
-  const duplicateCollection = async (collection) => {
+  const duplicateCollection = async (collection: any) => {
     try {
       const duplicatedCollection = await $fetch("/api/collections/", {
         method: "POST",
@@ -114,7 +118,7 @@ export const useCollection = (props, emit) => {
         console.log(err);
         if (err.data?.data?.issues) {
           const title = err.data.data.issues
-            .map((issue) => issue.message)
+            .map((issue: any) => issue.message)
             .join("\n");
           toast.add({ title, color: "red" });
         }

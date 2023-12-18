@@ -2,7 +2,7 @@
   <ol class="relative border-s border-gray-200 dark:border-gray-700">
     <li class="mb-10 ms-6">
       <span
-        class="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -start-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900"
+        class="absolute flex items-center justify-center w-6 h-6 bg-green-100 rounded-full -start-3 ring-8 ring-white dark:ring-gray-900 dark:bg-green-900"
       >
         <img
           class="rounded-full shadow-lg"
@@ -21,7 +21,7 @@
           Dr.Bonnie moved
           <a
             href="#"
-            class="font-semibold text-blue-600 dark:text-blue-500 hover:underline"
+            class="font-semibold text-green-600 dark:text-green-500 hover:underline"
             >Karno</a
           >
           to
@@ -34,7 +34,7 @@
     </li>
     <li class="mb-10 ms-6">
       <span
-        class="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -start-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900"
+        class="absolute flex items-center justify-center w-6 h-6 bg-green-100 rounded-full -start-3 ring-8 ring-white dark:ring-gray-900 dark:bg-green-900"
       >
         <img
           class="rounded-full shadow-lg"
@@ -68,7 +68,7 @@
     </li>
     <li class="ms-6">
       <span
-        class="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -start-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900"
+        class="absolute flex items-center justify-center w-6 h-6 bg-green-100 rounded-full -start-3 ring-8 ring-white dark:ring-gray-900 dark:bg-green-900"
       >
         <img
           class="rounded-full shadow-lg"
@@ -87,7 +87,7 @@
           Dr Bonnie moved Karno
           <a
             href="#"
-            class="font-semibold text-blue-600 dark:text-blue-500 hover:underline"
+            class="font-semibold text-green-600 dark:text-green-500 hover:underline"
             >Pemeriksaan</a
           >
           status to

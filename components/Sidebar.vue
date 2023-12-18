@@ -2,7 +2,9 @@
   <div class="sidebar">
     <div class="header">
       <div class="logo">
-        <Logo class="logo-icon" role="img" />
+        <NuxtLink to="/dashboard">
+          <Logo class="h-auto w-24 m-4 p-4" role="img" />
+        </NuxtLink>
         <!-- <span class="logo-text">Feedbackjar</span> -->
       </div>
       <!-- <UButton
@@ -34,28 +36,6 @@
             </li>
           </ul>
         </li>
-        <!-- <li v-if="!isAccountRoute">
-          <div class="filter-header">FILTER</div>
-          <ul role="list" class="filter-list">
-            <li v-for="filter in filters" :key="filter.key">
-              <button
-                @click="selectedFilter = filter.key"
-                :class="[
-                  'filter-button group',
-                  { selected: selectedFilter === filter.key },
-                ]"
-              >
-                <div class="flex-none rounded-full p-1" :class="filter.pill">
-                  <div class="h-1.5 w-1.5 rounded-full bg-current"></div>
-                </div>
-                <span class="filter-name">{{ filter.name }}</span>
-                <span v-if="selectedFilter === filter.key" aria-hidden="true"
-                  >&rarr;</span
-                >
-              </button>
-            </li>
-          </ul>
-        </li> -->
         <li class="user-settings">
           <UDropdown
             :items="userSettings"
@@ -147,10 +127,6 @@ const userSettings = [
 .logo-icon {
   @apply h-6 w-auto;
 }
-
-/* .logo-text {
-  @apply font-semibold text-lg font-display;
-} */
 
 .menu {
   @apply flex flex-1 flex-col;

@@ -47,6 +47,9 @@
 // const { patientId } = route.params;
 // console.log(patientId);
 // console.log(row.id);
+definePageMeta({
+  middleware: "auth",
+});
 
 const columns = [
   {
@@ -105,62 +108,85 @@ const items = (row) => [
     },
   ],
 ];
-const people = [
-  {
-    id: 1,
-    pasient: "Lindsay Walton",
-    dokter: "Dr lina",
-    poli: "Penyakit Dalam",
-    keluhan: "Pusing",
-    kontrol_terakhir: "12 jan 2023",
-  },
-  {
-    id: 1,
-    pasient: "Lindsay Walton",
-    dokter: "Dr lina",
-    poli: "Penyakit Dalam",
-    keluhan: "Pusing",
-    kontrol_terakhir: "12 jan 2023",
-  },
-  {
-    id: 1,
-    pasient: "Lindsay Walton",
-    dokter: "Dr lina",
-    poli: "Penyakit Dalam",
-    keluhan: "Pusing",
-    kontrol_terakhir: "12 jan 2023",
-  },
-  {
-    id: 1,
-    pasient: "Lindsay Walton",
-    dokter: "Dr lina",
-    poli: "Penyakit Dalam",
-    keluhan: "Pusing",
-    kontrol_terakhir: "12 jan 2023",
-  },
-  {
-    id: 1,
-    pasient: "Lindsay Walton",
-    dokter: "Dr lina",
-    poli: "Penyakit Dalam",
-    keluhan: "Pusing",
-    kontrol_terakhir: "12 jan 2023",
-  },
-];
+// const people = [
+//   {
+//     id: 1,
+//     pasient: "Lindsay Walton",
+//     dokter: "Dr lina",
+//     poli: "Penyakit Dalam",
+//     keluhan: "Pusing",
+//     kontrol_terakhir: "12 jan 2023",
+//   },
+//   {
+//     id: 1,
+//     pasient: "Lindsay Walton",
+//     dokter: "Dr lina",
+//     poli: "Penyakit Dalam",
+//     keluhan: "Pusing",
+//     kontrol_terakhir: "12 jan 2023",
+//   },
+//   {
+//     id: 1,
+//     pasient: "Lindsay Walton",
+//     dokter: "Dr lina",
+//     poli: "Penyakit Dalam",
+//     keluhan: "Pusing",
+//     kontrol_terakhir: "12 jan 2023",
+//   },
+//   {
+//     id: 1,
+//     pasient: "Lindsay Walton",
+//     dokter: "Dr lina",
+//     poli: "Penyakit Dalam",
+//     keluhan: "Pusing",
+//     kontrol_terakhir: "12 jan 2023",
+//   },
+//   {
+//     id: 1,
+//     pasient: "Lindsay Walton",
+//     dokter: "Dr lina",
+//     poli: "Penyakit Dalam",
+//     keluhan: "Pusing",
+//     kontrol_terakhir: "12 jan 2023",
+//   },
+// ];
+const { data: rekamMedisData, error, fetch } = useFetch("/api/rekamedis");
+
+// Fetch data rekam medis saat komponen dimounted
+onMounted(() => {
+  fetch();
+});
+
 const q = ref("");
 const selected = ref([]);
+const rekamMedisArray = JSON.parse(response.body);
+console.log(rekamMedisArray);
 
+// Sekarang rekamMedisArray dapat digunakan seperti array objek biasa
 const filteredRows = computed(() => {
-  if (!q.value) {
-    return people;
+  if (!rekamMedisArray || !Array.isArray(rekamMedisArray)) {
+    console.error("Data from /api/rekamedis is not an array:", rekamMedisArray);
+    return [];
   }
 
-  return people.filter((person) => {
-    return Object.values(person).some((value) => {
+  return rekamMedisArray.filter((rekamMedis) => {
+    return Object.values(rekamMedis).some((value) => {
       return String(value).toLowerCase().includes(q.value.toLowerCase());
     });
   });
 });
+
+// const filteredRows = computed(() => {
+//   if (!rekamMedisData) {
+//     return [];
+//   }
+
+//   return rekamMedisData.filter((rekamMedis) => {
+//     return Object.values(rekamMedis).some((value) => {
+//       return String(value).toLowerCase().includes(q.value.toLowerCase());
+//     });
+//   });
+// });
 </script>
 
 <style></style>
