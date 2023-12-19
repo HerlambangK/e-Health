@@ -21,9 +21,6 @@ const user = true;
 definePageMeta({
   layout: "home",
 });
-definePageMeta({
-  middleware: "auth",
-});
 </script>
 
 <style scoped></style>
