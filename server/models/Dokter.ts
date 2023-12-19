@@ -5,6 +5,8 @@ interface IDokter extends Document {
   nip: string;
   spesialisasi: string;
   poli: string;
+  jadwal: string;
+  kehadiran: string;
 }
 
 const dokterSchema = new Schema({
@@ -12,6 +14,8 @@ const dokterSchema = new Schema({
   nip: { type: String, required: true },
   spesialisasi: { type: String, required: true },
   poli: { type: String, required: true },
+  jadwal: { type: String, required: true },
+  kehadiran: { type: String, required: true },
 });
 
 export default model<IDokter>("Dokter", dokterSchema);

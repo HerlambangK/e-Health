@@ -5,6 +5,8 @@ const DokterSchema = z.object({
   nip: z.string(),
   spesialisasi: z.string(),
   poli: z.string(),
+  jadwal: z.string(),
+  kehadiran: z.string(),
 });
 
 export default DokterSchema;

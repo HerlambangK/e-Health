@@ -11,8 +11,17 @@
 
       <UInput v-model="q" placeholder="Filter doctor..." />
     </div>
-    <UTable v-model="selected" :rows="filteredRows" :columns="columns">
-      <!-- <template #name-data="{ row }">
+    <UTable
+      v-model="selected"
+      :rows="filteredRows"
+      :columns="columns"
+      :loading="loading"
+      :loading-state="{
+        icon: 'i-heroicons-arrow-path-20-solid',
+        label: 'Loading...',
+      }"
+    >
+      <template #name-data="{ row }">
         <span
           :class="[
             selected.find((doctor) => doctor.id === row.id) &&
@@ -20,7 +29,7 @@
           ]"
           >{{ row.name }}</span
         >
-      </template> -->
+      </template>
       <template #kehadiran-data="{ row }">
         <UTooltip :text="row.jadwal" :popper="{ arrow: true }">
           <UBadge
@@ -56,13 +65,17 @@ definePageMeta({
 });
 const columns = [
   {
-    key: "name",
+    key: "namaDokter",
     label: "Name",
+  },
+  {
+    key: "nip",
+    label: "NIP",
   },
 
   {
-    key: "spesialist",
-    label: "Spesialist",
+    key: "spesialisasi",
+    label: "Spesialisasi",
   },
   {
     key: "poli",
@@ -84,13 +97,15 @@ const columns = [
 const items = (row) => [
   [
     {
+      label: "Details",
+      icon: "i-heroicons-eye-20-solid",
+      // click: () => route.push(`/patient-record/rekam-medis/1`),
+      click: () => useRouter().push(`/patient-record/rekam-medis/1`),
+    },
+    {
       label: "Edit",
       icon: "i-heroicons-pencil-square-20-solid",
       click: () => console.log("Edit", row.id),
-    },
-    {
-      label: "Duplicate",
-      icon: "i-heroicons-document-duplicate-20-solid",
     },
   ],
   [
@@ -110,49 +125,75 @@ const items = (row) => [
     },
   ],
 ];
-const doctor = [
-  {
-    id: 1,
-    name: "Lindsay Walton",
-    spesialist: "Penyakit dalam",
-    poli: "penyakit dalam",
-    jadwal: "senin - rabu",
-    kehadiran: "online",
-  },
-  {
-    id: 1,
-    name: "Lindsay Walton",
-    spesialist: "Penyakit dalam",
-    poli: "penyakit dalam",
-    jadwal: "senin - rabu",
-    kehadiran: "offline",
-  },
-  {
-    id: 1,
-    name: "Lindsay Walton",
-    spesialist: "Penyakit dalam",
-    poli: "penyakit dalam",
-    jadwal: "senin - rabu",
-    kehadiran: "offline",
-  },
-  {
-    id: 1,
-    name: "Lindsay Walton",
-    spesialist: "Penyakit dalam",
-    poli: "penyakit dalam",
-    jadwal: "senin - rabu",
-    kehadiran: "online",
-  },
-];
+// const doctor = [
+//   {
+//     id: 1,
+//     name: "Lindsay Walton",
+//     spesialist: "Penyakit dalam",
+//     poli: "penyakit dalam",
+//     jadwal: "senin - rabu",
+//     kehadiran: "online",
+//   },
+//   {
+//     id: 1,
+//     name: "Lindsay Walton",
+//     spesialist: "Penyakit dalam",
+//     poli: "penyakit dalam",
+//     jadwal: "senin - rabu",
+//     kehadiran: "offline",
+//   },
+//   {
+//     id: 1,
+//     name: "Lindsay Walton",
+//     spesialist: "Penyakit dalam",
+//     poli: "penyakit dalam",
+//     jadwal: "senin - rabu",
+//     kehadiran: "offline",
+//   },
+//   {
+//     id: 1,
+//     name: "Lindsay Walton",
+//     spesialist: "Penyakit dalam",
+//     poli: "penyakit dalam",
+//     jadwal: "senin - rabu",
+//     kehadiran: "online",
+//   },
+// ];
 const q = ref("");
 const selected = ref([]);
+const loading = ref(true);
 
+const doctor = ref([]); // Gunakan ref() untuk membuat reaktif
+const fetchDoctorData = async () => {
+  try {
+    const response = await fetch("/api/dokter/");
+    const responseData = await response.json();
+
+    if (response.status === 200) {
+      // Assign data dari server ke variabel doctor
+      doctor.value = JSON.parse(responseData.body);
+      console.log(doctor.value);
+      loading.value = false;
+    } else {
+      console.error(
+        "Error fetching doctor data. Status code:",
+        response.status
+      );
+    }
+  } catch (error) {
+    loading.value = false;
+    console.error("Error parsing doctor data:", error);
+  }
+};
+
+// Panggil fungsi fetchDoctorData saat komponen dimuat
+onMounted(fetchDoctorData);
 const filteredRows = computed(() => {
   if (!q.value) {
-    return doctor;
+    return doctor.value;
   }
 
-  return doctor.filter((doctor) => {
+  return doctor.value.filter((doctor) => {
     return Object.values(doctor).some((value) => {
       return String(value).toLowerCase().includes(q.value.toLowerCase());
     });

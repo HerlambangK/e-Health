@@ -52,7 +52,27 @@
     <div class="w-full mt-12">
       <h1 class="font-semibold text-2xl text-center">Data Antrian Pasien</h1>
       <div class="flex flex-row justify-between my-6">
-        <UButton>Tambah Pasien</UButton>
+        <!-- <UButton type="primary" @click="isTrue = true" label="Tambah" /> -->
+        <UButton label="Tambah Pasien" @click="isPasien = true" />
+
+        <UModal v-model="isPasien">
+          <UCard
+            :ui="{
+              ring: '',
+              divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+            }"
+          >
+            <template #header>
+              <div class="">Form pasien</div>
+            </template>
+
+            <FormPasien />
+
+            <template #footer>
+              <Placeholder class="h-8" />
+            </template>
+          </UCard>
+        </UModal>
         <UButton>Tambah Dokter</UButton>
       </div>
     </div>
@@ -246,15 +266,12 @@
 
 <script setup lang="ts">
 import * as XLSX from "xlsx";
-
-// import html2pdf from "html2pdf.js";
-// import jsPDF from "jspdf";
-// import "jspdf-autotable";
-// import type OverviewVue from "../../components/admin/Overview.vue";
+// import FormPasien from "../../components/form/pasien.vue";
 
 definePageMeta({
   layout: "default",
 });
+const isPasien = ref(false);
 // Columns
 const columns = [
   {
@@ -317,6 +334,10 @@ const columnsTable = computed(() =>
 );
 console.log(selectedColumns);
 
+const TambahPasien = () => {
+  const router = useRouter();
+  router.push("/form-pasien");
+};
 // Selected Rows
 const selectedRows = ref([]);
 

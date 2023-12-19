@@ -7,6 +7,18 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
   Validator.validateSchema(DokterSchema, body);
 
+  // Check if the NIP already exists
+  const existingDokter = await Dokter.findOne({ nip: body.nip });
+
+  if (existingDokter) {
+    return {
+      statusCode: 400,
+      body: JSON.stringify({
+        error: "NIP already exists",
+      }),
+    };
+  }
+
   try {
     const createdDokter = await Dokter.create(body);
     const data = createdDokter.toObject();

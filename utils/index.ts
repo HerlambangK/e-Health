@@ -88,3 +88,9 @@ export const accountNavigationLinks = [
   //   icon: "heroicons:cog-6-tooth",
   // },
 ];
+
+export function formatTanggal(tanggal: string) {
+  const options = { year: "numeric", month: "long", day: "numeric" };
+  const formatter = new Intl.DateTimeFormat("id-ID", options); // Sesuaikan dengan kode bahasa atau zona waktu yang diinginkan
+  return formatter.format(new Date(tanggal));
+}

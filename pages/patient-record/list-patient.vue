@@ -11,7 +11,16 @@
 
       <UInput v-model="q" placeholder="Filter people..." />
     </div>
-    <UTable v-model="selected" :rows="filteredRows" :columns="columns">
+    <UTable
+      v-model="selected"
+      :rows="filteredRows"
+      :columns="columns"
+      :loading="loading"
+      :loading-state="{
+        icon: 'i-heroicons-arrow-path-20-solid',
+        label: 'Loading...',
+      }"
+    >
       <template #name-data="{ row }">
         <span
           :class="[
@@ -43,16 +52,15 @@
 <script setup>
 const columns = [
   {
-    key: "name",
+    key: "nama",
     label: "Name",
   },
-
   {
-    key: "alamat",
+    key: "address",
     label: "Alamat",
   },
   {
-    key: "notelp",
+    key: "notlp",
     label: "No. Telp",
   },
   {
@@ -64,7 +72,7 @@ const columns = [
     label: "Poli",
   },
   {
-    key: "jenis",
+    key: "jenisAsuransi",
     label: "Jenis",
   },
   {
@@ -104,39 +112,41 @@ const items = (row) => [
     },
   ],
 ];
-const people = [
-  {
-    id: 1,
-    name: "Lindsay Walton",
-    alamat: "Front-end Developer",
-    notelp: "lindsay.walton@example.com",
-    dokter: "Dr bernad",
-    poli: "Penyakit dalam",
-    jenis: "BPJS",
-  },
+// const people = [
+//   {
+//     id: 1,
+//     name: "Lindsay Walton",
+//     alamat: "Front-end Developer",
+//     notelp: "lindsay.walton@example.com",
+//     dokter: "Dr bernad",
+//     poli: "Penyakit dalam",
+//     jenis: "BPJS",
+//   },
 
-  {
-    id: 1,
-    name: "Lindsay Walton",
-    alamat: "Front-end Developer",
-    notelp: "lindsay.walton@example.com",
-    dokter: "Dr bernad",
-    poli: "Penyakit dalam",
-    jenis: "BPJS",
-  },
+//   {
+//     id: 1,
+//     name: "Lindsay Walton",
+//     alamat: "Front-end Developer",
+//     notelp: "lindsay.walton@example.com",
+//     dokter: "Dr bernad",
+//     poli: "Penyakit dalam",
+//     jenis: "BPJS",
+//   },
 
-  {
-    id: 1,
-    name: "Lindsay Walton",
-    alamat: "Front-end Developer",
-    notelp: "lindsay.walton@example.com",
-    dokter: "Dr bernad",
-    poli: "Penyakit dalam",
-    jenis: "BPJS",
-  },
-];
+//   {
+//     id: 1,
+//     name: "Lindsay Walton",
+//     alamat: "Front-end Developer",
+//     notelp: "lindsay.walton@example.com",
+//     dokter: "Dr bernad",
+//     poli: "Penyakit dalam",
+//     jenis: "BPJS",
+//   },
+// ];
 const q = ref("");
 const selected = ref([]);
+const pasienList = ref([]);
+const loading = ref(true);
 
 const development = () => {
   useToast().add({
@@ -148,13 +158,39 @@ const development = () => {
   });
 };
 
+const fetchPasienData = async () => {
+  try {
+    const response = await fetch("/api/pasien");
+    const responseData = await response.json();
+
+    if (response.status === 200) {
+      // Assign data dari server ke variabel doctor
+      pasienList.value = JSON.parse(responseData.body);
+      console.log(pasienList.value);
+      loading.value = false;
+      console.log(loading.value);
+    } else {
+      console.error(
+        "Error fetching pasien data. Status code:",
+        response.status
+      );
+    }
+  } catch (error) {
+    console.error("Error parsing doctor data:", error);
+  }
+};
+
+onMounted(() => {
+  fetchPasienData();
+});
+
 const filteredRows = computed(() => {
   if (!q.value) {
-    return people;
+    return pasienList.value;
   }
 
-  return people.filter((person) => {
-    return Object.values(person).some((value) => {
+  return pasienList.value.filter((pasien) => {
+    return Object.values(pasien).some((value) => {
       return String(value).toLowerCase().includes(q.value.toLowerCase());
     });
   });

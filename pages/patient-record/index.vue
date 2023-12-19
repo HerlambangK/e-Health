@@ -11,15 +11,32 @@
 
       <UInput v-model="q" placeholder="Filter people..." />
     </div>
-    <UTable v-model="selected" :rows="filteredRows" :columns="columns">
+    <UTable
+      v-model="selected"
+      :rows="filteredRows"
+      :columns="columns"
+      :loading="loading"
+      :loading-state="{
+        icon: 'i-heroicons-arrow-path-20-solid',
+        label: 'Loading...',
+      }"
+    >
       <template #name-data="{ row }">
         <span
           :class="[
-            selected.find((person) => person.id === row.id) &&
+            selected.find((rekamMedis) => rekamMedis.id === row.id) &&
               'text-primary-500 dark:text-primary-400',
           ]"
           >{{ row.name }}</span
         >
+      </template>
+
+      <template #kontrolTerakhir-data="{ row }">
+        <span>{{
+          columns
+            .find((column) => column.key === "kontrolTerakhir")
+            .formattedDate(row)
+        }}</span>
       </template>
       <template #actions-data="{ row }">
         <UDropdown :items="items(row)">
@@ -41,23 +58,13 @@
 </template>
 
 <script setup>
-// import { useRoute } from "vue-router";
-
-// const route = useRoute();
-// const { patientId } = route.params;
-// console.log(patientId);
-// console.log(row.id);
-definePageMeta({
-  middleware: "auth",
-});
-
-const columns = [
+const dataTabel = [
   {
-    key: "pasient",
+    key: "namaPasien",
     label: "Pasient",
   },
   {
-    key: "dokter",
+    namaDokter: "dokter",
     label: "dokter",
   },
   {
@@ -69,13 +76,24 @@ const columns = [
     label: "keluhan",
   },
   {
-    key: "kontrol_terakhir",
+    key: "kontrolTerakhir",
     label: "kontrol terakhir",
   },
   {
     key: "actions",
   },
 ];
+
+const columns = dataTabel.map((item) => {
+  if (item.key === "kontrolTerakhir") {
+    return {
+      ...item,
+      formattedDate: (row) => formatTanggal(row[item.key]),
+    };
+  } else {
+    return item;
+  }
+});
 
 const items = (row) => [
   [
@@ -108,85 +126,76 @@ const items = (row) => [
     },
   ],
 ];
-// const people = [
-//   {
-//     id: 1,
-//     pasient: "Lindsay Walton",
-//     dokter: "Dr lina",
-//     poli: "Penyakit Dalam",
-//     keluhan: "Pusing",
-//     kontrol_terakhir: "12 jan 2023",
-//   },
-//   {
-//     id: 1,
-//     pasient: "Lindsay Walton",
-//     dokter: "Dr lina",
-//     poli: "Penyakit Dalam",
-//     keluhan: "Pusing",
-//     kontrol_terakhir: "12 jan 2023",
-//   },
-//   {
-//     id: 1,
-//     pasient: "Lindsay Walton",
-//     dokter: "Dr lina",
-//     poli: "Penyakit Dalam",
-//     keluhan: "Pusing",
-//     kontrol_terakhir: "12 jan 2023",
-//   },
-//   {
-//     id: 1,
-//     pasient: "Lindsay Walton",
-//     dokter: "Dr lina",
-//     poli: "Penyakit Dalam",
-//     keluhan: "Pusing",
-//     kontrol_terakhir: "12 jan 2023",
-//   },
-//   {
-//     id: 1,
-//     pasient: "Lindsay Walton",
-//     dokter: "Dr lina",
-//     poli: "Penyakit Dalam",
-//     keluhan: "Pusing",
-//     kontrol_terakhir: "12 jan 2023",
-//   },
-// ];
-const { data: rekamMedisData, error, fetch } = useFetch("/api/rekamedis");
 
-// Fetch data rekam medis saat komponen dimounted
-onMounted(() => {
-  fetch();
-});
-
+// Define reactive variables
 const q = ref("");
 const selected = ref([]);
-const rekamMedisArray = JSON.parse(response.body);
-console.log(rekamMedisArray);
+const rekamMedisData = ref([]);
+const loading = ref(true);
+// Fetch rekamMedis data from the API
+const fetchRekamMedisData = async () => {
+  try {
+    const response = await fetch("/api/rekamedis");
+    if (response.status == 200) {
+      const responseData = await response.json();
+      if (responseData.body) {
+        rekamMedisData.value = JSON.parse(responseData.body);
+        console.log(
+          "Successfully fetched rekamMedis data",
+          rekamMedisData.value
+        );
+        loading.value = false;
+      } else {
+        throw new Error("Response body is empty.");
+      }
+    } else {
+      throw new Error(
+        `Error fetching rekamMedis data. Status code: ${response.status}`
+      );
+    }
+  } catch (error) {
+    loading.value = false;
+    console.error("Error fetching/parsing rekamMedis data:", error);
+  }
+};
 
-// Sekarang rekamMedisArray dapat digunakan seperti array objek biasa
+// const fetchRekamMedisData = async () => {
+//   try {
+//     const response = await fetch("/api/rekamedis");
+//     const responseData = await response.json();
+
+//     if (response.status === 200) {
+//       // Assign data dari server ke variabel rekamMedis
+//       rekamMedisData.value = JSON.parse(responseData.body);
+//       console.log(rekamMedisData.value);
+//       loading.value = false;
+//     } else {
+//       console.error(
+//         "Error fetching rekamMedis data. Status code:",
+//         response.status
+//       );
+//     }
+//   } catch (error) {
+//     loading.value = false;
+//     console.error("Error parsing rekamMedis data:", error);
+//   }
+// };
+
+// Call the fetchRekamMedisData function when the component is mounted
+onMounted(fetchRekamMedisData);
+
+// Use the fetched rekamMedisData for filtering
 const filteredRows = computed(() => {
-  if (!rekamMedisArray || !Array.isArray(rekamMedisArray)) {
-    console.error("Data from /api/rekamedis is not an array:", rekamMedisArray);
-    return [];
+  if (!q.value) {
+    return rekamMedisData.value;
   }
 
-  return rekamMedisArray.filter((rekamMedis) => {
+  return rekamMedisData.value.filter((rekamMedis) => {
     return Object.values(rekamMedis).some((value) => {
       return String(value).toLowerCase().includes(q.value.toLowerCase());
     });
   });
 });
-
-// const filteredRows = computed(() => {
-//   if (!rekamMedisData) {
-//     return [];
-//   }
-
-//   return rekamMedisData.filter((rekamMedis) => {
-//     return Object.values(rekamMedis).some((value) => {
-//       return String(value).toLowerCase().includes(q.value.toLowerCase());
-//     });
-//   });
-// });
 </script>
 
 <style></style>
