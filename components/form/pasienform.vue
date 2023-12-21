@@ -65,16 +65,17 @@
     <UFormGroup class="mb-4" name="fotoProfil" label="Foto Profil">
       <UInput
         v-model="formState.fotoProfil"
-        type="text"
+        type="file"
         placeholder="Masukkan URL foto profil pasien"
       />
     </UFormGroup>
 
     <UFormGroup class="mb-4" name="riwayatPenyakit" label="Riwayat Penyakit">
-      <USelect
+      <USelectMenu
         v-model="formState.riwayatPenyakit"
         :options="riwayatPenyakitOptions"
         multiple
+        placeholder="Select Riwayat"
       />
     </UFormGroup>
 
@@ -103,6 +104,7 @@ import { ref } from "vue";
 // import { UForm, UFormGroup, UInput, UButton, USelect } from "nuxt-ui";
 import PasienSchema from "~/schemas/Pasien.schema";
 import type { z } from "h3-zod";
+
 // import { PasienSchema } from "~/schemas/Pasien.schema";
 const riwayatPenyakitOptions: Ref<string[]> = ref([
   "Flu",
@@ -132,7 +134,6 @@ const formState = ref({
   riwayatPenyakit: [],
   completedStatus: false,
 });
-
 const isLoading = ref(false);
 // Opsi untuk Dokter
 // Deklarasikan jenis untuk opsi dokter dan rekamedis
@@ -141,30 +142,61 @@ type DokterOption = { _id: string; namaDokter: string };
 type RekamedisOption = { _id: string; noRekamedis: string };
 type PoliOption = string; // Poli hanya menggunakan string sebagai opsi
 const jenisAsuransiOptions: Ref<string[]> = ref(["Bpjs", "Askes", "Mandiri"]);
-
+const selectedDoctor = ref(null);
 const dokterOptions = ref<DokterOption[] | null>([]);
 const rekamedisOptions = ref<RekamedisOption[] | null>([]);
 const poliOptions = ref<PoliOption[]>([]);
 
-async function fetchDataForSelects() {
+// Assuming these are reactive variables
+const fetchDoctorData = async () => {
   try {
-    // Ambil data dokter dari API dan isi ke dokterOptions
-    const dokterResponse = await useFetch<DokterOption[]>("/api/dokter");
-    dokterOptions.value = dokterResponse.data;
+    const dokterResponse = await fetch("/api/dokter");
+    const dokterData = await dokterResponse.json();
 
-    // Ambil data rekamedis dari API dan isi ke rekamedisOptions
-    const rekamedisResponse = await useFetch<RekamedisOption[]>(
-      "/api/rekamedis"
-    );
-    rekamedisOptions.value = rekamedisResponse.data;
+    if (dokterResponse.status === 200) {
+      const parsedData = JSON.parse(dokterData.body);
+      console.log("dokterData.value", parsedData);
 
-    // Ambil data poli dari API dan isi ke poliOptions
-    const poliResponse = await useFetch<string[]>("/api/poli");
-    poliOptions.value = poliResponse.data;
+      const doctorId = selectedDoctor.value;
+      if (doctorId) {
+        console.log("doctorId", doctorId);
+        const selectedDoctorData = parsedData.find(
+          (doctor: any) => doctor._id === doctorId
+        );
+
+        formState.value.dokter = selectedDoctorData;
+
+        console.log("selectedDoctorData", selectedDoctorData);
+        console.log("formState.value.dokter", formState.value.dokter);
+
+        return selectedDoctorData || null;
+      }
+
+      console.log(parsedData[0]?.namaDokter);
+    } else {
+      console.error(
+        "Error fetching doctor data. Status code:",
+        dokterResponse.status
+      );
+    }
   } catch (error) {
-    console.error("Error fetching data for selects:", error);
+    console.error("Error parsing doctor data:", error);
   }
-}
+};
+
+watch(
+  () => selectedDoctor.value,
+  (newSelectedDoctor) => {
+    if (newSelectedDoctor) {
+      fetchDoctorData();
+    }
+  }
+);
+
+onMounted(() => {
+  fetchDoctorData();
+});
+
 async function handleSubmit(
   event: FormSubmitEvent<z.output<typeof PasienSchema>>
 ) {

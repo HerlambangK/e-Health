@@ -135,11 +135,12 @@ const loading = ref(true);
 // Fetch rekamMedis data from the API
 const fetchRekamMedisData = async () => {
   try {
-    const response = await fetch("/api/rekamedis");
+    // const response = await fetch("/api/rekamedis");
+    const { data: response } = await useFetch("/api/rekamedis");
     if (response.status == 200) {
       const responseData = await response.json();
       if (responseData.body) {
-        rekamMedisData.value = JSON.parse(responseData.body);
+        rekamMedisData.value = responseData.body;
         console.log(
           "Successfully fetched rekamMedis data",
           rekamMedisData.value
@@ -154,36 +155,25 @@ const fetchRekamMedisData = async () => {
       );
     }
   } catch (error) {
-    loading.value = false;
     console.error("Error fetching/parsing rekamMedis data:", error);
+  } finally {
+    loading.value = false;
   }
 };
 
-// const fetchRekamMedisData = async () => {
-//   try {
-//     const response = await fetch("/api/rekamedis");
-//     const responseData = await response.json();
-
-//     if (response.status === 200) {
-//       // Assign data dari server ke variabel rekamMedis
-//       rekamMedisData.value = JSON.parse(responseData.body);
-//       console.log(rekamMedisData.value);
-//       loading.value = false;
-//     } else {
-//       console.error(
-//         "Error fetching rekamMedis data. Status code:",
-//         response.status
-//       );
-//     }
-//   } catch (error) {
-//     loading.value = false;
-//     console.error("Error parsing rekamMedis data:", error);
-//   }
 // };
 
-// Call the fetchRekamMedisData function when the component is mounted
-onMounted(fetchRekamMedisData);
+// Use the useAsyncData hook to call fetchRekamMedisData during SSR and on client side
+useAsyncData(async ({ fetch }) => {
+  await fetchRekamMedisData();
+});
 
+// Call the fetchRekamMedisData function when the component is mounted on the client side
+onMounted(() => {
+  if (process.client) {
+    fetchRekamMedisData();
+  }
+});
 // Use the fetched rekamMedisData for filtering
 const filteredRows = computed(() => {
   if (!q.value) {

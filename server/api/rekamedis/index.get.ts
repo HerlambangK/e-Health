@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
       };
     });
 
-    return { statusCode: 200, body: JSON.stringify(formattedData) };
+    return { statusCode: 200, body: formattedData };
   } catch (error) {
     console.error(error);
     return {

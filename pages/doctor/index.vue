@@ -63,6 +63,8 @@
 definePageMeta({
   middleware: "auth",
 });
+import * as XLSX from "xlsx";
+
 const columns = [
   {
     key: "namaDokter",
@@ -106,6 +108,11 @@ const items = (row) => [
       label: "Edit",
       icon: "i-heroicons-pencil-square-20-solid",
       click: () => console.log("Edit", row.id),
+    },
+    {
+      label: "Print",
+      icon: "i-heroicons-printer",
+      click: () => exportToExcel(),
     },
   ],
   [
@@ -164,6 +171,7 @@ const selected = ref([]);
 const loading = ref(true);
 
 const doctor = ref([]); // Gunakan ref() untuk membuat reaktif
+
 const fetchDoctorData = async () => {
   try {
     const response = await fetch("/api/dokter/");
@@ -175,6 +183,8 @@ const fetchDoctorData = async () => {
       console.log(doctor.value);
       loading.value = false;
     } else {
+      loading.value = false;
+
       console.error(
         "Error fetching doctor data. Status code:",
         response.status
@@ -199,6 +209,21 @@ const filteredRows = computed(() => {
     });
   });
 });
+
+const exportToExcel = () => {
+  const data = selected.value.map((row) => ({
+    Name: row.namaDokter,
+    NIP: row.nip,
+    Spesialisasi: row.spesialisasi,
+    Poli: row.poli,
+    Jadwal: row.jadwal,
+    Kehadiran: row.kehadiran,
+  }));
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Sheet 1");
+  XLSX.writeFile(wb, "your_document_doctor.xlsx");
+};
 </script>
 
 <style></style>

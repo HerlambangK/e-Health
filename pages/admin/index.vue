@@ -55,7 +55,7 @@
         <!-- <UButton type="primary" @click="isTrue = true" label="Tambah" /> -->
         <UButton label="Tambah Pasien" @click="isPasien = true" />
 
-        <UModal v-model="isPasien">
+        <UModal v-model="isPasien" prevent-close>
           <UCard
             :ui="{
               ring: '',
@@ -63,17 +63,75 @@
             }"
           >
             <template #header>
-              <div class="">Form pasien</div>
+              <div class="flex items-center justify-between">
+                <h3
+                  class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
+                >
+                  Form Pasien
+                </h3>
+                <UButton
+                  color="gray"
+                  variant="ghost"
+                  icon="i-heroicons-x-mark-20-solid"
+                  class="-my-1"
+                  @click="isPasien = false"
+                />
+              </div>
             </template>
+            <!-- hallo -->
+            <FormPasienform />
+          </UCard>
+        </UModal>
 
-            <FormPasien />
+        <UButton label="Tambah Dokter" @click="isDokter = true" />
+
+        <UModal v-model="isDokter" prevent-close>
+          <UCard
+            :ui="{
+              ring: '',
+              divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+            }"
+          >
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h3
+                  class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
+                >
+                  Form Dokter
+                </h3>
+                <UButton
+                  color="gray"
+                  variant="ghost"
+                  icon="i-heroicons-x-mark-20-solid"
+                  class="-my-1"
+                  @click="isDokter = false"
+                />
+              </div>
+            </template>
+            <!-- hallo -->
+            <FormDoktorform />
+          </UCard>
+        </UModal>
+
+        <!-- <UModal v-model="isPasien">
+          <UCard
+            :ui="{
+              ring: '',
+              divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+            }"
+          >
+            <template #header>
+              <div class="font-semibold">Form pasien</div>
+            </template>
+            fgfdg
+            <FormPasienform />
 
             <template #footer>
               <Placeholder class="h-8" />
+              <FormPasienform />
             </template>
           </UCard>
-        </UModal>
-        <UButton>Tambah Dokter</UButton>
+        </UModal> -->
       </div>
     </div>
     <UCard
@@ -271,7 +329,7 @@ import * as XLSX from "xlsx";
 definePageMeta({
   layout: "default",
 });
-const isPasien = ref(false);
+const isOpen = ref(false);
 // Columns
 const columns = [
   {
@@ -326,7 +384,8 @@ const todoStatus = [
     value: true,
   },
 ];
-const isOpen = ref(false);
+const isPasien = ref(false);
+const isDokter = ref(false);
 
 const selectedColumns = ref(columns);
 const columnsTable = computed(() =>
