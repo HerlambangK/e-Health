@@ -13,8 +13,8 @@
     </div>
     <UTable
       v-model="selected"
-      :rows="filteredRows"
       :columns="columns"
+      :rows="filteredRows"
       :loading="loading"
       :loading-state="{
         icon: 'i-heroicons-arrow-path-20-solid',
@@ -179,7 +179,8 @@ const fetchDoctorData = async () => {
 
     if (response.status === 200) {
       // Assign data dari server ke variabel doctor
-      doctor.value = JSON.parse(responseData.body);
+      // doctor.value = JSON.parse(responseData.body);
+      doctor.value = responseData.body;
       console.log(doctor.value);
       loading.value = false;
     } else {

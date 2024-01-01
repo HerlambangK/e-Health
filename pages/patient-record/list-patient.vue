@@ -165,7 +165,7 @@ const fetchPasienData = async () => {
 
     if (response.status === 200) {
       // Assign data dari server ke variabel doctor
-      pasienList.value = JSON.parse(responseData.body);
+      pasienList.value = responseData.body;
       console.log(pasienList.value);
       loading.value = false;
       console.log(loading.value);

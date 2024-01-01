@@ -130,13 +130,14 @@ const items = (row) => [
 // Define reactive variables
 const q = ref("");
 const selected = ref([]);
-const rekamMedisData = ref([]);
 const loading = ref(true);
+const rekamMedisData = ref([]);
 // Fetch rekamMedis data from the API
 const fetchRekamMedisData = async () => {
   try {
     // const response = await fetch("/api/rekamedis");
     const { data: response } = await useFetch("/api/rekamedis");
+    console.log("response", response);
     if (response.status == 200) {
       const responseData = await response.json();
       if (responseData.body) {

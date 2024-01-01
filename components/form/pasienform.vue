@@ -35,15 +35,16 @@
 
     <UFormGroup class="mb-4" name="dokter" label="Dokter">
       <USelect
-        v-model="formState.dokter._id"
-        :options="dokterOptions.value"
+        v-model="formState.dokter"
+        :options="namaDokterList"
         labelKey="namaDokter"
         valueKey="_id"
+        placeholder="Select dokter"
       />
     </UFormGroup>
 
     <UFormGroup class="mb-4" name="poli" label="Poli">
-      <USelect v-model="formState.poli" :options="poliOptions.value" />
+      <USelect v-model="formState.poli" :options="poliOptions" />
     </UFormGroup>
 
     <UFormGroup class="mb-4" name="jenisAsuransi" label="Jenis Asuransi">
@@ -65,7 +66,7 @@
     <UFormGroup class="mb-4" name="fotoProfil" label="Foto Profil">
       <UInput
         v-model="formState.fotoProfil"
-        type="file"
+        type="text"
         placeholder="Masukkan URL foto profil pasien"
       />
     </UFormGroup>
@@ -99,13 +100,11 @@
 
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui/dist/runtime/types";
-import { ref } from "vue";
-// import { useFetch, useToast, useRouter } from "@nuxt/uicomposable";
-// import { UForm, UFormGroup, UInput, UButton, USelect } from "nuxt-ui";
+import { ref, defineProps } from "vue";
+
 import PasienSchema from "~/schemas/Pasien.schema";
 import type { z } from "h3-zod";
 
-// import { PasienSchema } from "~/schemas/Pasien.schema";
 const riwayatPenyakitOptions: Ref<string[]> = ref([
   "Flu",
   "Batuk",
@@ -115,14 +114,14 @@ const riwayatPenyakitOptions: Ref<string[]> = ref([
 ]);
 
 const formState = ref({
-  nama: undefined,
-  umur: undefined,
-  address: undefined,
-  notlp: undefined,
+  nama: "",
+  umur: "",
+  address: "",
+  notlp: "",
   dokter: {
-    _id: undefined,
-    namaDokter: undefined,
+    namaDokter: "",
   },
+  namaDokterList: "",
   poli: undefined,
   jenisAsuransi: undefined,
   rekamedis: {
@@ -135,18 +134,18 @@ const formState = ref({
   completedStatus: false,
 });
 const isLoading = ref(false);
-// Opsi untuk Dokter
-// Deklarasikan jenis untuk opsi dokter dan rekamedis
-// Deklarasikan jenis untuk opsi dokter, rekamedis, dan poli
-type DokterOption = { _id: string; namaDokter: string };
 type RekamedisOption = { _id: string; noRekamedis: string };
 type PoliOption = string; // Poli hanya menggunakan string sebagai opsi
 const jenisAsuransiOptions: Ref<string[]> = ref(["Bpjs", "Askes", "Mandiri"]);
-const selectedDoctor = ref(null);
-const dokterOptions = ref<DokterOption[] | null>([]);
-const rekamedisOptions = ref<RekamedisOption[] | null>([]);
-const poliOptions = ref<PoliOption[]>([]);
 
+const selectedDoctor = ref(null as string | null);
+// const rekamedisOptions = ref<RekamedisOption[] | null>([]);
+const poliOptions = ref<PoliOption[]>(["jiwa", "dokter", "perawat"]);
+const namaDokterList = ref([]);
+const rekamedisOptions = ref(["12333", "12344"]);
+// const rekamedisOptions = ref(["12333", "12344"]);
+
+console.log("jenisAsuransiOptions", jenisAsuransiOptions.value);
 // Assuming these are reactive variables
 const fetchDoctorData = async () => {
   try {
@@ -154,25 +153,40 @@ const fetchDoctorData = async () => {
     const dokterData = await dokterResponse.json();
 
     if (dokterResponse.status === 200) {
-      const parsedData = JSON.parse(dokterData.body);
-      console.log("dokterData.value", parsedData);
+      const parsedData = dokterData.body.map((doctor: any) => ({
+        _id: doctor._id,
+        namaDokter: doctor.namaDokter,
+      }));
+      const namaDokterListSemua = computed(() => {
+        return parsedData.map((doctor: any) => doctor.namaDokter);
+      });
+      const IdDokterSemua = computed(() => {
+        return parsedData.map((doctor: any) => doctor._id);
+      });
+
+      // Menggunakan hasil dari namaDokterListSemua.value
+      // namaDokterList.value = namaDokterListSemua.value;
+      // IdDokterList.value = IdDokterSemua.value;
+      namaDokterList.value = namaDokterListSemua.value;
+
+      console.log("namaDokterListSemua", namaDokterListSemua.value);
+      console.log("namaDokterList,", namaDokterList.value);
+      console.log("parsedData", parsedData);
 
       const doctorId = selectedDoctor.value;
+      console.log("doctorId:", doctorId);
+
       if (doctorId) {
-        console.log("doctorId", doctorId);
         const selectedDoctorData = parsedData.find(
           (doctor: any) => doctor._id === doctorId
         );
+        console.log("selectedDoctorData: ", selectedDoctorData);
 
         formState.value.dokter = selectedDoctorData;
-
-        console.log("selectedDoctorData", selectedDoctorData);
         console.log("formState.value.dokter", formState.value.dokter);
 
         return selectedDoctorData || null;
       }
-
-      console.log(parsedData[0]?.namaDokter);
     } else {
       console.error(
         "Error fetching doctor data. Status code:",
@@ -215,6 +229,11 @@ async function handleSubmit(
     });
   } catch (error) {
     console.error(error);
+    useToast().add({
+      title: "Error created",
+      color: "red",
+      description: "Pasien data has not been created.",
+    });
   } finally {
     isLoading.value = false;
   }
