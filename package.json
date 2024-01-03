@@ -21,6 +21,7 @@
     "naive-ui": "^2.35.0",
     "nuxt": "^3.8.2",
     "nuxt-server-utils": "^0.0.7",
+    "rollup-plugin-ignore": "^1.0.10",
     "vue": "^3.3.10",
     "vue-router": "^4.2.5"
   },
@@ -53,5 +54,4 @@
     "vuedraggable": "^4.1.0",
     "xlsx": "^0.18.5"
   }
-
 }
