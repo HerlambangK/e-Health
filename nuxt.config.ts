@@ -1,24 +1,24 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  runtimeConfig: {
-    auth: {
-      secret: process.env.AUTH_SECRET,
-      origin: process.env.AUTH_ORIGIN,
-    },
-    // mongodbUri: process.env.MONGODB_URI,
-  },
-  build: {
-    transpile: [/echarts/],
-    // optimizeDeps: {
-    //   include: [
-    //     "naive-ui",
-    //     "vueuc",
-    //     "@css-render/vue3-ssr",
-    //     "@juggle/resize-observer",
-    //   ],
-    // },
-  },
+  // runtimeConfig: {
+  //   auth: {
+  //     secret: process.env.AUTH_SECRET,
+  //     origin: process.env.AUTH_ORIGIN,
+  //   },
+  //   // mongodbUri: process.env.MONGODB_URI,
+  // },
+  // build: {
+  //   transpile: [/echarts/],
+  //   // optimizeDeps: {
+  //   //   include: [
+  //   //     "naive-ui",
+  //   //     "vueuc",
+  //   //     "@css-render/vue3-ssr",
+  //   //     "@juggle/resize-observer",
+  //   //   ],
+  //   // },
+  // },
 
   modules: [
     "@nuxt/ui",
