@@ -1,6 +1,4 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import ignore from "rollup-plugin-ignore";
-
 export default defineNuxtConfig({
   devtools: { enabled: true },
   runtimeConfig: {
@@ -48,8 +46,4 @@ export default defineNuxtConfig({
     cssPath: "~/assets/css/input.css",
     configPath: "tailwind.config",
   },
-  plugins: [
-    // other plugins...
-    ignore(["./dist/cpexcel.js"]),
-  ],
 });
