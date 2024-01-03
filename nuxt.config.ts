@@ -1,13 +1,13 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   devtools: { enabled: true },
-  runtimeConfig: {
-    auth: {
-      secret: process.env.AUTH_SECRET,
-      origin: process.env.AUTH_ORIGIN,
-    },
-    // mongodbUri: process.env.MONGODB_URI,
-  },
+  // runtimeConfig: {
+  //   auth: {
+  //     secret: process.env.AUTH_SECRET,
+  //     origin: process.env.AUTH_ORIGIN,
+  //   },
+  //   // mongodbUri: process.env.MONGODB_URI,
+  // },
   build: {
     transpile: [/echarts/],
     // optimizeDeps: {
