@@ -323,7 +323,7 @@
 </template>
 
 <script setup lang="ts">
-import * as XLSX from "xlsx";
+// import * as XLSX from "xlsx";
 // import FormPasien from "../../components/form/pasien.vue";
 
 definePageMeta({
@@ -430,15 +430,15 @@ const resetFilters = () => {
 };
 
 const exportToExcel = () => {
-  const data = selectedRows.value.map((row: any) => ({
-    ID: row.id,
-    Title: row.title,
-    Completed: row.completed,
-  }));
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Sheet 1");
-  XLSX.writeFile(wb, "your_document_patinet.xlsx");
+  // const data = selectedRows.value.map((row: any) => ({
+  //   ID: row.id,
+  //   Title: row.title,
+  //   Completed: row.completed,
+  // }));
+  // const ws = XLSX.utils.json_to_sheet(data);
+  // const wb = XLSX.utils.book_new();
+  // XLSX.utils.book_append_sheet(wb, ws, "Sheet 1");
+  // XLSX.writeFile(wb, "your_document_patinet.xlsx");
 };
 // Pagination
 const page = ref(1);

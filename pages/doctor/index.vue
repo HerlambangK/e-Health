@@ -63,7 +63,7 @@
 definePageMeta({
   middleware: "auth",
 });
-import * as XLSX from "xlsx";
+// import * as XLSX from "xlsx";
 
 const columns = [
   {
@@ -212,18 +212,18 @@ const filteredRows = computed(() => {
 });
 
 const exportToExcel = () => {
-  const data = selected.value.map((row) => ({
-    Name: row.namaDokter,
-    NIP: row.nip,
-    Spesialisasi: row.spesialisasi,
-    Poli: row.poli,
-    Jadwal: row.jadwal,
-    Kehadiran: row.kehadiran,
-  }));
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Sheet 1");
-  XLSX.writeFile(wb, "your_document_doctor.xlsx");
+  // const data = selected.value.map((row) => ({
+  //   Name: row.namaDokter,
+  //   NIP: row.nip,
+  //   Spesialisasi: row.spesialisasi,
+  //   Poli: row.poli,
+  //   Jadwal: row.jadwal,
+  //   Kehadiran: row.kehadiran,
+  // }));
+  // const ws = XLSX.utils.json_to_sheet(data);
+  // const wb = XLSX.utils.book_new();
+  // XLSX.utils.book_append_sheet(wb, ws, "Sheet 1");
+  // XLSX.writeFile(wb, "your_document_doctor.xlsx");
 };
 </script>
 

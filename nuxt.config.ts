@@ -9,6 +9,12 @@ export default defineNuxtConfig({
     // mongodbUri: process.env.MONGODB_URI,
   },
   build: {
+    plugins: [
+      require("rollup-plugin-ignore")({
+        // Gunakan ekspresi reguler untuk mengabaikan file atau direktori tertentu
+        "./dist/cpexcel.js": ["unusedExport"],
+      }),
+    ],
     transpile: [/echarts/],
     // optimizeDeps: {
     //   include: [
