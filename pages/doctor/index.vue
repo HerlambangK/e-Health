@@ -35,7 +35,7 @@
           <UBadge
             :label="row.kehadiran"
             variant="outline"
-            :color="row.kehadiran === 'online' ? 'green' : 'red'"
+            :color="row.kehadiran == 'online' ? 'green' : 'red'"
             class="cursor-pointer"
           />
         </UTooltip>
