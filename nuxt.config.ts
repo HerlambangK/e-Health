@@ -8,6 +8,18 @@ export default defineNuxtConfig({
     },
     // mongodbUri: process.env.MONGODB_URI,
   },
+  routeRules: {
+    // Use client-side rendering for this route
+    "/client-side-route-example": { ssr: false },
+  },
+  nitro: {
+    preset: "vercel-edge",
+    vercel: {
+      regions: ["iad1"],
+    },
+    static: true,
+  },
+
   build: {
     transpile: [/echarts/],
     // optimizeDeps: {
