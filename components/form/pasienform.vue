@@ -103,7 +103,8 @@ import type { FormSubmitEvent } from "@nuxt/ui/dist/runtime/types";
 import { ref, defineProps } from "vue";
 
 import PasienSchema from "~/schemas/Pasien.schema";
-import type { z } from "h3-zod";
+// import type { z } from "h3-zod";
+import type { z } from "zod";
 
 const riwayatPenyakitOptions: Ref<string[]> = ref([
   "Flu",

@@ -1,4 +1,5 @@
-import { z } from "h3-zod";
+// import { z } from "h3-zod";
+import { z } from "zod";
 
 const PasienSchema = z.object({
   nama: z.string(),
