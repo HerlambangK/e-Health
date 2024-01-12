@@ -60,9 +60,10 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from "@nuxt/ui/dist/runtime/types";
 import { ref } from "vue";
-import DokterSchema from "~/schemas/Dokter.schema";
+// import DokterSchema from "~/schemas/Dokter.schema";
 // import type { z } from "h3-zod";
 import type { z } from "zod";
+import DokterSchema from "../../schemas/Dokter.schema";
 
 const formState = ref({
   namaDokter: undefined,
