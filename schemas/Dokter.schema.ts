@@ -1,5 +1,5 @@
 // import { z } from "h3-zod";
-import z from "zod";
+import { z } from "zod";
 
 const DokterSchema = z.object({
   namaDokter: z.string(),
