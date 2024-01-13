@@ -1,5 +1,4 @@
-// import { z } from "h3-zod";
-import { z } from "zod";
+import { z } from "h3-zod";
 
 export default z.object({
   email: z

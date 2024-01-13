@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "h3-zod";
 
 const RekamedisSchema = z.object({
   namaPasien: z.string(),

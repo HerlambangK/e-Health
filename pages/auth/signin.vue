@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import SigninSchema from "~/schemas/Signin.schema";
 import type { FormSubmitEvent } from "@nuxt/ui/dist/runtime/types";
-// import { z } from "h3-zod";
-import { z } from "zod";
+import { z } from "h3-zod";
 
 const isLoading = ref(false);
 const formState = reactive({
