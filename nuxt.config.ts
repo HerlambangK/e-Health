@@ -8,6 +8,9 @@ export default defineNuxtConfig({
     },
     // mongodbUri: process.env.MONGODB_URI,
   },
+  nitro: {
+    preset: "vercel-edge",
+  },
   build: {
     transpile: [/echarts/],
     // optimizeDeps: {
