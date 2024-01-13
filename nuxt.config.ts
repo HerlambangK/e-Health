@@ -9,14 +9,9 @@ export default defineNuxtConfig({
     // mongodbUri: process.env.MONGODB_URI,
   },
   nitro: {
-    preset: "vercel-edge",
+    preset: "vercel",
   },
-  routeRules: {
-    // "/examples/*": { redirect: "/redirect-route" },
-    "/modify-headers-route": { headers: { "x-magic-of": "nuxt and vercel" } },
-    // Enables client-side rendering
-    "/spa": { ssr: true },
-  },
+
   build: {
     transpile: [/echarts/],
     // optimizeDeps: {
