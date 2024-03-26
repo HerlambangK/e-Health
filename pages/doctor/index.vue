@@ -11,10 +11,13 @@
 
       <UInput v-model="q" placeholder="Filter doctor..." />
     </div>
+    <!-- <div>
+      {{ doctor }}
+    </div> -->
     <UTable
       v-model="selected"
-      :columns="columns"
       :rows="filteredRows"
+      :columns="columns"
       :loading="loading"
       :loading-state="{
         icon: 'i-heroicons-arrow-path-20-solid',

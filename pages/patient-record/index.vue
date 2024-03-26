@@ -5,12 +5,11 @@
     <div
       class="flex px-3 py-3.5 border-b border-gray-200 dark:border-gray-700 justify-between items-center"
     >
-      <h2 className="mr-2 text-2xl font-semibold tracking-tight">
-        Rekam Medis
-      </h2>
+      <h2 class="mr-2 text-2xl font-semibold tracking-tight">Rekam Medis</h2>
 
       <UInput v-model="q" placeholder="Filter people..." />
     </div>
+    <!-- <div>tes: {{ rekamMedisData }}</div> -->
     <UTable
       v-model="selected"
       :rows="filteredRows"
@@ -64,7 +63,7 @@ const dataTabel = [
     label: "Pasient",
   },
   {
-    namaDokter: "dokter",
+    key: "namaDokter",
     label: "dokter",
   },
   {
@@ -136,20 +135,13 @@ const rekamMedisData = ref([]);
 const fetchRekamMedisData = async () => {
   try {
     // const response = await fetch("/api/rekamedis");
-    const { data: response } = await useFetch("/api/rekamedis");
-    console.log("response", response);
+    const response = await fetch("/api/rekamedis");
+    const responseData = await response.json();
+    // console.log("response", response);
     if (response.status == 200) {
-      const responseData = await response.json();
-      if (responseData.body) {
-        rekamMedisData.value = responseData.body;
-        console.log(
-          "Successfully fetched rekamMedis data",
-          rekamMedisData.value
-        );
-        loading.value = false;
-      } else {
-        throw new Error("Response body is empty.");
-      }
+      rekamMedisData.value = responseData.body;
+      // console.log("Successfully fetched rekamMedis data", rekamMedisData.value);
+      loading.value = false;
     } else {
       throw new Error(
         `Error fetching rekamMedis data. Status code: ${response.status}`
@@ -165,9 +157,9 @@ const fetchRekamMedisData = async () => {
 // };
 
 // Use the useAsyncData hook to call fetchRekamMedisData during SSR and on client side
-useAsyncData(async ({ fetch }) => {
-  await fetchRekamMedisData();
-});
+// useAsyncData(async ({ fetch }) => {
+//   await fetchRekamMedisData();
+// });
 
 // Call the fetchRekamMedisData function when the component is mounted on the client side
 onMounted(() => {
