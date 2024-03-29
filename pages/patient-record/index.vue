@@ -29,6 +29,13 @@
           >{{ row.name }}</span
         >
       </template>
+      <template #namaDokter-data="{ row }">
+        <span>{{ row && row.namaDokter ? row.namaDokter : "-" }}</span>
+      </template>
+
+      <template #poli-data="{ row }">
+        <span>{{ row && row.poli ? row.poli : "-" }}</span>
+      </template>
 
       <template #kontrolTerakhir-data="{ row }">
         <span>{{
@@ -60,23 +67,28 @@
 const dataTabel = [
   {
     key: "namaPasien",
-    label: "Pasient",
+    label: "Pasien",
   },
   {
     key: "namaDokter",
-    label: "dokter",
+    label: "Dokter",
   },
   {
     key: "poli",
-    label: "poli",
+    label: "Poli",
   },
+
   {
     key: "keluhan",
-    label: "keluhan",
+    label: "Keluhan",
   },
   {
     key: "kontrolTerakhir",
-    label: "kontrol terakhir",
+    label: "Kontrol Terakhir",
+  },
+  {
+    key: "catatan",
+    label: "Catatan",
   },
   {
     key: "actions",
