@@ -1,4 +1,3 @@
-import type { NuxtImg } from '#build/components';
 <template>
   <div class="bg-white py-24 sm:pb-32">
     <div class="mx-auto md:max-w-7xl px-6 lg:px-8">
