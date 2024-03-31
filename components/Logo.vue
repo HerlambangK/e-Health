@@ -19,7 +19,8 @@
           />
         </g>
       </svg> -->
-      <NuxtImg src="/img/logo.png" key="logo" class="mt-2" />
+      <!-- <NuxtImg src="/img/logo.png" key="logo" class="mt-2" /> -->
+      <img src="/img/logo.png" key="logo" class="mt-2" />
     </div>
     <!-- <div
       class="self-center text-2xl font-semibold whitespace-nowrap dark:text-white"
