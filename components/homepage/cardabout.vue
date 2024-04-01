@@ -1,43 +1,38 @@
 <template>
-  <div class="bg-white pt-2 dark:bg-gray-900 px-6 pt-14 lg:px-8" id="service">
-    <div class="mx-auto max-w-screen py-12 sm:py-48 lg:py-12">
+  <div class="bg-white pt-2 dark:bg-gray-900 px-4 lg:px-8" id="service">
+    <div class="mx-auto md:max-w-4xl py-12 sm:py-48 lg:py-12">
       <h3
         class="text-lg mb:text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl text-center"
       >
         Our Service
       </h3>
       <div
-        class="bg-white mx-auto py-2 px-20 grid grid-cols-2 mx2 md:grid-cols-2 lg:grid-cols-4 gap-2"
+        class="bg-white mx-auto py-2 px-10 grid grid-cols-2 mx2 md:grid-cols-2 lg:grid-cols-4 gap-2"
       >
-        <div class="col-span-1 py-2" v-for="asset in assets" :key="asset.title">
-          <a
-            :href="asset.link"
-            class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-          >
-            <img
-              class="object-cover w-full rounded-t-lg h-48 md:h-40 md:w-40 md:rounded-none md:rounded-s-lg"
-              :src="asset.img"
-              alt="kadar"
-            />
-            <!-- <NuxtImg
-              class="object-cover w-full rounded-t-lg h-48 md:h-40 md:w-40 md:rounded-none md:rounded-s-lg"
-              :src="asset.img"
-              alt="kadar"
-            /> -->
-            <div class="flex flex-col justify-between p-4 leading-normal">
-              <h5
-                class="mb-2 text-sm md:text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
-              >
-                {{ asset.title }}
-              </h5>
-              <p
-                class="mb-3 text-sm md:text-md font-normal text-gray-700 dark:text-gray-400"
-              >
-                {{ asset.description }}
-              </p>
+        <a
+          href="#"
+          class="block rounded-lg p-4 shadow-sm shadow-indigo-100"
+          v-for="asset in assets"
+          :key="asset.title"
+        >
+          <img
+            :src="asset.img"
+            alt="kadar"
+            class="h-32 w-full rounded-md object-cover"
+          />
+
+          <div class="mt-2">
+            <dl>
+              <div>
+                <dt class="font-medium">{{ asset.title }}</dt>
+              </div>
+            </dl>
+
+            <div class="mt-6 flex items-center gap-8 text-xs">
+              {{ asset.description }}
             </div>
-          </a>
-        </div>
+          </div>
+        </a>
       </div>
     </div>
   </div>

@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white py-24 sm:pb-32">
-    <div class="mx-auto md:max-w-7xl px-6 lg:px-8">
+    <div class="mx-auto md:max-w-2xl px-6 lg:px-8">
       <h2 class="text-center text-lg font-semibold leading-8 text-gray-900">
         Trusted by the world’s most innovative teams
       </h2>
@@ -48,6 +48,10 @@ const assets = ref([
     imgLogo: "/img/logo.png",
     alt: "Kadar5",
   },
+  // {
+  //   imgLogo: "/img/logo.png",
+  //   alt: "Kadar5",
+  // },
 ]);
 </script>
 

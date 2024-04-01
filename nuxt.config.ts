@@ -19,6 +19,7 @@ export default defineNuxtConfig({
     "nuxt-server-utils",
     "@sidebase/nuxt-auth",
     "@nuxt/image",
+    // "@glidejs/glide",
   ],
   // image: {
   //   provider: "netlify",

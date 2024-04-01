@@ -1,6 +1,6 @@
 <template>
-  <div class="bg-white pt-2 dark:bg-gray-900 px-6 pt-14 lg:px-8" id="about">
-    <div class="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
+  <div class="bg-white dark:bg-gray-900 px-6 pt-2 lg:px-4" id="about">
+    <div class="mx-auto max-w-2xl py-12 lg:py-32">
       <div class="text-center">
         <h3
           class="text-lg mb:text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl"

@@ -10,7 +10,9 @@
     <HomepageCardabout />
     <!-- Logos -->
     <HomepageLogoclient />
+    <!-- <HomepageClientSlide /> -->
     <HomepageContactform />
+
     <HomepageFooter />
   </main>
 </template>
