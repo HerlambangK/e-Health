@@ -1,10 +1,6 @@
 <template>
-  <div
-    class="md:ml-72 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11"
-  >
-    <div
-      class="flex px-3 py-3.5 border-b border-gray-200 dark:border-gray-700 justify-between items-center"
-    >
+  <div class="md:ml-72 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11">
+    <div class="flex px-3 py-3.5 border-b border-gray-200 dark:border-gray-700 justify-between items-center">
       <h2 className="mr-2 text-2xl font-semibold tracking-tight">
         List Dokter
       </h2>
@@ -14,42 +10,25 @@
     <!-- <div>
       {{ doctor }}
     </div> -->
-    <UTable
-      v-model="selected"
-      :rows="filteredRows"
-      :columns="columns"
-      :loading="loading"
-      :loading-state="{
+    <UTable v-model="selected" :rows="filteredRows" :columns="columns" :loading="loading" :loading-state="{
         icon: 'i-heroicons-arrow-path-20-solid',
         label: 'Loading...',
-      }"
-    >
+      }">
       <template #name-data="{ row }">
-        <span
-          :class="[
-            selected.find((doctor) => doctor.id === row.id) &&
-              'text-primary-500 dark:text-primary-400',
-          ]"
-          >{{ row.name }}</span
-        >
+        <span :class="[
+        selected.find((doctor) => doctor.id === row.id) &&
+        'text-primary-500 dark:text-primary-400',
+      ]">{{ row.name }}</span>
       </template>
       <template #kehadiran-data="{ row }">
         <UTooltip :text="row.jadwal" :popper="{ arrow: true }">
-          <UBadge
-            :label="row.kehadiran"
-            variant="outline"
-            :color="row.kehadiran === 'online' ? 'green' : 'red'"
-            class="cursor-pointer"
-          />
+          <UBadge :label="row.kehadiran" variant="outline" :color="row.kehadiran === 'online' ? 'green' : 'red'"
+            class="cursor-pointer" />
         </UTooltip>
       </template>
       <template #actions-data="{ row }">
         <UDropdown :items="items(row)">
-          <UButton
-            color="gray"
-            variant="ghost"
-            icon="i-heroicons-ellipsis-horizontal-20-solid"
-          />
+          <UButton color="gray" variant="ghost" icon="i-heroicons-ellipsis-horizontal-20-solid" />
         </UDropdown>
       </template>
       <template #empty-state>

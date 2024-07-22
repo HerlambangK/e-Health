@@ -1,27 +1,15 @@
 <template>
-  <div
-    class="md:ml-72 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11"
-  >
+  <div class="md:ml-72 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11">
     <div className="flex item-center">
-      <h2
-        className="mr-2 text-2xl mt-6 font-semibold tracking-tight text-center"
-      >
+      <h2 className="mr-2 text-2xl mt-6 font-semibold tracking-tight text-center">
         Dashboard Admin
       </h2>
     </div>
     <div class="w-full flex flex-row mt-6 gap-2">
-      <div
-        class="w-1/2 p-8 mx-auto shadow-md rounded-lg border py-10 flex-col justify-center items-center"
-      >
+      <div class="w-1/2 p-8 mx-auto shadow-md rounded-lg border py-10 flex-col justify-center items-center">
         <h2 class="font-semibold text-lg">Jumlah Pasien</h2>
         <!-- <h3>10</h3> -->
-        <UMeterGroup
-          :min="0"
-          :max="128"
-          size="md"
-          indicator
-          icon="i-heroicons-minus"
-        >
+        <UMeterGroup :min="0" :max="128" size="md" indicator icon="i-heroicons-minus">
           <UMeter :value="24" color="gray" label="Rawat inap" />
           <UMeter :value="8" color="red" label="ICU / Urgent" />
           <UMeter :value="12" color="yellow" label="UGD / Rawat jalan" />
@@ -31,24 +19,19 @@
         </UMeterGroup>
       </div>
 
-      <div
-        class="w-1/2 p-8 mx-auto shadow-md rounded-lg border py-10 flex-col justify-center items-center"
-      >
+      <div class="w-1/2 p-8 mx-auto shadow-md rounded-lg border py-10 flex-col justify-center items-center">
         <h2 class="font-semibold text-lg">Jumlah Dokter</h2>
         <h3>10</h3>
       </div>
     </div>
-    <div
-      class="w-full mt-6 p-8 mx-auto shadow-md rounded-lg border py-3 flex-col justify-center items-center"
-    >
+    <div class="w-full mt-6 p-8 mx-auto shadow-md rounded-lg border py-3 flex-col justify-center items-center">
       <h2 class="font-semibold text-lg">information</h2>
       <AdminOverview />
     </div>
   </div>
 
   <div
-    class="md:ml-72 mt-3 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11"
-  >
+    class="md:ml-72 mt-3 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11">
     <div class="w-full mt-12">
       <h1 class="font-semibold text-2xl text-center">Data Antrian Pasien</h1>
       <div class="flex flex-row justify-between my-6">
@@ -56,26 +39,17 @@
         <UButton label="Tambah Pasien" @click="isPasien = true" />
 
         <UModal v-model="isPasien" prevent-close>
-          <UCard
-            :ui="{
-              ring: '',
-              divide: 'divide-y divide-gray-100 dark:divide-gray-800',
-            }"
-          >
+          <UCard :ui="{
+          ring: '',
+          divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+        }">
             <template #header>
               <div class="flex items-center justify-between">
-                <h3
-                  class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
-                >
+                <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
                   Form Pasien
                 </h3>
-                <UButton
-                  color="gray"
-                  variant="ghost"
-                  icon="i-heroicons-x-mark-20-solid"
-                  class="-my-1"
-                  @click="isPasien = false"
-                />
+                <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
+                  @click="isPasien = false" />
               </div>
             </template>
             <!-- hallo -->
@@ -86,26 +60,17 @@
         <UButton label="Tambah Dokter" @click="isDokter = true" />
 
         <UModal v-model="isDokter" prevent-close>
-          <UCard
-            :ui="{
-              ring: '',
-              divide: 'divide-y divide-gray-100 dark:divide-gray-800',
-            }"
-          >
+          <UCard :ui="{
+          ring: '',
+          divide: 'divide-y divide-gray-100 dark:divide-gray-800',
+        }">
             <template #header>
               <div class="flex items-center justify-between">
-                <h3
-                  class="text-base font-semibold leading-6 text-gray-900 dark:text-white"
-                >
+                <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
                   Form Dokter
                 </h3>
-                <UButton
-                  color="gray"
-                  variant="ghost"
-                  icon="i-heroicons-x-mark-20-solid"
-                  class="-my-1"
-                  @click="isDokter = false"
-                />
+                <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
+                  @click="isDokter = false" />
               </div>
             </template>
             <!-- hallo -->
@@ -134,156 +99,79 @@
         </UModal> -->
       </div>
     </div>
-    <UCard
-      class="w-full"
-      :ui="{
-        base: '',
-        ring: '',
-        divide: 'divide-y divide-gray-200 dark:divide-gray-700',
-        header: { padding: 'px-4 py-5' },
-        body: {
-          padding: '',
-          base: 'divide-y divide-gray-200 dark:divide-gray-700',
-        },
-        footer: { padding: 'p-4' },
-      }"
-    >
+    <UCard class="w-full" :ui="{
+          base: '',
+          ring: '',
+          divide: 'divide-y divide-gray-200 dark:divide-gray-700',
+          header: { padding: 'px-4 py-5' },
+          body: {
+            padding: '',
+            base: 'divide-y divide-gray-200 dark:divide-gray-700',
+          },
+          footer: { padding: 'p-4' },
+        }">
       <template #header>
-        <h2
-          class="font-semibold text-xl text-gray-900 dark:text-white leading-tight"
-        >
+        <h2 class="font-semibold text-xl text-gray-900 dark:text-white leading-tight">
           Todos
         </h2>
       </template>
 
       <!-- Filters -->
       <div class="flex items-center justify-between gap-3 px-4 py-3">
-        <UInput
-          v-model="search"
-          icon="i-heroicons-magnifying-glass-20-solid"
-          placeholder="Search..."
-        />
+        <UInput v-model="search" icon="i-heroicons-magnifying-glass-20-solid" placeholder="Search..." />
 
-        <USelectMenu
-          v-model="selectedStatus"
-          :options="todoStatus"
-          multiple
-          placeholder="Status"
-          class="w-40"
-        />
+        <USelectMenu v-model="selectedStatus" :options="todoStatus" multiple placeholder="Status" class="w-40" />
       </div>
 
       <!-- Header and Action buttons -->
-      <div
-        class="flex flex-col md:flex-row justify-between items-center w-full px-4 py-3"
-      >
+      <div class="flex flex-col md:flex-row justify-between items-center w-full px-4 py-3">
         <div class="flex flex-col md:flex-row items-center gap-1.5">
           <span class="text-sm leading-5">Rows per page:</span>
 
-          <USelect
-            v-model="pageCount"
-            :options="[3, 5, 10, 20, 30, 40]"
-            class="w-64 md:w-20 flex justify-center mt-1"
-            size="xs"
-          />
+          <USelect v-model="pageCount" :options="[3, 5, 10, 20, 30, 40]" class="w-64 md:w-20 flex justify-center mt-1"
+            size="xs" />
         </div>
 
         <div class="flex flex-col md:flex-row gap-1.5 items-center">
-          <UDropdown
-            v-if="selectedRows.length > 1"
-            :items="actions"
-            :ui="{ width: 'w-36' }"
-          >
-            <UButton
-              icon="i-heroicons-chevron-down"
-              trailing
-              color="gray"
-              size="xs"
-            >
+          <UDropdown v-if="selectedRows.length > 1" :items="actions" :ui="{ width: 'w-36' }">
+            <UButton icon="i-heroicons-chevron-down" trailing color="gray" size="xs">
               Mark as
             </UButton>
           </UDropdown>
 
-          <USelectMenu
-            v-model="selectedColumns"
-            :options="columns"
-            multiple
-            :ui="{ width: 'w-36' }"
-          >
-            <UButton
-              icon="i-heroicons-view-columns"
-              color="gray"
-              size="xs"
-              class="w-64 md:w-20 flex justify-center mt-1"
-            >
+          <USelectMenu v-model="selectedColumns" :options="columns" multiple :ui="{ width: 'w-36' }">
+            <UButton icon="i-heroicons-view-columns" color="gray" size="xs"
+              class="w-64 md:w-20 flex justify-center mt-1">
               Columns
             </UButton>
           </USelectMenu>
 
-          <UButton
-            icon="i-heroicons-funnel"
-            color="gray"
-            size="xs"
-            class="w-64 md:w-20 flex justify-center mt-1"
-            :disabled="search === '' && selectedStatus.length === 0"
-            @click="resetFilters"
-          >
+          <UButton icon="i-heroicons-funnel" color="gray" size="xs" class="w-64 md:w-20 flex justify-center mt-1"
+            :disabled="search === '' && selectedStatus.length === 0" @click="resetFilters">
             Reset
           </UButton>
-          <UButton
-            icon="i-heroicons-printer"
-            color="gray"
-            size="xs"
-            class="w-64 md:w-20 flex justify-center mt-1"
-            :disabled="selectedRows.length === 0"
-            @click="exportToExcel"
-          >
+          <UButton icon="i-heroicons-printer" color="gray" size="xs" class="w-64 md:w-20 flex justify-center mt-1"
+            :disabled="selectedRows.length === 0" @click="exportToExcel">
             <UTooltip text="Please select one or more data"> Print </UTooltip>
           </UButton>
         </div>
       </div>
 
       <!-- Table -->
-      <UTable
-        v-model="selectedRows"
-        :rows="todos"
-        :columns="columnsTable"
-        :loading="pending"
-        sort-asc-icon="i-heroicons-arrow-up"
-        sort-desc-icon="i-heroicons-arrow-down"
-        class="w-full"
-        :ui="{ td: { base: 'max-w-[0] truncate' } }"
-        @select="select"
-      >
+      <UTable v-model="selectedRows" :rows="todos" :columns="columnsTable" :loading="pending"
+        sort-asc-icon="i-heroicons-arrow-up" sort-desc-icon="i-heroicons-arrow-down" class="w-full"
+        :ui="{ td: { base: 'max-w-[0] truncate' } }" @select="select">
         <template #completed-data="{ row }">
-          <UBadge
-            size="xs"
-            :label="row.completed ? 'Completed' : 'In Progress'"
-            :color="row.completed ? 'emerald' : 'orange'"
-            variant="subtle"
-          />
+          <UBadge size="xs" :label="row.completed ? 'Completed' : 'In Progress'"
+            :color="row.completed ? 'emerald' : 'orange'" variant="subtle" />
         </template>
 
         <template #actions-data="{ row }">
-          <UButton
-            v-if="!row.completed"
-            icon="i-heroicons-check"
-            size="2xs"
-            color="emerald"
-            variant="outline"
-            :ui="{ rounded: 'rounded-full' }"
-            square
-          />
+          <UButton v-if="!row.completed" icon="i-heroicons-check" size="2xs" color="emerald" variant="outline"
+            :ui="{ rounded: 'rounded-full' }" square />
 
-          <UButton
-            v-else
-            icon="i-heroicons-arrow-path"
-            size="2xs"
-            color="orange"
-            variant="outline"
-            :ui="{ rounded: 'rounded-full' }"
-            square
-          />
+          <UButton v-else icon="i-heroicons-arrow-path" size="2xs" color="orange" variant="outline"
+            :ui="{ rounded: 'rounded-full' }" square />
         </template>
       </UTable>
 
@@ -302,20 +190,15 @@
             </span>
           </div>
 
-          <UPagination
-            v-model="page"
-            :page-count="pageCount"
-            :total="pageTotal"
-            :ui="{
-              wrapper: 'flex items-center gap-1',
-              rounded: '!rounded-full min-w-[32px] justify-center',
-              default: {
-                activeButton: {
-                  variant: 'outline',
-                },
-              },
-            }"
-          />
+          <UPagination v-model="page" :page-count="pageCount" :total="pageTotal" :ui="{
+          wrapper: 'flex items-center gap-1',
+          rounded: '!rounded-full min-w-[32px] justify-center',
+          default: {
+            activeButton: {
+              variant: 'outline',
+            },
+          },
+        }" />
         </div>
       </template>
     </UCard>
@@ -328,6 +211,7 @@
 
 definePageMeta({
   layout: "default",
+  middleware: "auth",
 });
 const isOpen = ref(false);
 // Columns

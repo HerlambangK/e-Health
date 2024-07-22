@@ -64,6 +64,10 @@
 </template>
 
 <script setup>
+definePageMeta({
+  layout: "default",
+  middleware: "auth",
+});
 const dataTabel = [
   {
     key: "namaPasien",

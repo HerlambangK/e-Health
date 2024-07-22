@@ -51,7 +51,9 @@
                   alt="as"
                 />
               </div>
-              <span class="user-name">Hahaha</span>
+              <span class="user-name">
+                {{ data?.user?.email ? data?.user?.email : "none" }}
+              </span>
               <!-- <span class="user-name">{{ user.name }}</span> -->
               <Icon
                 name="heroicons:ellipsis-vertical"
@@ -67,6 +69,8 @@
 
 <script setup lang="ts">
 // import { GithubUser } from "@/lib/types/github";
+const { data, signOut } = useAuth();
+
 interface Props {
   closeButton: boolean;
   //   user: GithubUser;
@@ -76,18 +80,19 @@ const props = defineProps<Props>();
 const route = useRoute();
 // const selectedFilter = ref("all");
 
-const isAccountRoute = computed(
-  () =>
-    route.path === "/dashboard" ||
-    route.path === "/dashboard/" ||
-    route.path === "/dashboard/get-started" ||
-    route.path === "/dashboard/get-started/" ||
-    accountNavigationLinks.map((item) => item.href).includes(route.path)
-);
+// const isAccountRoute = computed(
+//   () =>
+//     route.path === "/dashboard" ||
+//     route.path === "/dashboard/" ||
+//     route.path === "/dashboard/get-started" ||
+//     route.path === "/dashboard/get-started/" ||
+//     accountNavigationLinks.map((item) => item.href).includes(route.path)
+// );
 
 // const navigation = computed(() =>
 //   isAccountRoute.value : accountNavigationLinks : accountNavigationLinks
 // );
+// const navigation = computed(() => accountNavigationLinks);
 const navigation = computed(() => accountNavigationLinks);
 
 const userSettings = [
@@ -105,6 +110,7 @@ const userSettings = [
     {
       label: "Sign out",
       icon: "i-heroicons-arrow-left-on-rectangle",
+      click: () => signOut(),
       // click: props.clear,
     },
   ],

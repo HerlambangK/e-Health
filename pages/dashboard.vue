@@ -98,6 +98,7 @@
 <script lang="ts" setup>
 definePageMeta({
   layout: "default",
+  middleware: ["auth", "auth-middleware"],
 });
 
 const profile = reactive({
@@ -107,7 +108,7 @@ const profile = reactive({
   alamat: "Jl. Kediri",
 });
 
-definePageMeta({
-  middleware: "auth",
-});
+// definePageMeta({
+//   middleware: "auth",
+// });
 </script>

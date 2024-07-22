@@ -10,6 +10,10 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  layout: "default",
+  middleware: "auth",
+});
 import {
   Chart as ChartJS,
   CategoryScale,
