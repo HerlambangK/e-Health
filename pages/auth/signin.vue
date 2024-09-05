@@ -58,9 +58,9 @@ async function handleSubmit(
   }
 }
 
+
 onMounted(() => {
   isOpen.value = true
-
   const interval = setInterval(() => {
     countDown.value--;
     if (countDown.value <= 0) {
