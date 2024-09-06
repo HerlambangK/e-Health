@@ -9,8 +9,8 @@
     <HomepageAboutus />
     <HomepageCardabout />
     <!-- Logos -->
-    <HomepageLogoclient />
-    <!-- <HomepageClientSlide /> -->
+    <!-- <HomepageLogoclient /> -->
+    <HomepageClientSlide />
     <HomepageContactform />
 
     <HomepageFooter />

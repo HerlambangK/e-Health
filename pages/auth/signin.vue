@@ -14,7 +14,7 @@ const validationSchema = SigninSchema;
 const { signIn } = useAuth();
 const router = useRouter();
 const isOpen = ref(false)
-const countDown = ref(10)
+const countDown = ref(5)
 
 async function handleSubmit(
   event: FormSubmitEvent<z.output<typeof validationSchema>>
