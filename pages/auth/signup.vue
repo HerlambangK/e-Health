@@ -19,26 +19,44 @@ const formState = ref({
 });
 
 const isLoading = ref(false);
+const toast = useToast();
+const router = useRouter();
+const REGISTER_SUCCESS_MESSAGE =
+  "Akun berhasil dibuat. Kamu akan diarahkan ke halaman masuk.";
 
 async function handleSubmit(
   event: FormSubmitEvent<z.output<typeof SignupSchema>>
 ) {
   try {
     isLoading.value = true;
-    await useFetch("/api/auth/signup", {
+    await $fetch("/api/auth/signup", {
       method: "POST",
       body: event.data,
     });
-    useToast().add({
-      title: "Account created",
-      description:
-        "Your account has been created successfully, Redirecting you to the sign in page",
+    toast.add({
+      id: "register-success",
+      title: "Registrasi berhasil",
+      description: REGISTER_SUCCESS_MESSAGE,
+      color: "green",
+      icon: "i-heroicons-check-circle",
+      timeout: 4000,
     });
-    await useRouter().push({
+    await router.push({
       name: "auth-signin",
     });
   } catch (error) {
-    console.log(error);
+    console.error("signup error", error);
+    const message =
+      (error as { statusMessage?: string })?.statusMessage ??
+      "Terjadi kendala saat membuat akun, silakan coba lagi.";
+    toast.add({
+      id: "register-error",
+      title: "Registrasi gagal",
+      description: message,
+      color: "red",
+      icon: "i-heroicons-information-circle",
+      timeout: 4000,
+    });
   } finally {
     isLoading.value = false;
   }

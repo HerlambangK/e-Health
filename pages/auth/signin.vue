@@ -13,42 +13,49 @@ const validationSchema = SigninSchema;
 
 const { signIn } = useAuth();
 const router = useRouter();
-const isOpen = ref(false)
-const countDown = ref(5)
+const toast = useToast();
+const isOpen = ref(false);
+const countDown = ref(5);
+let countdownTimer: ReturnType<typeof setInterval> | undefined;
+
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  CredentialsSignin: "Email atau kata sandi tidak sesuai.",
+  CallbackRouteError: "Layanan autentikasi sedang bermasalah.",
+};
 
 async function handleSubmit(
   event: FormSubmitEvent<z.output<typeof validationSchema>>
 ) {
-  console.log("object", event);
-  console.log("event.data.email", event.data.email);
   try {
     isLoading.value = true;
-    // ts-expect-error
     const res = await signIn("credentials", {
       email: event.data.email,
       password: event.data.password,
       redirect: false,
     });
 
-    if (!res?.error) {
-      useRouter().push("/dashboard");
+    if (res?.error) {
+      const description =
+        AUTH_ERROR_MESSAGES[res.error] ??
+        "Tidak dapat memproses permintaan masuk, coba lagi nanti.";
+      toast.add({
+        id: "login-error",
+        title: "Login gagal",
+        description,
+        color: "red",
+        icon: "i-heroicons-information-circle",
+        timeout: 4000,
+      });
+      return;
     }
-    // const { error } = await signIn("credentials", {
-    //   email: event.data.email,
-    //   password: event.data.password,
-    //   redirect: false,
-    // });
 
-    // if (error) {
-    //   throw new Error(error);
-    // }
-
-    router.push("/dashboard");
+    await router.push("/dashboard");
   } catch (e) {
-    console.log("error", e);
-    useToast().add({
-      id: "error",
-      title: "Invalid credentials",
+    console.error("sign in error", e);
+    toast.add({
+      id: "login-unexpected-error",
+      title: "Login gagal",
+      description: "Terjadi kendala pada server, silakan coba lagi atau hubungi administrator.",
       color: "red",
       icon: "i-heroicons-information-circle",
       timeout: 3000,
@@ -57,23 +64,31 @@ async function handleSubmit(
     isLoading.value = false;
   }
 }
-
-
 onMounted(() => {
-  isOpen.value = true
-  const interval = setInterval(() => {
+  isOpen.value = true;
+  countDown.value = 5;
+  countdownTimer = setInterval(() => {
     countDown.value--;
     if (countDown.value <= 0) {
-      clearInterval(interval);
-      isOpen.value = false
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = undefined;
+      }
+      isOpen.value = false;
     }
-  }, 1000)
-}),
+  }, 1000);
+});
 
-  // import { useSignin } from "~/composables/useSignin";
-  useHead({
-    title: "Signin",
-  });
+onBeforeUnmount(() => {
+  if (countdownTimer) {
+    clearInterval(countdownTimer);
+    countdownTimer = undefined;
+  }
+});
+// import { useSignin } from "~/composables/useSignin";
+useHead({
+  title: "Signin",
+});
 definePageMeta({
   layout: "home",
 });
