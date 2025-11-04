@@ -7,6 +7,12 @@ interface IDokter extends Document {
   poli: string;
   jadwal: string;
   kehadiran: string;
+  telepon?: string;
+  email?: string;
+  tarifKonsultasi?: number;
+  billingCode?: string;
+  appointmentSlots?: string[];
+  catatan?: string;
 }
 
 const dokterSchema = new Schema({
@@ -16,6 +22,12 @@ const dokterSchema = new Schema({
   poli: { type: String, required: true },
   jadwal: { type: String, required: true },
   kehadiran: { type: String, required: true },
+  telepon: { type: String },
+  email: { type: String },
+  tarifKonsultasi: { type: Number },
+  billingCode: { type: String },
+  appointmentSlots: [{ type: String }],
+  catatan: { type: String },
 });
 
 export default model<IDokter>("Dokter", dokterSchema);

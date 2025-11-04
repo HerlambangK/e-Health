@@ -33,6 +33,10 @@ export default defineEventHandler(async (event) => {
         fotoProfil: pasien.fotoProfil,
         riwayatPenyakit: pasien.riwayatPenyakit,
         completedStatus: pasien.completedStatus,
+        billingPlan: pasien.billingPlan,
+        appointmentDate: pasien.appointmentDate,
+        appointmentTime: pasien.appointmentTime,
+        appointmentNotes: pasien.appointmentNotes,
       };
     });
 

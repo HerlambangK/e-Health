@@ -9,9 +9,13 @@ interface IPasien extends Document {
   poli: string; // Nama poli yang berelasi
   jenisAsuransi: string;
   rekamedis: string; // ID rekamedis yang berelasi
-  foto_profil: string;
+  fotoProfil?: string;
   riwayatPenyakit?: string[];
   completedStatus: boolean;
+  billingPlan?: string;
+  appointmentDate?: string;
+  appointmentTime?: string;
+  appointmentNotes?: string;
 }
 
 const pasienSchema = new Schema<IPasien>(
@@ -26,13 +30,17 @@ const pasienSchema = new Schema<IPasien>(
     jenisAsuransi: { type: String, required: true },
     rekamedis: { type: Schema.Types.ObjectId, ref: "Rekamedis" },
     // rekamedis: { type: String },
-    foto_profil: {
+    fotoProfil: {
       type: String,
       default:
         "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=facearea&facepad=4&w=256&h=256&q=60",
     },
     riwayatPenyakit: [{ type: String }],
     completedStatus: { type: Boolean, default: false },
+    billingPlan: { type: String },
+    appointmentDate: { type: String },
+    appointmentTime: { type: String },
+    appointmentNotes: { type: String },
   },
   {
     timestamps: true,
