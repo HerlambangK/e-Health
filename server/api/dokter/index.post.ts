@@ -1,34 +1,23 @@
 import { Validator } from "#nuxt-server-utils";
 import DokterSchema from "~/schemas/Dokter.schema";
 import Dokter from "~/server/models/Dokter";
-// import { Dokter } from "~/server/models/Dokter";
+import { sendError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event);
-  Validator.validateSchema(DokterSchema, body);
-
-  // Check if the NIP already exists
-  const existingDokter = await Dokter.findOne({ nip: body.nip });
-
-  if (existingDokter) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: "NIP already exists",
-      }),
-    };
-  }
-
   try {
+    const body = await readBody(event);
+    Validator.validateSchema(DokterSchema, body);
+
+    const existingDokter = await Dokter.findOne({ nip: body.nip });
+
+    if (existingDokter) {
+      return sendError(event, 400, "duplicate", "NIP already exists");
+    }
+
     const createdDokter = await Dokter.create(body);
-    const data = createdDokter.toObject();
-    return { statusCode: 201, body: data };
+    return sendSuccess(event, createdDokter, 201);
   } catch (error) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: "Invalid data format",
-      }),
-    };
+    console.error(error);
+    return sendError(event, 400, "validation_error", "Invalid data format", error);
   }
 });

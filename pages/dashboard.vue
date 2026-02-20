@@ -1,6 +1,6 @@
 <template>
-  <div class="md:ml-72 min-h-screen bg-gray-50">
-    <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 lg:px-8">
+  <div class="min-h-screen bg-white">
+    <div class="w-full space-y-6 py-6">
       <header class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p class="text-sm font-semibold uppercase tracking-wide text-primary-500">
@@ -184,7 +184,7 @@
           <template #header>
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold text-gray-900">Catatan Pribadi</h2>
-              <UBadge label="3 catatan" color="gray" variant="subtle" />
+              <UBadge :label="`${personalNotes.length} catatan`" color="gray" variant="subtle" />
             </div>
           </template>
 
@@ -209,99 +209,162 @@ definePageMeta({
   middleware: ["auth", "auth-middleware"],
 });
 
-const patient = reactive({
-  name: "Surminah",
-  healthSummary: {
-    updatedAt: "2 jam lalu",
-    latestDiagnosis: {
-      title: "Infeksi Saluran Pernapasan Atas (ISPA)",
-      date: "Ditetapkan 21 Februari 2024",
-      notes: "Terindikasi batuk pilek berkepanjangan tanpa demam tinggi. Perlu pemantauan 7 hari.",
-    },
-    plan: [
-      "Melanjutkan terapi antibiotik selama 5 hari",
-      "Kontrol ulang jika gejala tidak berkurang dalam 3 hari",
-      "Istirahat cukup dan konsumsi cairan hangat",
-    ],
+const { data: session } = useAuth();
+const userId = computed(() => session.value?.user?._id);
+
+const { data: dashboardResponse } = await useAsyncData(
+  "patient-dashboard",
+  async () => {
+    if (!userId.value) return null;
+
+    let pasienRes: any;
+    try {
+      pasienRes = await $fetch("/api/pasien", {
+        query: { userId: userId.value, page: 1, pageSize: 1 },
+      });
+    } catch {
+      return null;
+    }
+
+    const pasien = pasienRes?.data?.[0];
+
+    if (!pasien) return null;
+
+    let rekamedisRes: any = { data: [] };
+    let appointmentRes: any = { data: [] };
+
+    try {
+      [rekamedisRes, appointmentRes] = await Promise.all([
+        $fetch("/api/rekamedis", {
+          query: { patientId: pasien._id, page: 1, pageSize: 5 },
+        }),
+        $fetch("/api/appointment", {
+          query: { patientId: pasien._id, from: new Date().toISOString() },
+        }),
+      ]);
+    } catch {
+      // keep empty results
+    }
+
+    return {
+      pasien,
+      rekamedis: (rekamedisRes as any)?.data ?? [],
+      appointments: (appointmentRes as any)?.data ?? [],
+    };
   },
+  {
+    server: false,
+    default: () => null,
+    watch: [userId],
+  }
+);
+
+const dashboardData = computed(() => dashboardResponse.value);
+
+const latestRekamedis = computed(() => dashboardData.value?.rekamedis?.[0]);
+const nextAppointment = computed(() =>
+  (dashboardData.value?.appointments ?? [])
+    .sort((a: any, b: any) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+    .find((item: any) => item.status !== "cancelled")
+);
+
+const patient = computed(() => {
+  const pasien = dashboardData.value?.pasien;
+  const rekamedis = latestRekamedis.value;
+
+  return {
+    name: pasien?.nama ?? "Pasien",
+    healthSummary: {
+      updatedAt: rekamedis?.kontrolTerakhir ?? "-",
+      latestDiagnosis: {
+        title: rekamedis?.diagnosis || rekamedis?.keluhan || "Belum ada diagnosis",
+        date: rekamedis?.kontrolTerakhir ?? "-",
+        notes: rekamedis?.catatan ?? "Belum ada catatan medis terbaru.",
+      },
+      plan: rekamedis?.obat?.length
+        ? rekamedis.obat.map((item: string) => `Konsumsi ${item}`)
+        : ["Belum ada rencana perawatan terbaru."],
+    },
+  };
 });
 
-const highlightCards = [
-  {
-    title: "Menetap di RS terakhir",
-    value: "2 hari",
-    description: "Rawat jalan tanpa komplikasi lanjut.",
-    icon: "i-heroicons-clock-20-solid",
-  },
-  {
-    title: "Keanggotaan",
-    value: "BPJS Kesehatan",
-    description: "Status aktif sejak Januari 2022. Perpanjang otomatis.",
-    icon: "i-heroicons-identification-20-solid",
-    badge: "Aktif",
-  },
-  {
-    title: "Dokter Penanggung Jawab",
-    value: "dr. Rani Wijayanti",
-    description: "Spesialis penyakit dalam • Poli Lantai 3",
-    icon: "i-heroicons-user-circle-20-solid",
-  },
-];
+const highlightCards = computed(() => {
+  const pasien = dashboardData.value?.pasien;
+  return [
+    {
+      title: "Status Penanganan",
+      value: pasien?.completedStatus ? "Selesai" : "Dalam Proses",
+      description: "Status pemeriksaan terakhir pasien.",
+      icon: "i-heroicons-clipboard-document-check-20-solid",
+    },
+    {
+      title: "Keanggotaan",
+      value: pasien?.jenisAsuransi ?? "-",
+      description: "Jenis asuransi yang digunakan pasien.",
+      icon: "i-heroicons-identification-20-solid",
+      badge: pasien?.jenisAsuransi ? "Aktif" : undefined,
+    },
+    {
+      title: "Dokter Penanggung Jawab",
+      value: pasien?.dokter?.namaDokter ?? "-",
+      description: pasien?.poli ? `Poli ${pasien.poli}` : "Belum ditetapkan",
+      icon: "i-heroicons-user-circle-20-solid",
+    },
+  ];
+});
 
-const medications = [
-  { name: "Amoxicillin 500mg", dose: "3x sehari setelah makan", schedule: "Pagi • Siang • Malam" },
-  { name: "Paracetamol 500mg", dose: "Jika demam >38°C", schedule: "Sesuai kebutuhan" },
-  { name: "Vitamin C 500mg", dose: "1x sehari", schedule: "Pagi" },
-];
+const medications = computed(() => {
+  const meds = latestRekamedis.value?.obat ?? [];
+  if (!meds.length) return [];
+  return meds.map((name: string) => ({
+    name,
+    dose: "Sesuai anjuran dokter",
+    schedule: "Ikuti jadwal resep",
+  }));
+});
 
-const vitals = [
-  { label: "Tekanan darah", value: "118 / 78 mmHg" },
-  { label: "Suhu tubuh", value: "36.9°C" },
-  { label: "Denyut nadi", value: "78 bpm" },
-  { label: "Saturasi O₂", value: "97%" },
-];
+const vitals = computed(() => {
+  const rekamedis = latestRekamedis.value;
+  if (!rekamedis) return [];
+  return [
+    { label: "Tekanan darah", value: `${rekamedis.tensiSistol} / ${rekamedis.tensiDiastol} mmHg` },
+    { label: "Gula darah", value: `${rekamedis.guladarah} mg/dL` },
+  ];
+});
 
-const upcomingAppointment = {
-  date: "Kamis, 29 Februari 2024",
-  time: "08:30 WIB",
-  doctor: "Rani Wijayanti",
-  department: "Penyakit Dalam",
-  status: "Terkonfirmasi",
-};
+const upcomingAppointment = computed(() => {
+  const appointment = nextAppointment.value;
+  if (!appointment) {
+    return {
+      date: "Belum ada jadwal",
+      time: "-",
+      doctor: "-",
+      department: "-",
+      status: "Belum terjadwal",
+    };
+  }
 
-const visits = [
-  {
-    id: 1,
-    title: "Kontrol lanjutan ISPA",
-    date: "14 Februari 2024",
-    department: "Poli Penyakit Dalam",
+  const date = new Date(appointment.startAt);
+  return {
+    date: date.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" }),
+    time: date.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }),
+    doctor: appointment.doctorId?.namaDokter ?? "-",
+    department: appointment.doctorId?.poli ?? "-",
+    status: appointment.status,
+  };
+});
+
+const visits = computed(() =>
+  (dashboardData.value?.rekamedis ?? []).map((item: any) => ({
+    id: item._id,
+    title: item.diagnosis || item.keluhan || "Kunjungan",
+    date: item.kontrolTerakhir ?? "-",
+    department: item.dokter?.poli ?? "-",
     status: "Selesai",
     statusColor: "emerald",
-    notes: "Evaluasi perbaikan gejala, resep obat diperbarui.",
-  },
-  {
-    id: 2,
-    title: "Pemeriksaan Laboratorium",
-    date: "21 Januari 2024",
-    department: "Lab Klinik",
-    status: "Selesai",
-    statusColor: "emerald",
-    notes: "Tes darah lengkap, fungsi hati dan ginjal normal.",
-  },
-  {
-    id: 3,
-    title: "Vaksin influenza tahunan",
-    date: "10 Desember 2023",
-    department: "Poli Vaksin",
-    status: "Selesai",
-    statusColor: "emerald",
-    notes: "Tidak ada reaksi alergi, pantau selama 24 jam.",
-  },
-];
+    notes: item.catatan ?? "",
+  }))
+);
 
-const personalNotes = [
-  "Catat pola tidur dan tingkat kelelahan setiap malam.",
-  "Kurangi konsumsi makanan berminyak selama masa pemulihan.",
-  "Jadwalkan konsultasi gizi untuk rencana makan seimbang.",
-];
+const personalNotes = computed(() => []);
 </script>

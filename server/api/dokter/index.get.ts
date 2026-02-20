@@ -1,17 +1,37 @@
-// import Pasien from "~/server/models/Pasien";
-
+import { getQuery } from "h3";
 import Dokter from "~/server/models/Dokter";
+import { parsePagination } from "~/server/utils/pagination";
+import { sendError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
-  const dokter = await Dokter.find();
+  try {
+    const query = getQuery(event) as Record<string, any>;
+    const { page, pageSize, skip } = parsePagination(query);
 
-  if (!dokter) {
-    throw createError({
-      statusCode: 404,
-      message: "pasien not found",
-    });
+    const filter: Record<string, any> = {};
+
+    if (query.q) {
+      const regex = new RegExp(String(query.q), "i");
+      filter.$or = [
+        { namaDokter: regex },
+        { nip: regex },
+        { spesialisasi: regex },
+        { poli: regex },
+      ];
+    }
+
+    if (query.poli) {
+      filter.poli = query.poli;
+    }
+
+    const [items, total] = await Promise.all([
+      Dokter.find(filter).skip(skip).limit(pageSize).sort({ createdAt: -1 }),
+      Dokter.countDocuments(filter),
+    ]);
+
+    return sendSuccess(event, items, 200, { page, pageSize, total });
+  } catch (error) {
+    console.error(error);
+    return sendError(event, 500, "server_error", "Internal Server Error");
   }
-  // return { statusCode: 200, body: JSON.stringify(pasienList) };
-
-  return { statusCode: 200, body: dokter };
 });

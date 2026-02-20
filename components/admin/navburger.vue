@@ -21,7 +21,18 @@
 </template>
 
 <script setup lang="ts">
-const items = computed(() => accountNavigationLinks);
+import { accountNavigationLinks } from "~/utils";
+import { normalizeRole } from "~/utils/permissions";
+
+const { data } = useAuth();
+const userRole = computed(() => normalizeRole(data.value?.user?.role));
+
+const items = computed(() =>
+  accountNavigationLinks.filter((item: any) => {
+    if (!item.roles || !Array.isArray(item.roles)) return true;
+    return item.roles.includes(userRole.value);
+  })
+);
 </script>
 
 <style></style>

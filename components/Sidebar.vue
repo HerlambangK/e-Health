@@ -68,6 +68,9 @@
 </template>
 
 <script setup lang="ts">
+import { accountNavigationLinks } from "~/utils";
+import { normalizeRole } from "~/utils/permissions";
+
 // import { GithubUser } from "@/lib/types/github";
 const { data, signOut } = useAuth();
 
@@ -92,8 +95,13 @@ const route = useRoute();
 // const navigation = computed(() =>
 //   isAccountRoute.value : accountNavigationLinks : accountNavigationLinks
 // );
-// const navigation = computed(() => accountNavigationLinks);
-const navigation = computed(() => accountNavigationLinks);
+const userRole = computed(() => normalizeRole(data.value?.user?.role));
+const navigation = computed(() =>
+  accountNavigationLinks.filter((item: any) => {
+    if (!item.roles || !Array.isArray(item.roles)) return true;
+    return item.roles.includes(userRole.value);
+  })
+);
 
 const userSettings = [
   [

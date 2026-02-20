@@ -1,91 +1,113 @@
 <template>
-  <div class="md:ml-72 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11">
-    <div class="flex gap-2 px-3 py-3.5">
-      <UInput type="file" @change="handleFileUpload" />
-      <UButton @click="exportToExcel" :disabled="!results.length">Download Excel</UButton>
-      <UButton @click="saveToDatabase" :disabled="!results.length">Save to Database</UButton>
-
-      <UButton @click="checkWebsites">Check Websites</UButton>
+  <div class="pb-10 flex-grow">
+    <div class="flex flex-wrap items-center gap-3 py-4">
+      <USelectMenu v-model="selectedDataset" :options="datasetOptions" class="w-52" />
+      <UButton @click="exportToExcel" :disabled="!rows.length">Download Excel</UButton>
     </div>
 
-    <div v-if="results.length">
-      <h3>Website Status</h3>
-      <UTable :ui="{ td: { base: 'max-w-[0] truncate' } }" :rows="results" :columns="columns" :loading="loading"
-        :loading-state="{
-        icon: 'i-heroicons-arrow-path-20-solid',
-        label: 'Loading...',
-      }">
-
-      </UTable>
-
-    </div>
+    <UTable
+      :rows="rows"
+      :columns="columns"
+      :loading="loading"
+      :loading-state="{ icon: 'i-heroicons-arrow-path-20-solid', label: 'Loading...' }"
+    />
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue'
-import * as XLSX from 'xlsx'
-import axios from 'axios'
+<script setup lang="ts">
+import * as XLSX from "xlsx";
 
-const file = ref(null)
-const websites = ref([])
-const results = ref([])
+definePageMeta({
+  layout: "default",
+  middleware: ["auth", "auth-middleware"],
+});
 
-const columns = [
-  { key: 'no', label: 'ID' },
-  { key: 'website', label: 'Website' },
-  { key: 'status', label: 'Status' },
-]
-const handleFileUpload = (event) => {
-  const selectedFile = event.target.files[0]
-  if (selectedFile) {
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const data = new Uint8Array(e.target.result)
-      const workbook = XLSX.read(data, { type: 'array' })
-      const firstSheetName = workbook.SheetNames[0]
-      console.log("object", firstSheetName)
-      const worksheet = workbook.Sheets[firstSheetName]
-      console.log("worksheet", worksheet)
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
-      console.log("jsonData", jsonData)
-      websites.value = jsonData.slice(1).map(row => row[1])
+const datasetOptions = [
+  { label: "Pasien", value: "pasien" },
+  { label: "Dokter", value: "dokter" },
+  { label: "Rekam Medis", value: "rekamedis" },
+];
+
+const selectedDataset = ref("pasien");
+
+const { data: datasetResponse, pending: loading } = await useLazyAsyncData(
+  "export-dataset",
+  async () => {
+    if (selectedDataset.value === "dokter") {
+      return $fetch("/api/dokter", { query: { page: 1, pageSize: 200 } });
     }
-    reader.readAsArrayBuffer(selectedFile)
-  }
-}
-
-const checkWebsites = async () => {
-  // loading.value = true
-  results.value = []
-  for (let i = 0; i < websites.value.length; i++) {
-    const website = websites.value[i]
-    try {
-      await axios.get(website)
-      results.value.push({ no: i + 1, website, status: 'Active' })
-    } catch (error) {
-      results.value.push({ no: i + 1, website, status: 'Inactive' })
+    if (selectedDataset.value === "rekamedis") {
+      return $fetch("/api/rekamedis", { query: { page: 1, pageSize: 200 } });
     }
+    return $fetch("/api/pasien", { query: { page: 1, pageSize: 200 } });
+  },
+  {
+    default: () => ({ data: [] }),
+    watch: [selectedDataset],
   }
-  loading.value = false
-}
+);
 
+const rows = computed(() => (datasetResponse.value as any)?.data ?? []);
 
-
-const exportToExcel = () => {
-  const worksheet = XLSX.utils.json_to_sheet(results.value)
-  const workbook = XLSX.utils.book_new()
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Results')
-  XLSX.writeFile(workbook, 'WebsiteStatus.xlsx')
-}
-
-const saveToDatabase = async () => {
-  try {
-    await axios.post('/api/save-website-status', { data: results.value })
-    alert('Data saved to database successfully')
-  } catch (error) {
-    alert('Failed to save data to database')
+const columns = computed(() => {
+  switch (selectedDataset.value) {
+    case "dokter":
+      return [
+        { key: "namaDokter", label: "Nama" },
+        { key: "nip", label: "NIP" },
+        { key: "spesialisasi", label: "Spesialisasi" },
+        { key: "poli", label: "Poli" },
+        { key: "jadwal", label: "Jadwal" },
+      ];
+    case "rekamedis":
+      return [
+        { key: "namaPasien", label: "Pasien" },
+        { key: "namaDokter", label: "Dokter" },
+        { key: "keluhan", label: "Keluhan" },
+        { key: "kontrolTerakhir", label: "Kontrol Terakhir" },
+      ];
+    default:
+      return [
+        { key: "nama", label: "Nama" },
+        { key: "umur", label: "Umur" },
+        { key: "dokter", label: "Dokter" },
+        { key: "poli", label: "Poli" },
+        { key: "jenisAsuransi", label: "Asuransi" },
+      ];
   }
-}
+});
 
+function exportToExcel() {
+  let dataToExport: any[] = [];
+
+  if (selectedDataset.value === "dokter") {
+    dataToExport = rows.value.map((row: any) => ({
+      Nama: row.namaDokter,
+      NIP: row.nip,
+      Spesialisasi: row.spesialisasi,
+      Poli: row.poli,
+      Jadwal: row.jadwal,
+    }));
+  } else if (selectedDataset.value === "rekamedis") {
+    dataToExport = rows.value.map((row: any) => ({
+      Pasien: row.namaPasien?.nama ?? row.namaPasien,
+      Dokter: row.dokter?.namaDokter ?? row.namaDokter,
+      Keluhan: row.keluhan,
+      KontrolTerakhir: row.kontrolTerakhir,
+    }));
+  } else {
+    dataToExport = rows.value.map((row: any) => ({
+      Nama: row.nama,
+      Umur: row.umur,
+      Dokter: row.dokter?.namaDokter ?? row.dokter,
+      Poli: row.poli,
+      Asuransi: row.jenisAsuransi,
+    }));
+  }
+
+  const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Export");
+  XLSX.writeFile(workbook, `ehealth-${selectedDataset.value}.xlsx`);
+}
 </script>

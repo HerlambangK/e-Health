@@ -23,6 +23,8 @@ const toast = useToast();
 const router = useRouter();
 const REGISTER_SUCCESS_MESSAGE =
   "Akun berhasil dibuat. Kamu akan diarahkan ke halaman masuk.";
+const showPassword = ref(false);
+const showPasswordConfirm = ref(false);
 
 async function handleSubmit(
   event: FormSubmitEvent<z.output<typeof SignupSchema>>
@@ -47,6 +49,7 @@ async function handleSubmit(
   } catch (error) {
     console.error("signup error", error);
     const message =
+      (error as any)?.data?.error?.message ??
       (error as { statusMessage?: string })?.statusMessage ??
       "Terjadi kendala saat membuat akun, silakan coba lagi.";
     toast.add({
@@ -84,16 +87,38 @@ async function handleSubmit(
       <UFormGroup class="mb-4" name="password" label="Password">
         <UInput
           v-model="formState.password"
-          type="password"
+          :type="showPassword ? 'text' : 'password'"
           placeholder="********"
-        />
+        >
+          <template #trailing>
+            <UButton
+              type="button"
+              color="gray"
+              variant="ghost"
+              size="xs"
+              :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+              @click="showPassword = !showPassword"
+            />
+          </template>
+        </UInput>
       </UFormGroup>
       <UFormGroup class="mb-4" name="passwordConfirm" label="Confirm Password">
         <UInput
           v-model="formState.passwordConfirm"
-          type="password"
+          :type="showPasswordConfirm ? 'text' : 'password'"
           placeholder="********"
-        />
+        >
+          <template #trailing>
+            <UButton
+              type="button"
+              color="gray"
+              variant="ghost"
+              size="xs"
+              :icon="showPasswordConfirm ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+              @click="showPasswordConfirm = !showPasswordConfirm"
+            />
+          </template>
+        </UInput>
       </UFormGroup>
       <UFormGroup>
         <UButton :loading="isLoading" type="submit" color="primary" block>

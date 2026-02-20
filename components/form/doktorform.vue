@@ -17,6 +17,14 @@
           <UInput v-model="formState.nip" placeholder="Masukkan NIP dokter" />
         </UFormGroup>
 
+        <UFormGroup name="licenseNumber" label="Nomor SIP (opsional)">
+          <UInput v-model="formState.licenseNumber" placeholder="Nomor izin praktik" />
+        </UFormGroup>
+
+        <UFormGroup name="yearsExperience" label="Pengalaman (tahun)">
+          <UInput v-model="formState.yearsExperience" type="number" min="0" placeholder="Contoh: 5" />
+        </UFormGroup>
+
         <UFormGroup name="spesialisasi" label="Spesialisasi">
           <USelectMenu
             v-model="formState.spesialisasi"
@@ -36,6 +44,10 @@
 
         <UFormGroup name="email" label="Email (opsional)">
           <UInput v-model="formState.email" type="email" placeholder="Contoh: dokter@rumahsakit.id" />
+        </UFormGroup>
+
+        <UFormGroup name="signatureUrl" label="Tanda tangan digital (URL)">
+          <UInput v-model="formState.signatureUrl" placeholder="URL gambar tanda tangan" />
         </UFormGroup>
       </div>
     </UCard>
@@ -156,6 +168,9 @@ const defaultState: DokterFormState = {
   poli: "",
   jadwal: "",
   kehadiran: "",
+  licenseNumber: "",
+  yearsExperience: undefined,
+  signatureUrl: "",
   telepon: "",
   email: "",
   tarifKonsultasi: undefined,
@@ -218,11 +233,11 @@ function gotoBilling() {
 }
 
 function gotoAppointment() {
-  router.push("/patient-record/appoitment");
+  router.push("/patient-record/appointment");
 }
 
 function gotoRekamedis() {
-  router.push("/patient-record/rekam-medis");
+  router.push("/patient-record");
 }
 
 async function handleSubmit(event: FormSubmitEvent<z.output<typeof DokterSchema>>) {
@@ -230,6 +245,9 @@ async function handleSubmit(event: FormSubmitEvent<z.output<typeof DokterSchema>
     isLoading.value = true;
     const payload: Record<string, any> = { ...event.data };
 
+    if (!payload.licenseNumber) delete payload.licenseNumber;
+    if (!payload.yearsExperience) delete payload.yearsExperience;
+    if (!payload.signatureUrl) delete payload.signatureUrl;
     if (!payload.telepon) delete payload.telepon;
     if (!payload.email) delete payload.email;
     if (!payload.billingCode) delete payload.billingCode;

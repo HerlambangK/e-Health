@@ -6,10 +6,15 @@ interface IPenyakit extends Document {
   deskripsi?: string;
 }
 
-const penyakitSchema = new Schema<IPenyakit>({
-  nama: { type: String, required: true },
-  gejala: [{ type: String }],
-  deskripsi: { type: String },
-});
+const penyakitSchema = new Schema<IPenyakit>(
+  {
+    nama: { type: String, required: true },
+    gejala: [{ type: String }],
+    deskripsi: { type: String },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 export default model<IPenyakit>("Penyakit", penyakitSchema);

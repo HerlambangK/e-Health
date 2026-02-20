@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { provide, ref } from "vue";
+import { provide, computed } from "vue";
 import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { PieChart } from "echarts/charts";
@@ -20,7 +20,11 @@ use([CanvasRenderer, PieChart, TitleComponent, TooltipComponent, LegendComponent
 
 provide(THEME_KEY, "light");
 
-const patientDistribution = [
+const props = defineProps<{
+  distribution?: Array<{ label: string; value: number }>;
+}>();
+
+const fallbackDistribution = [
   { value: 24, name: "Rawat inap" },
   { value: 8, name: "ICU / Urgent" },
   { value: 12, name: "UGD / Rawat jalan" },
@@ -28,7 +32,17 @@ const patientDistribution = [
   { value: 42, name: "Telah ditangani" },
 ];
 
-const option = ref({
+const chartData = computed(() => {
+  if (props.distribution && props.distribution.length) {
+    return props.distribution.map((item) => ({
+      value: item.value,
+      name: item.label,
+    }));
+  }
+  return fallbackDistribution;
+});
+
+const option = computed(() => ({
   color: ["#4b5563", "#f97316", "#fbbf24", "#22c55e", "#0ea5e9"],
   title: {
     text: "Komposisi Pasien",
@@ -83,7 +97,7 @@ const option = ref({
         borderColor: "#ffffff",
         borderWidth: 2,
       },
-      data: patientDistribution,
+      data: chartData.value,
       emphasis: {
         scale: true,
         scaleSize: 8,
@@ -117,7 +131,7 @@ const option = ref({
       },
     },
   ],
-});
+}));
 </script>
 
 <style scoped>

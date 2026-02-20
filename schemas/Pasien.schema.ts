@@ -5,10 +5,15 @@ const PasienSchema = z.object({
   umur: z.coerce.number().min(0),
   address: z.string().min(4),
   notlp: z.string().min(8),
+  gender: z.string().optional(),
+  birthDate: z.string().optional(),
+  emergencyContact: z.string().optional(),
+  allergies: z.array(z.string()).optional(),
   dokter: z.string().min(1), // ID dokter yang berelasi
   poli: z.string().min(1), // Nama poli yang berelasi
   jenisAsuransi: z.string().min(2),
   rekamedis: z.string().min(1), // ID rekamedis yang berelasi
+  userId: z.string().optional(),
   fotoProfil: z
     .string()
     .url()

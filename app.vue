@@ -2,8 +2,9 @@
   <div>
     <NuxtLoadingIndicator color="green" />
     <!-- <NGlobalStyle /> -->
-    <NuxtLayout />
-    <NuxtPage />
+    <NuxtLayout>
+      <NuxtPage />
+    </NuxtLayout>
     <UNotifications />
   </div>
 </template>

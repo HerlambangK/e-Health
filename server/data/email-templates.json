@@ -1,0 +1,23 @@
+[
+  {
+    "id": "invitation-default",
+    "name": "Undangan Tes Online",
+    "subject": "Undangan Tes Online - [lowongan]",
+    "body": "Halo [nama-kandidat],\n\nKami mengundang Anda untuk mengikuti tes online untuk posisi [lowongan].\n\nTerima kasih.",
+    "updatedAt": "2026-02-20T07:05:52.865Z"
+  },
+  {
+    "id": "account-default",
+    "name": "Akun Tes Online",
+    "subject": "Akun Tes Online - [lowongan]",
+    "body": "Halo [nama-kandidat],\n\nBerikut akun tes online untuk posisi [lowongan]:\nUsername: [username]\nPassword: [password]\n\nTerima kasih.",
+    "updatedAt": "2026-02-20T07:05:52.865Z"
+  },
+  {
+    "id": "invitation-gelombang3",
+    "name": "Undangan Tes Online Gelombang 3",
+    "subject": "Undangan Tes Online Gelombang 3",
+    "body": "Yth. [nama-kandidat],\nPelamar posisi [lowongan]\n\nSelamat sore.\n\nTerima kasih atas partisipasi Anda dalam rangkaian proses rekrutmen posisi [lowongan] di PT Sejahtera Sehat Karyautama.\n\nMelalui email ini, kami mengundang Anda untuk mengikuti Tes Online Gelombang 3 yang masih membuka kesempatan bagi peserta yang belum mengikuti tes sebelumnya, dengan detail sebagai berikut:\n\nHari/Tanggal : Minggu, 22 Februari 2026\nWaktu        : 09.00 – 12.00 WIB\nMedia        : Zoom Meeting\n\nTautan Zoom akan dikirimkan setelah peserta melakukan konfirmasi kehadiran.\n\nSehubungan dengan hal tersebut, peserta WAJIB melakukan konfirmasi kehadiran dan kesediaan mengikuti tes melalui WhatsApp ke:\n\nRecruitment Sejahtera Sehat Karyautama\n+62 811-9989-6331\n\nDengan format konfirmasi sebagai berikut:\n[nama-kandidat] - Gelombang 3 / 09.00 WIB\n\nKonfirmasi kehadiran paling lambat Jumat, 20 Februari 2026 pukul 12.00 WIB.\n\nPeserta diwajibkan sudah standby di ruang Zoom paling lambat 30 menit sebelum tes dimulai untuk keperluan registrasi dan pengecekan teknis.\n\nPerlu kami informasikan bahwa pelaksanaan ini merupakan kesempatan terakhir. Peserta yang tidak melakukan konfirmasi atau tidak hadir sesuai jadwal yang telah ditentukan akan dianggap mengundurkan diri dari proses seleksi.\n\nMohon memastikan perangkat, koneksi internet, kamera, dan audio dalam kondisi baik sebelum pelaksanaan tes.\n\nDemikian kami sampaikan. Atas perhatian dan kerja sama Anda, kami ucapkan terima kasih.\n\nHormat kami,\n\nTim Rekrutmen\nPT Sejahtera Sehat Karyautama\n",
+    "updatedAt": "2026-02-20T08:07:34.042Z"
+  }
+]

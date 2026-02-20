@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { provide, ref } from "vue";
+import { provide, computed } from "vue";
 import { use } from "echarts/core";
 import { CanvasRenderer } from "echarts/renderers";
 import { LineChart } from "echarts/charts";
@@ -19,7 +19,16 @@ import VChart, { THEME_KEY } from "vue-echarts";
 use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent]);
 provide(THEME_KEY, "light");
 
-const option = ref({
+const props = defineProps<{
+  labels?: string[];
+  values?: number[];
+}>();
+
+const fallbackLabels = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+const fallbackInpatient = [22, 28, 24, 20, 26, 30, 27];
+const fallbackOutpatient = [32, 34, 30, 36, 39, 38, 34];
+
+const option = computed(() => ({
   color: ["#0ea5e9", "#22c55e"],
   tooltip: {
     trigger: "axis",
@@ -47,7 +56,7 @@ const option = ref({
   xAxis: {
     type: "category",
     boundaryGap: false,
-    data: ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"],
+    data: props.labels?.length ? props.labels : fallbackLabels,
     axisLine: { lineStyle: { color: "#e5e7eb" } },
     axisLabel: { color: "#6b7280" },
   },
@@ -67,7 +76,7 @@ const option = ref({
       },
       symbol: "circle",
       symbolSize: 8,
-      data: [22, 28, 24, 20, 26, 30, 27],
+      data: props.values?.length ? props.values : fallbackInpatient,
     },
     {
       name: "Rawat Jalan",
@@ -78,10 +87,10 @@ const option = ref({
       },
       symbol: "circle",
       symbolSize: 8,
-      data: [32, 34, 30, 36, 39, 38, 34],
+      data: fallbackOutpatient,
     },
   ],
-});
+}));
 </script>
 
 <style scoped>

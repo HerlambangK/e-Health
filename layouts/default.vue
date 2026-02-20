@@ -4,7 +4,7 @@
       <!-- <ComponentSidebar /> -->
       <Sidebar />
     </div>
-    <main class="md:ml-60 pb-3 flex-grow">
+    <main class="md:ml-60 pb-3 flex-grow px-3 bg-white">
       <Navbar />
       <slot />
     </main>

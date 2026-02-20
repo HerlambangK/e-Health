@@ -5,10 +5,15 @@ interface IPasien extends Document {
   umur: number;
   address: string;
   notlp: string;
+  gender?: string;
+  birthDate?: Date;
+  emergencyContact?: string;
+  allergies?: string[];
   dokter: string; // ID dokter yang berelasi
   poli: string; // Nama poli yang berelasi
   jenisAsuransi: string;
   rekamedis: string; // ID rekamedis yang berelasi
+  userId?: string;
   fotoProfil?: string;
   riwayatPenyakit?: string[];
   completedStatus: boolean;
@@ -24,11 +29,16 @@ const pasienSchema = new Schema<IPasien>(
     umur: { type: Number, required: true },
     address: { type: String, required: true },
     notlp: { type: String, required: true },
+    gender: { type: String },
+    birthDate: { type: Date },
+    emergencyContact: { type: String },
+    allergies: [{ type: String }],
     dokter: { type: Schema.Types.ObjectId, ref: "Dokter" },
     poli: { type: String },
     // poli: { type: String, ref: "Dokter.poli" },
     jenisAsuransi: { type: String, required: true },
     rekamedis: { type: Schema.Types.ObjectId, ref: "Rekamedis" },
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
     // rekamedis: { type: String },
     fotoProfil: {
       type: String,

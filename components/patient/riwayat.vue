@@ -1,5 +1,3 @@
-import type { variants } from '#tailwind-config'; import type { UBadge } from
-'#build/components'; import type { UAccordion } from '#build/components';
 <template>
   <UAccordion multiple :items="items" :ui="{ wrapper: 'flex flex-col w-full' }">
     <template #default="{ item, index, open }">
@@ -9,8 +7,6 @@ import type { variants } from '#tailwind-config'; import type { UBadge } from
         class="border-b border-gray-200 dark:border-gray-700"
         :ui="{ rounded: 'rounded-none', padding: { sm: 'p-3' } }"
       >
-        <!-- <template #leading> </template> -->
-
         <span class="truncate">{{ index + 1 }}. {{ item.label }}</span>
 
         <template #trailing>
@@ -20,8 +16,9 @@ import type { variants } from '#tailwind-config'; import type { UBadge } from
             :class="[open && 'rotate-90']"
           />
         </template>
-      </UButton> </template
-  ></UAccordion>
+      </UButton>
+    </template>
+  </UAccordion>
 </template>
 
 <script setup>

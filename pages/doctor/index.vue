@@ -1,7 +1,7 @@
 <template>
-  <div class="md:ml-72 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11">
+  <div class="pb-10 flex-grow">
     <div class="flex px-3 py-3.5 border-b border-gray-200 dark:border-gray-700 justify-between items-center">
-      <h2 className="mr-2 text-2xl font-semibold tracking-tight">
+      <h2 class="mr-2 text-2xl font-semibold tracking-tight">
         List Dokter
       </h2>
 
@@ -14,11 +14,11 @@
         icon: 'i-heroicons-arrow-path-20-solid',
         label: 'Loading...',
       }">
-      <template #name-data="{ row }">
+      <template #namaDokter-data="{ row }">
         <span :class="[
-        selected.find((doctor) => doctor.id === row.id) &&
+        selected.find((doctor) => doctor._id === row._id) &&
         'text-primary-500 dark:text-primary-400',
-      ]">{{ row.name }}</span>
+      ]">{{ row.namaDokter }}</span>
       </template>
       <template #kehadiran-data="{ row }">
         <UTooltip :text="row.jadwal" :popper="{ arrow: true }">
@@ -41,9 +41,9 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 definePageMeta({
-  middleware: "auth",
+  middleware: ["auth", "auth-middleware"],
 });
 // import * as XLSX from "xlsx";
 
@@ -84,12 +84,12 @@ const items = (row) => [
       label: "Details",
       icon: "i-heroicons-eye-20-solid",
       // click: () => route.push(`/patient-record/rekam-medis/1`),
-      click: () => useRouter().push(`/patient-record/rekam-medis/1`),
+      click: () => useRouter().push(`/patient-record`),
     },
     {
       label: "Edit",
       icon: "i-heroicons-pencil-square-20-solid",
-      click: () => console.log("Edit", row.id),
+      click: () => console.log("Edit", row._id),
     },
     {
       label: "Print",
@@ -150,48 +150,24 @@ const items = (row) => [
 // ];
 const q = ref("");
 const selected = ref([]);
-const loading = ref(true);
 
-const doctor = ref([]); // Gunakan ref() untuk membuat reaktif
-
-const fetchDoctorData = async () => {
-  try {
-    const response = await fetch("/api/dokter/");
-    const responseData = await response.json();
-
-    if (response.status === 200) {
-      // Assign data dari server ke variabel doctor
-      // doctor.value = JSON.parse(responseData.body);
-      doctor.value = responseData.body;
-      console.log(doctor.value);
-      loading.value = false;
-    } else {
-      loading.value = false;
-
-      console.error(
-        "Error fetching doctor data. Status code:",
-        response.status
-      );
-    }
-  } catch (error) {
-    loading.value = false;
-    console.error("Error parsing doctor data:", error);
+const { data: doctorResponse, pending: loading } = await useLazyAsyncData(
+  "doctor-list",
+  () =>
+    $fetch("/api/dokter", {
+      query: {
+        q: q.value || undefined,
+        page: 1,
+        pageSize: 50,
+      },
+    }),
+  {
+    default: () => ({ data: [] }),
+    watch: [q],
   }
-};
+);
 
-// Panggil fungsi fetchDoctorData saat komponen dimuat
-onMounted(fetchDoctorData);
-const filteredRows = computed(() => {
-  if (!q.value) {
-    return doctor.value;
-  }
-
-  return doctor.value.filter((doctor) => {
-    return Object.values(doctor).some((value) => {
-      return String(value).toLowerCase().includes(q.value.toLowerCase());
-    });
-  });
-});
+const filteredRows = computed(() => (doctorResponse.value as any)?.data ?? []);
 
 const exportToExcel = () => {
   // const data = selected.value.map((row) => ({

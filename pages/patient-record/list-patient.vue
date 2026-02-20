@@ -1,11 +1,11 @@
 <template>
   <div
-    class="md:ml-72 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11"
+    class="pb-10 flex-grow"
   >
     <div
       class="flex px-3 py-3.5 border-b border-gray-200 dark:border-gray-700 justify-between items-center"
     >
-      <h2 className="mr-2 text-2xl font-semibold tracking-tight">
+      <h2 class="mr-2 text-2xl font-semibold tracking-tight">
         List Pasien
       </h2>
 
@@ -21,13 +21,13 @@
         label: 'Loading...',
       }"
     >
-      <template #name-data="{ row }">
+      <template #nama-data="{ row }">
         <span
           :class="[
-            selected.find((person) => person.id === row.id) &&
+            selected.find((person) => person._id === row._id) &&
               'text-primary-500 dark:text-primary-400',
           ]"
-          >{{ row.name }}</span
+          >{{ row.nama }}</span
         >
       </template>
       <template #actions-data="{ row }">
@@ -39,6 +39,9 @@
           />
         </UDropdown>
       </template>
+      <template #dokter-data="{ row }">
+        <span>{{ row?.dokter?.namaDokter ?? "-" }}</span>
+      </template>
       <template #empty-state>
         <div class="flex flex-col items-center justify-center py-6 gap-3">
           <span class="italic text-sm">No one here!</span>
@@ -49,10 +52,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { normalizeRole } from "~/utils/permissions";
+
 definePageMeta({
   layout: "default",
-  middleware: "auth",
+  middleware: ["auth", "auth-middleware"],
 });
 const columns = [
   {
@@ -84,38 +89,11 @@ const columns = [
   },
 ];
 
-const items = (row) => [
-  [
-    {
-      label: "Edit",
-      icon: "i-heroicons-pencil-square-20-solid",
-      click: () => console.log("Edit", row.id),
-    },
-    {
-      label: "Duplicate",
-      icon: "i-heroicons-document-duplicate-20-solid",
-      click: () => development(),
-    },
-  ],
-  [
-    {
-      label: "Archive",
-      icon: "i-heroicons-archive-box-20-solid",
-      click: () => development(),
-    },
-    {
-      label: "Move",
-      icon: "i-heroicons-arrow-right-circle-20-solid",
-      click: () => development(),
-    },
-  ],
-  [
-    {
-      label: "Delete",
-      icon: "i-heroicons-trash-20-solid",
-    },
-  ],
-];
+const router = useRouter();
+const toast = useToast();
+const { data: session } = useAuth();
+const role = computed(() => normalizeRole(session.value?.user?.role));
+const canDelete = computed(() => role.value === "admin");
 // const people = [
 //   {
 //     id: 1,
@@ -149,11 +127,9 @@ const items = (row) => [
 // ];
 const q = ref("");
 const selected = ref([]);
-const pasienList = ref([]);
-const loading = ref(true);
 
 const development = () => {
-  useToast().add({
+  toast.add({
     color: "blue",
     icon: "i-heroicons-exclamation-triangle-20-solid",
     position: "top-1 bottom-auto",
@@ -162,43 +138,103 @@ const development = () => {
   });
 };
 
-const fetchPasienData = async () => {
-  try {
-    const response = await fetch("/api/pasien");
-    const responseData = await response.json();
+const { data: pasienResponse, pending: loading, refresh } = await useLazyAsyncData(
+  "pasien-list",
+  () =>
+    $fetch("/api/pasien", {
+      query: {
+        q: q.value || undefined,
+        page: 1,
+        pageSize: 50,
+      },
+    }),
+  {
+    default: () => ({ data: [] }),
+    watch: [q],
+  }
+);
 
-    if (response.status === 200) {
-      // Assign data dari server ke variabel doctor
-      pasienList.value = responseData.body;
-      console.log(pasienList.value);
-      loading.value = false;
-      console.log(loading.value);
-    } else {
-      console.error(
-        "Error fetching pasien data. Status code:",
-        response.status
-      );
-    }
+const filteredRows = computed(() => (pasienResponse.value as any)?.data ?? []);
+
+const gotoDetail = (row: any) => {
+  if (!row?._id) {
+    toast.add({
+      color: "red",
+      title: "Pasien tidak ditemukan",
+      description: "ID pasien tidak tersedia.",
+    });
+    return;
+  }
+  router.push(`/patient-record/rekam-medis/${row._id}`);
+};
+
+const deletePatient = async (row: any) => {
+  if (!canDelete.value) return;
+  if (!row?._id) return;
+  if (!window.confirm(`Hapus pasien ${row.nama ?? "ini"}?`)) return;
+
+  try {
+    await $fetch(`/api/pasien/${row._id}`, { method: "DELETE" });
+    toast.add({
+      color: "green",
+      title: "Pasien dihapus",
+      description: "Data pasien berhasil dihapus.",
+    });
+    refresh();
   } catch (error) {
-    console.error("Error parsing doctor data:", error);
+    toast.add({
+      color: "red",
+      title: "Gagal menghapus pasien",
+      description: "Periksa akses atau coba lagi.",
+    });
   }
 };
 
-onMounted(() => {
-  fetchPasienData();
-});
+const items = (row: any) => {
+  const menu: any[] = [
+    [
+      {
+        label: "Detail",
+        icon: "i-heroicons-eye-20-solid",
+        click: () => gotoDetail(row),
+      },
+      {
+        label: "Edit",
+        icon: "i-heroicons-pencil-square-20-solid",
+        click: () => development(),
+      },
+      {
+        label: "Duplicate",
+        icon: "i-heroicons-document-duplicate-20-solid",
+        click: () => development(),
+      },
+    ],
+    [
+      {
+        label: "Archive",
+        icon: "i-heroicons-archive-box-20-solid",
+        click: () => development(),
+      },
+      {
+        label: "Move",
+        icon: "i-heroicons-arrow-right-circle-20-solid",
+        click: () => development(),
+      },
+    ],
+  ];
 
-const filteredRows = computed(() => {
-  if (!q.value) {
-    return pasienList.value;
+  if (canDelete.value) {
+    menu.push([
+      {
+        label: "Delete",
+        icon: "i-heroicons-trash-20-solid",
+        click: () => deletePatient(row),
+      },
+    ]);
   }
 
-  return pasienList.value.filter((pasien) => {
-    return Object.values(pasien).some((value) => {
-      return String(value).toLowerCase().includes(q.value.toLowerCase());
-    });
-  });
-});
+  return menu;
+};
 </script>
 
 <style></style>

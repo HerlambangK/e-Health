@@ -17,6 +17,7 @@ const toast = useToast();
 const isOpen = ref(false);
 const countDown = ref(5);
 let countdownTimer: ReturnType<typeof setInterval> | undefined;
+const showPassword = ref(false);
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   CredentialsSignin: "Email atau kata sandi tidak sesuai.",
@@ -150,7 +151,22 @@ definePageMeta({
         <UInput v-model="formState.email" type="email" placeholder="john@email.com" />
       </UFormGroup>
       <UFormGroup class="mb-4" name="password" label="Password">
-        <UInput v-model="formState.password" type="password" placeholder="********" />
+        <UInput
+          v-model="formState.password"
+          :type="showPassword ? 'text' : 'password'"
+          placeholder="********"
+        >
+          <template #trailing>
+            <UButton
+              type="button"
+              color="gray"
+              variant="ghost"
+              size="xs"
+              :icon="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
+              @click="showPassword = !showPassword"
+            />
+          </template>
+        </UInput>
       </UFormGroup>
       <UFormGroup>
         <UButton :loading="isLoading" type="submit" color="primary" block>

@@ -1,6 +1,6 @@
 <template>
-  <div class="md:ml-72 min-h-screen bg-gray-50">
-    <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 lg:px-8">
+  <div class="min-h-screen bg-white">
+    <div class="w-full space-y-6 py-6">
       <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p class="text-sm font-semibold uppercase tracking-wide text-primary-500">Navigasi</p>
@@ -104,34 +104,53 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from "vue";
-import { useHead } from "@vueuse/head";
+import { onBeforeUnmount, onMounted, ref, watch } from "vue";
+import type { Map as LeafletMap, Polyline, Marker } from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+definePageMeta({
+  layout: "default",
+  middleware: ["auth", "auth-middleware"],
+});
 
 const mapContainerId = "ambulance-map";
-const routeStops = [
+
+type RouteStop = {
+  id: string;
+  name: string;
+  description: string;
+  coords: [number, number];
+  type: "start" | "checkpoint" | "end";
+  wait: number;
+};
+
+const routeStops = ref<RouteStop[]>([]);
+const activeStops = ref<RouteStop[]>([]);
+
+const fallbackStops: RouteStop[] = [
   {
     id: "start",
-    name: "Dinihari Kopi, Wonosari",
+    name: "RSUD Wonosari",
     description: "Posko keberangkatan ambulans di pusat kota Wonosari.",
-    coords: [-7.9602, 110.6145] as [number, number],
+    coords: [-7.9653, 110.6054],
     type: "start",
-    wait: 4000,
+    wait: 3500,
   },
   {
-    id: "checkpoint-1",
-    name: "Rumah Makan Bu Sudar",
-    description: "Checkpoint untuk pengecekan awal kondisi pasien.",
-    coords: [-7.9658, 110.6029] as [number, number],
+    id: "checkpoint",
+    name: "Klinik Pratama",
+    description: "Checkpoint pemeriksaan awal kondisi pasien.",
+    coords: [-7.9712, 110.6132],
     type: "checkpoint",
     wait: 2000,
   },
   {
-    id: "finish",
+    id: "end",
     name: "Pantai Indrayanti",
-    description: "Lokasi penjemputan pasien dan serah terima tim medis.",
-    coords: [-8.151, 110.6167] as [number, number],
+    description: "Lokasi tujuan pasien dan serah terima tim medis.",
+    coords: [-8.151, 110.6167],
     type: "end",
-    wait: 4000,
+    wait: 3500,
   },
 ];
 
@@ -147,13 +166,29 @@ const markerColors: Record<string, string> = {
   end: "#f43f5e",
 };
 
-useHead({
-  link: [{ rel: "stylesheet", href: "https://unpkg.com/leaflet/dist/leaflet.css" }],
-});
+const { data: routeResponse } = await useAsyncData(
+  "ambulance-route",
+  () => $fetch("/api/routes/ambulance"),
+  {
+    default: () => ({ data: { stops: [] } }),
+    server: false,
+  }
+);
 
-let mapInstance: Awaited<ReturnType<typeof import("leaflet")>>["map"] | null = null;
-let routePolyline: Awaited<ReturnType<typeof import("leaflet")>>["Polyline"] | null = null;
-let carMarker: Awaited<ReturnType<typeof import("leaflet")>>["Marker"] | null = null;
+watch(
+  () => routeResponse.value,
+  (value) => {
+    const stops = (value as any)?.data?.stops;
+    if (Array.isArray(stops)) {
+      routeStops.value = stops;
+    }
+  },
+  { immediate: true }
+);
+
+let mapInstance: LeafletMap | null = null;
+let routePolyline: Polyline | null = null;
+let carMarker: Marker | null = null;
 let animationFrame: number | null = null;
 let delayTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -161,26 +196,33 @@ const carSpeed = 0.00005;
 let routeIndex = 0;
 let progress = 0;
 
-async function initMap() {
+async function initMap(stops: RouteStop[]) {
   const L = await import("leaflet");
 
+  if (!stops.length || mapInstance) {
+    return;
+  }
+
   mapInstance = L.map(mapContainerId, { zoomControl: false });
-  mapInstance.setView(routeStops[0].coords, 12);
+  mapInstance.setView(stops[0].coords, 12);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapInstance);
 
-  routePolyline = L.polyline(routeStops.map((stop) => stop.coords), {
-    color: "#0ea5e9",
-    weight: 4,
-    opacity: 0.9,
-  }).addTo(mapInstance);
+  if (stops.length > 1) {
+    routePolyline = L.polyline(stops.map((stop) => stop.coords), {
+      color: "#0ea5e9",
+      weight: 4,
+      opacity: 0.9,
+    }).addTo(mapInstance);
 
-  const bounds = L.latLngBounds(routeStops.map((stop) => stop.coords));
-  mapInstance.fitBounds(bounds, { padding: [24, 24] });
+    const bounds = L.latLngBounds(stops.map((stop) => stop.coords));
+    mapInstance.fitBounds(bounds, { padding: [24, 24] });
+  }
 
-  routeStops.forEach((stop) => {
+  activeStops.value = stops;
+  stops.forEach((stop) => {
     const marker = L.circleMarker(stop.coords, {
       radius: 8,
       weight: 2,
@@ -198,14 +240,16 @@ async function initMap() {
     iconAnchor: [18, 18],
   });
 
-  carMarker = L.marker(routeStops[0].coords, { icon: carIcon }).addTo(mapInstance);
+  carMarker = L.marker(stops[0].coords, { icon: carIcon }).addTo(mapInstance);
 
   // reflow map on container resize
   setTimeout(() => {
     mapInstance?.invalidateSize();
   }, 300);
 
-  animateCar(4000);
+  if (routePolyline) {
+    animateCar(4000);
+  }
 }
 
 function animateCar(waitTime = 2000) {
@@ -214,6 +258,9 @@ function animateCar(waitTime = 2000) {
   }
 
   const routeLatLngs = routePolyline.getLatLngs() as Array<{ lat: number; lng: number }>;
+  if (routeLatLngs.length < 2) {
+    return;
+  }
   if (routeIndex >= routeLatLngs.length - 1) {
     routeIndex = 0;
     progress = 0;
@@ -232,7 +279,7 @@ function animateCar(waitTime = 2000) {
     progress = 0;
     routeIndex++;
 
-    const currentStop = routeStops.find(
+    const currentStop = activeStops.value.find(
       (stop) => stop.coords[0] === endPoint.lat && stop.coords[1] === endPoint.lng
     );
 
@@ -264,11 +311,33 @@ function stopAnimation() {
   }
 }
 
+let stopWatcher: (() => void) | null = null;
+
 onMounted(() => {
-  initMap();
+  stopWatcher = watch(
+    () => (routeStops.value.length ? routeStops.value : fallbackStops),
+    (stops) => {
+      if (!stops.length) return;
+      stopAnimation();
+      if (mapInstance) {
+        mapInstance.remove();
+        mapInstance = null;
+      }
+      routePolyline = null;
+      carMarker = null;
+      routeIndex = 0;
+      progress = 0;
+      initMap(stops);
+    },
+    { immediate: true }
+  );
 });
 
 onBeforeUnmount(() => {
+  if (stopWatcher) {
+    stopWatcher();
+    stopWatcher = null;
+  }
   stopAnimation();
   if (mapInstance) {
     mapInstance.remove();

@@ -1,59 +1,74 @@
 <template>
-  <section class="bg-white dark:bg-gray-900 pt-32">
-    <div
-      class="bg-white absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden sm:-top-80"
-      aria-hidden="true"
-    ></div>
-    <div class="py-8 px-4 mx-auto max-w-screen-xl text-center lg:py-16">
-      <h1
-        class="mb-4 text-4xl font-extrabold tracking-tight leading-none text-gray-900 md:text-5xl lg:text-6xl dark:text-white"
-      >
-        The Best Health Care Sistem for Your
-      </h1>
-      <p
-        class="mb-8 text-lg font-normal text-gray-500 lg:text-xl sm:px-16 lg:px-48 dark:text-gray-400"
-      >
-        Here at e-Health we focus on making where technology, innovation, and
-        capital can unlock long-term value and drive health efiency for all.
-      </p>
-      <div
-        class="flex flex-col space-y-4 sm:flex-row sm:justify-center sm:space-y-0"
-      >
-        <NuxtLink
-          :to="user ? 'patient-record/dashboard' : '/auth/signin'"
-          class="inline-flex justify-center items-center py-3 px-5 text-base font-medium text-center text-white rounded-lg bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 dark:focus:ring-green-900"
-        >
-          Get started
-          <svg
-            class="w-3.5 h-3.5 ms-2 rtl:rotate-180"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 14 10"
-          >
-            <path
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M1 5h12m0 0L9 1m4 4L9 9"
-            />
-          </svg>
-        </NuxtLink>
+  <section class="relative overflow-hidden pb-16 pt-32">
+    <div class="pointer-events-none absolute -top-32 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-200/60 blur-3xl" />
+    <div class="pointer-events-none absolute right-10 top-24 h-56 w-56 rounded-full bg-sky-200/70 blur-3xl" />
 
-        <a
-          href="#"
-          class="inline-flex justify-center items-center py-3 px-5 sm:ms-4 text-base font-medium text-center text-gray-900 rounded-lg border border-gray-300 hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700 dark:focus:ring-gray-800"
+    <div class="home-container grid items-center gap-12 lg:grid-cols-[1.1fr,0.9fr]">
+      <div class="space-y-6">
+        <div
+          class="fade-up inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 ring-1 ring-emerald-200"
         >
-          Learn more
-        </a>
+          <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
+          Platform kesehatan terpadu
+        </div>
+
+        <h1 class="font-display fade-up delay-1 text-4xl font-semibold leading-tight text-slate-900 sm:text-5xl lg:text-6xl">
+          Kelola layanan klinik dan rumah sakit dengan pengalaman digital yang modern.
+        </h1>
+        <p class="fade-up delay-2 text-base text-slate-600 sm:text-lg">
+          e-Health membantu tim medis, administrasi, dan pasien berkolaborasi dalam satu dashboard.
+          Dari jadwal kunjungan, rekam medis, hingga analitik operasional semua rapi dan real-time.
+        </p>
+
+        <div class="fade-up delay-2 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <NuxtLink :to="isLoggedIn ? '/dashboard' : '/auth/signin'">
+            <UButton size="lg" color="primary" class="w-full sm:w-auto">Mulai Sekarang</UButton>
+          </NuxtLink>
+          <NuxtLink to="#service" class="w-full sm:w-auto">
+            <UButton size="lg" variant="soft" color="gray" class="w-full sm:w-auto">Lihat Layanan</UButton>
+          </NuxtLink>
+        </div>
+
+        <div class="fade-up delay-3 grid gap-3 sm:grid-cols-2">
+          <div class="glass-card rounded-2xl p-4">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Rata-rata respon</p>
+            <p class="font-display text-2xl font-semibold text-slate-900">8 menit</p>
+            <p class="text-xs text-slate-500">Monitoring ambulans & telemedis.</p>
+          </div>
+          <div class="glass-card rounded-2xl p-4">
+            <p class="text-xs uppercase tracking-[0.2em] text-slate-400">Integrasi data</p>
+            <p class="font-display text-2xl font-semibold text-slate-900">100%</p>
+            <p class="text-xs text-slate-500">Rekam medis, billing, dan laporan.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative">
+        <div class="overflow-hidden rounded-[2.5rem] shadow-2xl ring-1 ring-white/60">
+          <img
+            src="/img/image-phone-doctor.jpg"
+            alt="Dashboard e-Health"
+            class="h-full w-full object-cover"
+          />
+        </div>
+
+        <div class="glass-card absolute -left-6 bottom-8 rounded-2xl px-4 py-3 text-sm text-slate-700">
+          <div class="text-xs uppercase tracking-[0.2em] text-slate-400">Live</div>
+          <div class="font-semibold text-slate-900">13 pasien terpantau</div>
+          <div class="text-xs text-slate-500">Waktu tunggu terendah hari ini.</div>
+        </div>
+
+        <div class="glass-card absolute -right-6 top-10 rounded-2xl px-4 py-3 text-sm text-slate-700">
+          <div class="text-xs uppercase tracking-[0.2em] text-slate-400">Integrasi</div>
+          <div class="font-semibold text-slate-900">BPJS & Lab</div>
+          <div class="text-xs text-slate-500">Sinkron otomatis setiap 10 menit.</div>
+        </div>
       </div>
     </div>
   </section>
 </template>
 
-<script>
-export default {};
+<script setup lang="ts">
+const { data: session } = useAuth();
+const isLoggedIn = computed(() => Boolean(session.value?.user));
 </script>
-
-<style></style>

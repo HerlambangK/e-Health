@@ -6,10 +6,15 @@ interface IObat extends Document {
   keterangan?: string;
 }
 
-const obatSchema = new Schema<IObat>({
-  nama: { type: String, required: true },
-  dosis: { type: String },
-  keterangan: { type: String },
-});
+const obatSchema = new Schema<IObat>(
+  {
+    nama: { type: String, required: true },
+    dosis: { type: String },
+    keterangan: { type: String },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 export default model<IObat>("Obat", obatSchema);

@@ -20,12 +20,24 @@
           <UInput v-model="formState.umur" type="number" min="0" placeholder="Contoh: 27" />
         </UFormGroup>
 
+        <UFormGroup name="gender" label="Jenis Kelamin">
+          <USelectMenu v-model="formState.gender" :options="genderOptions" placeholder="Pilih jenis kelamin" />
+        </UFormGroup>
+
+        <UFormGroup name="birthDate" label="Tanggal Lahir">
+          <UInput v-model="formState.birthDate" type="date" />
+        </UFormGroup>
+
         <UFormGroup name="address" label="Alamat">
           <UTextarea v-model="formState.address" rows="2" placeholder="Tulis alamat domisili pasien" />
         </UFormGroup>
 
         <UFormGroup name="notlp" label="Nomor Kontak">
           <UInput v-model="formState.notlp" placeholder="Contoh: 0812-xxxx-xxxx" />
+        </UFormGroup>
+
+        <UFormGroup name="emergencyContact" label="Kontak Darurat">
+          <UInput v-model="formState.emergencyContact" placeholder="Nomor kontak darurat" />
         </UFormGroup>
 
         <UFormGroup name="jenisAsuransi" label="Jenis Asuransi">
@@ -44,6 +56,10 @@
             :options="riwayatPenyakitOptions"
             placeholder="Pilih riwayat yang relevan"
           />
+        </UFormGroup>
+
+        <UFormGroup name="allergies" label="Alergi (opsional)">
+          <UTagsInput v-model="formState.allergies" placeholder="Tambahkan alergi" />
         </UFormGroup>
 
         <UFormGroup name="completedStatus" label="Status Penanganan">
@@ -237,6 +253,10 @@ const defaultState: PasienFormState = {
   umur: undefined,
   address: "",
   notlp: "",
+  gender: "",
+  birthDate: "",
+  emergencyContact: "",
+  allergies: [],
   dokter: "",
   poli: "",
   jenisAsuransi: "",
@@ -262,6 +282,12 @@ const insuranceOptions = [
   { label: "Tunai / Mandiri", value: "Mandiri" },
 ];
 
+const genderOptions = [
+  { label: "Laki-laki", value: "male" },
+  { label: "Perempuan", value: "female" },
+  { label: "Lainnya", value: "other" },
+];
+
 const riwayatPenyakitOptions = [
   "Flu",
   "Batuk",
@@ -281,7 +307,7 @@ const billingOptions = [
 
 const { data: dokterResponse, pending: isLoadingDoctors } = await useLazyAsyncData(
   "admin-dokter-options",
-  () => $fetch("/api/dokter").then((res: any) => ("body" in res ? res.body : res ?? [])),
+  () => $fetch("/api/dokter").then((res: any) => ("data" in res ? res.data : res ?? [])),
   {
     server: false,
     default: () => [],
@@ -326,7 +352,7 @@ watch(
 const { data: rekamedisResponse, pending: isLoadingRekamedis } = await useLazyAsyncData(
   "admin-rekamedis-options",
   () =>
-    $fetch("/api/rekamedis").then((res: any) => ("body" in res ? res.body : res ?? [])).catch(() => [] as any[]),
+    $fetch("/api/rekamedis").then((res: any) => ("data" in res ? res.data : res ?? [])).catch(() => [] as any[]),
   {
     server: false,
     default: () => [],
@@ -354,7 +380,7 @@ function resetForm() {
 }
 
 function gotoRekamedis() {
-  router.push("/patient-record/rekam-medis");
+  router.push("/patient-record");
 }
 
 function gotoBilling() {
@@ -362,7 +388,7 @@ function gotoBilling() {
 }
 
 function gotoAppointment() {
-  router.push("/patient-record/appoitment");
+  router.push("/patient-record/appointment");
 }
 
 async function handleSubmit(event: FormSubmitEvent<z.output<typeof PasienSchema>>) {
@@ -372,6 +398,13 @@ async function handleSubmit(event: FormSubmitEvent<z.output<typeof PasienSchema>
       ...event.data,
       fotoProfil: event.data.fotoProfil || defaultAvatar,
     };
+
+    if (!payload.gender) delete payload.gender;
+    if (!payload.birthDate) delete payload.birthDate;
+    if (!payload.emergencyContact) delete payload.emergencyContact;
+    if (!payload.allergies || payload.allergies.length === 0) {
+      delete payload.allergies;
+    }
 
     if (!payload.billingPlan) {
       delete payload.billingPlan;

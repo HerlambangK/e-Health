@@ -1,52 +1,63 @@
+import { getQuery } from "h3";
 import Pasien from "~/server/models/Pasien";
+import { parsePagination } from "~/server/utils/pagination";
+import { sendError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
-    const pasienList = await Pasien.find()
-      .populate({
-        path: "dokter",
-        select: "namaDokter",
-      })
-      .populate({
-        path: "rekamedis",
-        select: "_id",
-      });
+    const query = getQuery(event) as Record<string, any>;
+    const { page, pageSize, skip } = parsePagination(query);
 
-    if (!pasienList || pasienList.length === 0) {
-      throw createError({
-        statusCode: 404,
-        message: "Pasien not found",
-      });
+    const filter: Record<string, any> = {};
+    const user = event.context.user as any;
+
+    if (user?.role === "patient") {
+      if (user.patientId) {
+        filter._id = user.patientId;
+      } else {
+        filter.userId = user._id;
+      }
     }
 
-    // Format data sesuai kebutuhan Anda
-    const formattedData = pasienList.map((pasien) => {
-      return {
-        nama: pasien.nama,
-        umur: pasien.umur,
-        address: pasien.address,
-        notlp: pasien.notlp,
-        dokter: pasien.dokter ? pasien.dokter.namaDokter : null,
-        poli: pasien.poli,
-        jenisAsuransi: pasien.jenisAsuransi,
-        rekamedis: pasien.rekamedis ? pasien.rekamedis._id : null,
-        fotoProfil: pasien.fotoProfil,
-        riwayatPenyakit: pasien.riwayatPenyakit,
-        completedStatus: pasien.completedStatus,
-        billingPlan: pasien.billingPlan,
-        appointmentDate: pasien.appointmentDate,
-        appointmentTime: pasien.appointmentTime,
-        appointmentNotes: pasien.appointmentNotes,
-      };
-    });
+    if (query.doctorId) {
+      filter.dokter = query.doctorId;
+    }
 
-    // return { statusCode: 200, body: JSON.stringify(formattedData) };
-    return { statusCode: 200, body: formattedData };
+    if (query.poli) {
+      filter.poli = query.poli;
+    }
+
+    if (query.status) {
+      filter.completedStatus = query.status === "true" || query.status === true;
+    }
+
+    if (query.userId) {
+      filter.userId = query.userId;
+    }
+
+    if (query.q) {
+      const regex = new RegExp(String(query.q), "i");
+      filter.$or = [
+        { nama: regex },
+        { address: regex },
+        { notlp: regex },
+        { jenisAsuransi: regex },
+      ];
+    }
+
+    const [items, total] = await Promise.all([
+      Pasien.find(filter)
+        .populate({ path: "dokter", select: "namaDokter" })
+        .populate({ path: "rekamedis", select: "_id" })
+        .skip(skip)
+        .limit(pageSize)
+        .sort({ createdAt: -1 }),
+      Pasien.countDocuments(filter),
+    ]);
+
+    return sendSuccess(event, items, 200, { page, pageSize, total });
   } catch (error) {
     console.error(error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: "Internal Server Error" }),
-    };
+    return sendError(event, 500, "server_error", "Internal Server Error");
   }
 });

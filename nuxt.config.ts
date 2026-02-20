@@ -36,6 +36,18 @@ export default defineNuxtConfig({
 			origin: process.env.AUTH_ORIGIN,
 			secret: process.env.AUTH_SECRET,
 		},
+		smtp: {
+			host: process.env.SMTP_HOST,
+			port: process.env.SMTP_PORT ? Number(process.env.SMTP_PORT) : undefined,
+			secure: process.env.SMTP_SECURE === 'true',
+			user: process.env.SMTP_USER,
+			pass: process.env.SMTP_PASS,
+			from: process.env.SMTP_FROM,
+		},
+		mongodbUri: process.env.MONGODB_URI,
+		public: {
+			authOrigin: process.env.AUTH_ORIGIN,
+		},
 	},
 
 	auth: {
@@ -49,6 +61,6 @@ export default defineNuxtConfig({
 	},
 	ui: {},
 	nuxtServerUtils: {
-		mongodbUri: process.env.NEXTAUTH_URL,
+		mongodbUri: process.env.MONGODB_URI,
 	},
 });

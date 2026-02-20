@@ -1,50 +1,56 @@
 <template>
-  <nav
-    class="bg-white dark:bg-gray-900 fixed w-full z-20 top-0 start-0 border-b border-gray-200 dark:border-gray-600"
-  >
-    <div
-      class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4"
-    >
-      <a href="/" class="flex items-center space-x-3 rtl:space-x-reverse">
-        <Logo class="w-12 h-12" />
-      </a>
-      <div class="hidden w-full md:block md:w-auto" id="navbar-default">
-        <ul
-          class="font-medium flex flex-col p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 rtl:space-x-reverse md:mt-0 md:border-0 md:bg-white dark:bg-gray-800 md:dark:bg-gray-900 dark:border-gray-700"
-        >
-          <li v-for="item in link" :key="item.title">
-            <a
-              :href="item.link"
-              class="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 md:p-0 dark:text-white md:dark:hover:text-green-500 dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent"
-              aria-current="page"
-              >{{ item.title }}</a
-            >
-          </li>
-        </ul>
-      </div>
-      <div class="flex md:order-2 space-x-3 md:space-x-0 rtl:space-x-reverse">
-        <NuxtLink :to="user ? '/dashboard' : '/auth/signin'">
-          <UButton href type="button"> Get started </UButton>
+  <nav class="fixed inset-x-0 top-0 z-30">
+    <div class="home-container">
+      <div
+        class="mt-4 flex items-center justify-between rounded-full bg-white/80 px-4 py-3 shadow-sm ring-1 ring-black/5 backdrop-blur"
+      >
+        <NuxtLink to="/" class="flex items-center gap-3">
+          <Logo class="h-10 w-10" />
+          <div class="leading-tight">
+            <div class="font-display text-lg font-semibold text-slate-900">e-Health</div>
+            <div class="text-[10px] uppercase tracking-[0.24em] text-slate-400">Care OS</div>
+          </div>
         </NuxtLink>
-        <div class="block md:hidden">
-          <UPopover :popper="{ arrow: true }">
-            <UButton
-              color="white"
-              trailing-icon="i-heroicons-bars-3-20-solid"
-              size="xs"
-              :width="200"
-            />
 
-            <template #panel>
-              <div v-for="item in link" :key="item.title">
-                <NuxtLink :to="item.link">
-                  <div class="p-2 text-sm text-slate-600 border-t w-[450px]">
-                    <span class="ml-2"> {{ item.title }}</span>
-                  </div>
-                </NuxtLink>
-              </div>
-            </template>
-          </UPopover>
+        <div class="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
+          <a
+            v-for="item in link"
+            :key="item.title"
+            :href="item.link"
+            class="transition hover:text-slate-900"
+          >
+            {{ item.title }}
+          </a>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <NuxtLink :to="isLoggedIn ? '/dashboard' : '/auth/signin'">
+            <UButton size="sm" color="primary">Mulai</UButton>
+          </NuxtLink>
+
+          <div class="md:hidden">
+            <UPopover :popper="{ arrow: true, placement: 'bottom-end' }">
+              <UButton
+                color="white"
+                variant="soft"
+                trailing-icon="i-heroicons-bars-3-20-solid"
+                size="xs"
+              />
+
+              <template #panel>
+                <div class="w-64 rounded-xl bg-white p-2 shadow-lg">
+                  <NuxtLink v-for="item in link" :key="item.title" :to="item.link">
+                    <div
+                      class="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
+                    >
+                      <span>{{ item.title }}</span>
+                      <span class="text-xs text-slate-400">↗</span>
+                    </div>
+                  </NuxtLink>
+                </div>
+              </template>
+            </UPopover>
+          </div>
         </div>
       </div>
     </div>
@@ -70,6 +76,7 @@ const link = reactive([
     link: "#contact",
   },
 ]);
-</script>
 
-<style scoped></style>
+const { data: session } = useAuth();
+const isLoggedIn = computed(() => Boolean(session.value?.user));
+</script>

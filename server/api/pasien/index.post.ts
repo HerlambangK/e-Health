@@ -1,21 +1,17 @@
 import { Validator } from "#nuxt-server-utils";
 import PasienSchema from "~/schemas/Pasien.schema";
 import Pasien from "~/server/models/Pasien";
+import { sendError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event);
-  Validator.validateSchema(PasienSchema, body);
-
   try {
+    const body = await readBody(event);
+    Validator.validateSchema(PasienSchema, body);
+
     const createdPasien = await Pasien.create(body);
-    return { statusCode: 201, body: createdPasien };
-  } catch (error) {
-    return {
-      statusCode: 400,
-      body: JSON.stringify({
-        error: "Invalid data format",
-        message: error,
-      }),
-    };
+    return sendSuccess(event, createdPasien, 201);
+  } catch (error: any) {
+    console.error(error);
+    return sendError(event, 400, "validation_error", "Invalid data format", error);
   }
 });

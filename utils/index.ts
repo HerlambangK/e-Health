@@ -45,54 +45,73 @@ export const dashboardRoutes = [
 
 export const accountNavigationLinks = [
 	{
+		name: 'Dashboard',
+		href: '/dashboard',
+		icon: 'lucide:layout-dashboard',
+		roles: ['patient'],
+	},
+	{
 		name: 'Dashboard Admin',
 		href: '/admin',
 		icon: 'lucide:layout-dashboard',
-		isAdmin: false,
+		roles: ['admin'],
 	},
 	{
 		name: 'Rekam Medis',
 		href: '/patient-record',
 		icon: 'heroicons:clipboard-document-list',
 		// icon: "heroicons:folder",
-		isAdmin: false,
+		roles: ['admin', 'doctor', 'nurse', 'receptionist', 'billing'],
 	},
 
 	{
 		name: 'Doctor',
 		href: '/doctor',
 		icon: 'heroicons:users',
+		roles: ['admin', 'doctor', 'nurse', 'receptionist', 'billing'],
 	},
 
 	{
 		name: 'Pasien',
 		href: '/patient-record/list-patient',
 		icon: 'heroicons:user-group',
+		roles: ['admin', 'doctor', 'nurse', 'receptionist', 'billing'],
 	},
 	{
 		name: 'Grafik Pasien',
 		href: '/patient-record/medical-chart',
 		icon: 'heroicons:chart-pie',
+		roles: ['admin', 'doctor', 'nurse', 'receptionist', 'billing'],
 	},
 	{
 		name: 'Billing',
 		href: '/patient-record/billing',
 		icon: 'heroicons:credit-card',
+		roles: ['admin', 'billing', 'receptionist', 'patient'],
 	},
 	{
-		name: 'Appoitment',
-		href: '/patient-record/appoitment',
+		name: 'Appointment',
+		href: '/patient-record/appointment',
 		icon: 'heroicons:calendar',
+		roles: ['admin', 'doctor', 'nurse', 'receptionist', 'patient'],
 	},
 	{
 		name: 'Export Data',
 		href: '/patient-record/exportData',
 		icon: 'heroicons:archive-box-solid',
+		roles: ['admin'],
 	},
 	{
 		name: 'Map',
 		href: '/map',
 		icon: 'heroicons:calendar',
+		roles: ['admin', 'doctor', 'nurse', 'receptionist'],
+	},
+	{
+		name: 'Email Blast',
+		href: '/admin/email-blast',
+		icon: 'heroicons:paper-airplane',
+		roles: ['admin'],
 	},
 	// {
 	//   name: "Account",

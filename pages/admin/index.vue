@@ -1,6 +1,6 @@
 <template>
-  <div class="md:ml-72 min-h-screen bg-gray-50">
-    <div class="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 lg:px-8">
+  <div class="min-h-screen bg-white">
+    <div class="w-full space-y-6 py-6">
       <header class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p class="text-sm font-semibold uppercase tracking-wide text-primary-500">Dashboard</p>
@@ -9,9 +9,14 @@
             Pantau status pasien, dokter, dan aktivitas terbaru secara real-time.
           </p>
         </div>
-        <UButton to="/dashboard" color="primary" variant="soft" icon="i-heroicons-arrow-right-20-solid">
-          Lihat Dashboard Pengguna
-        </UButton>
+        <div class="flex flex-wrap items-center gap-2">
+          <UButton to="/admin/email-blast" color="gray" variant="soft" icon="i-heroicons-paper-airplane">
+            Email Blast
+          </UButton>
+          <UButton to="/dashboard" color="primary" variant="soft" icon="i-heroicons-arrow-right-20-solid">
+            Lihat Dashboard Pengguna
+          </UButton>
+        </div>
       </header>
 
       <section class="grid grid-cols-1 gap-4 xl:grid-cols-3">
@@ -71,7 +76,7 @@
             </div>
           </template>
           <div class="h-full min-h-[320px] w-full">
-            <AdminOverview class="h-full" />
+            <AdminOverview class="h-full" :distribution="patientDistribution" />
           </div>
         </UCard>
 
@@ -85,7 +90,11 @@
                 </p>
               </div>
             </template>
-            <AdmissionsTrend class="h-full" />
+            <AdmissionsTrend
+              class="h-full"
+              :labels="summary?.visitTrend?.labels"
+              :values="summary?.visitTrend?.values"
+            />
           </UCard>
 
           <UCard :ui="{ body: { padding: 'p-5 sm:p-6' }, header: { padding: 'px-5 py-4 sm:px-6' } }">
@@ -197,7 +206,7 @@
         <div class="overflow-x-auto">
           <UTable
             v-model="selectedRows"
-            :rows="todos"
+            :rows="pasienRows"
             :columns="columnsTable"
             :loading="pending"
             sort-asc-icon="i-heroicons-arrow-up"
@@ -206,18 +215,22 @@
             class="min-w-full"
             @select="select"
           >
-            <template #completed-data="{ row }">
+            <template #dokter-data="{ row }">
+              <span>{{ row?.dokter?.namaDokter ?? "-" }}</span>
+            </template>
+
+            <template #completedStatus-data="{ row }">
               <UBadge
                 size="xs"
-                :label="row.completed ? 'Selesai' : 'Dalam Proses'"
-                :color="row.completed ? 'emerald' : 'orange'"
+                :label="row.completedStatus ? 'Selesai' : 'Dalam Proses'"
+                :color="row.completedStatus ? 'emerald' : 'orange'"
                 variant="subtle"
               />
             </template>
 
             <template #actions-data="{ row }">
               <UButton
-                v-if="!row.completed"
+                v-if="!row.completedStatus"
                 icon="i-heroicons-check"
                 size="2xs"
                 color="emerald"
@@ -311,37 +324,64 @@
 <script setup lang="ts">
 definePageMeta({
   layout: "default",
-  middleware: "auth",
+  middleware: ["auth", "auth-middleware"],
 });
 
-const patientDistribution = [
-  { label: "Rawat inap", value: 24, color: "gray" },
-  { label: "ICU / Urgent", value: 8, color: "red" },
-  { label: "UGD / Rawat jalan", value: 12, color: "yellow" },
-  { label: "Dalam antrian", value: 12, color: "green" },
-  { label: "Telah ditangani", value: 42, color: "emerald" },
-];
-const totalPatients = computed(() =>
-  patientDistribution.reduce((total, item) => total + item.value, 0)
+const { data: summaryResponse, refresh: refreshSummary } = await useAsyncData(
+  "dashboard-summary",
+  () => $fetch("/api/dashboard/summary"),
+  {
+    default: () => ({ data: null }),
+  }
 );
-const totalDoctors = 10;
+
+const summary = computed(() => summaryResponse.value?.data);
+
+const distributionColors: Record<string, string> = {
+  "Rawat inap": "gray",
+  "ICU / Urgent": "red",
+  "UGD / Rawat jalan": "yellow",
+  "Dalam antrian": "green",
+  "Telah ditangani": "emerald",
+};
+
+const patientDistribution = computed(() =>
+  (summary.value?.patientDistribution ?? []).map((item: any) => ({
+    ...item,
+    color: distributionColors[item.label] || "gray",
+  }))
+);
+const totalPatients = computed(() =>
+  patientDistribution.value.reduce((total: number, item: any) => total + item.value, 0)
+);
+const totalDoctors = computed(() => summary.value?.totals?.doctors ?? 0);
 
 const isPasien = ref(false);
 const isDokter = ref(false);
 
 const columns = [
   {
-    key: "id",
-    label: "#",
-    sortable: true,
-  },
-  {
-    key: "title",
+    key: "nama",
     label: "Nama",
     sortable: true,
   },
   {
-    key: "completed",
+    key: "dokter",
+    label: "Dokter",
+    sortable: true,
+  },
+  {
+    key: "poli",
+    label: "Poli",
+    sortable: true,
+  },
+  {
+    key: "jenisAsuransi",
+    label: "Asuransi",
+    sortable: true,
+  },
+  {
+    key: "completedStatus",
     label: "Status",
     sortable: true,
   },
@@ -389,7 +429,7 @@ const columnsTable = computed(() =>
 
 const selectedRows = ref<any[]>([]);
 function select(row: any) {
-  const index = selectedRows.value.findIndex((item) => item.id === row.id);
+  const index = selectedRows.value.findIndex((item) => item._id === row._id);
   if (index === -1) {
     selectedRows.value.push(row);
   } else {
@@ -399,16 +439,11 @@ function select(row: any) {
 
 const search = ref("");
 const selectedStatus = ref<any[]>([]);
-const searchStatus = computed(() => {
-  if (selectedStatus.value.length === 0) {
-    return "";
+const statusFilter = computed(() => {
+  if (selectedStatus.value.length === 1) {
+    return selectedStatus.value[0].value;
   }
-
-  if (selectedStatus.value.length > 1) {
-    return `?completed=${selectedStatus.value[0].value}&completed=${selectedStatus.value[1].value}`;
-  }
-
-  return `?completed=${selectedStatus.value[0].value}`;
+  return undefined;
 });
 
 function resetFilters() {
@@ -422,44 +457,37 @@ function exportToExcel() {
 
 const page = ref(1);
 const pageCount = ref(10);
-const pageTotal = ref(200);
 const pageFrom = computed(() => (page.value - 1) * pageCount.value + 1);
-const pageTo = computed(() =>
-  Math.min(page.value * pageCount.value, pageTotal.value)
-);
 
-const { data: todos, pending, refresh: refreshTodos } = await useLazyAsyncData<
-  {
-    id: number;
-    title: string;
-    completed: boolean;
-  }[]
->(
-  "todos",
+const { data: pasienResponse, pending, refresh: refreshPasien } = await useLazyAsyncData(
+  "pasien-list",
   () =>
-    ($fetch as any)(
-      `https://jsonplaceholder.typicode.com/todos${searchStatus.value}`,
-      {
-        query: {
-          q: search.value,
-          _page: page.value,
-          _limit: pageCount.value,
-        },
-      }
-    ),
+    $fetch("/api/pasien", {
+      query: {
+        q: search.value || undefined,
+        page: page.value,
+        pageSize: pageCount.value,
+        status: statusFilter.value,
+      },
+    }),
   {
-    default: () => [],
-    watch: [page, search, searchStatus, pageCount],
+    default: () => ({ data: [], meta: { total: 0 } }),
+    watch: [page, search, statusFilter, pageCount],
   }
 );
 
+const pasienRows = computed(() => (pasienResponse.value as any)?.data ?? []);
+const pageTotal = computed(() => (pasienResponse.value as any)?.meta?.total ?? 0);
+const pageTo = computed(() => Math.min(page.value * pageCount.value, pageTotal.value));
+
 function handlePatientSaved() {
   isPasien.value = false;
-  refreshTodos();
+  refreshPasien();
+  refreshSummary();
 }
 
 function handleDoctorSaved() {
   isDokter.value = false;
-  refreshTodos();
+  refreshSummary();
 }
 </script>

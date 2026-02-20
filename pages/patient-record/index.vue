@@ -1,6 +1,6 @@
 <template>
   <div
-    class="md:ml-72 pb-10 flex-grow items-center justify-center bg-white rounded-md shadow-md px-4 border mx-11"
+    class="pb-10 flex-grow"
   >
     <div
       class="flex px-3 py-3.5 border-b border-gray-200 dark:border-gray-700 justify-between items-center"
@@ -12,7 +12,7 @@
     <!-- <div>tes: {{ rekamMedisData }}</div> -->
     <UTable
       v-model="selected"
-      :rows="filteredRows"
+      :rows="rekamMedisRows"
       :columns="columns"
       :loading="loading"
       :loading-state="{
@@ -20,21 +20,22 @@
         label: 'Loading...',
       }"
     >
-      <template #name-data="{ row }">
+      <template #namaPasien-data="{ row }">
         <span
           :class="[
-            selected.find((rekamMedis) => rekamMedis.id === row.id) &&
+            selected.find((rekamMedis) => rekamMedis._id === row._id) &&
               'text-primary-500 dark:text-primary-400',
           ]"
-          >{{ row.name }}</span
         >
+          {{ row?.namaPasien?.nama ?? '-' }}
+        </span>
       </template>
       <template #namaDokter-data="{ row }">
-        <span>{{ row && row.namaDokter ? row.namaDokter : "-" }}</span>
+        <span>{{ row?.dokter?.namaDokter ?? "-" }}</span>
       </template>
 
       <template #poli-data="{ row }">
-        <span>{{ row && row.poli ? row.poli : "-" }}</span>
+        <span>{{ row?.dokter?.poli ?? "-" }}</span>
       </template>
 
       <template #kontrolTerakhir-data="{ row }">
@@ -63,11 +64,15 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { formatTanggal } from "~/utils";
+
 definePageMeta({
   layout: "default",
-  middleware: "auth",
+  middleware: ["auth", "auth-middleware"],
 });
+const router = useRouter();
+const toast = useToast();
 const dataTabel = [
   {
     key: "namaPasien",
@@ -110,18 +115,30 @@ const columns = dataTabel.map((item) => {
   }
 });
 
+const gotoDetail = (row) => {
+  const patientId = row?.namaPasien?._id;
+  if (!patientId) {
+    toast.add({
+      color: "red",
+      title: "Pasien tidak ditemukan",
+      description: "ID pasien tidak tersedia.",
+    });
+    return;
+  }
+  router.push(`/patient-record/rekam-medis/${patientId}`);
+};
+
 const items = (row) => [
   [
     {
       label: "Details",
       icon: "i-heroicons-eye-20-solid",
-      // click: () => route.push(`/patient-record/rekam-medis/1`),
-      click: () => useRouter().push(`/patient-record/rekam-medis/1`),
+      click: () => gotoDetail(row),
     },
     {
       label: "Edit",
       icon: "i-heroicons-pencil-square-20-solid",
-      click: () => console.log("Edit", row.id),
+      click: () => console.log("Edit", row._id),
     },
   ],
   [
@@ -142,59 +159,26 @@ const items = (row) => [
   ],
 ];
 
-// Define reactive variables
 const q = ref("");
 const selected = ref([]);
-const loading = ref(true);
-const rekamMedisData = ref([]);
-// Fetch rekamMedis data from the API
-const fetchRekamMedisData = async () => {
-  try {
-    // const response = await fetch("/api/rekamedis");
-    const response = await fetch("/api/rekamedis");
-    const responseData = await response.json();
-    // console.log("response", response);
-    if (response.status == 200) {
-      rekamMedisData.value = responseData.body;
-      // console.log("Successfully fetched rekamMedis data", rekamMedisData.value);
-      loading.value = false;
-    } else {
-      throw new Error(
-        `Error fetching rekamMedis data. Status code: ${response.status}`
-      );
-    }
-  } catch (error) {
-    console.error("Error fetching/parsing rekamMedis data:", error);
-  } finally {
-    loading.value = false;
+
+const { data: rekamedisResponse, pending: loading } = await useLazyAsyncData(
+  "rekamedis-list",
+  () =>
+    $fetch("/api/rekamedis", {
+      query: {
+        q: q.value || undefined,
+        page: 1,
+        pageSize: 50,
+      },
+    }),
+  {
+    default: () => ({ data: [] }),
+    watch: [q],
   }
-};
+);
 
-// };
-
-// Use the useAsyncData hook to call fetchRekamMedisData during SSR and on client side
-// useAsyncData(async ({ fetch }) => {
-//   await fetchRekamMedisData();
-// });
-
-// Call the fetchRekamMedisData function when the component is mounted on the client side
-onMounted(() => {
-  if (process.client) {
-    fetchRekamMedisData();
-  }
-});
-// Use the fetched rekamMedisData for filtering
-const filteredRows = computed(() => {
-  if (!q.value) {
-    return rekamMedisData.value;
-  }
-
-  return rekamMedisData.value.filter((rekamMedis) => {
-    return Object.values(rekamMedis).some((value) => {
-      return String(value).toLowerCase().includes(q.value.toLowerCase());
-    });
-  });
-});
+const rekamMedisRows = computed(() => (rekamedisResponse.value as any)?.data ?? []);
 </script>
 
 <style></style>
