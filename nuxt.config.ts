@@ -26,6 +26,7 @@ export default defineNuxtConfig({
 		// '@vueuse/head',
 		// "@glidejs/glide",
 	],
+	css: ['mapbox-gl/dist/mapbox-gl.css'],
 	// image: {
 	//   provider: "netlify",
 	//   domains: ["ehospitalku.netlify.app"],
@@ -47,6 +48,7 @@ export default defineNuxtConfig({
 		mongodbUri: process.env.MONGODB_URI,
 		public: {
 			authOrigin: process.env.AUTH_ORIGIN,
+			mapboxToken: process.env.MAPBOX_ACCESS_TOKEN,
 		},
 	},
 

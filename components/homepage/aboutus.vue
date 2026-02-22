@@ -5,10 +5,10 @@
         <div class="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 ring-1 ring-emerald-200">
           Tentang Kami
         </div>
-        <h2 class="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">
+        <h2 class="font-display text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
           Data pasien yang rapi dan akurat untuk keputusan klinis yang lebih cepat.
         </h2>
-        <p class="text-base text-slate-600">
+        <p class="text-base leading-relaxed text-slate-600 sm:text-lg">
           Kami merancang e-Health agar setiap tim memiliki akses informasi yang sama, kapan pun dibutuhkan.
           Sistem ini mengurangi administrasi manual, mempercepat layanan, dan memberi visibilitas penuh terhadap perjalanan pasien.
         </p>

@@ -5,10 +5,10 @@
         <div class="inline-flex items-center gap-2 rounded-full bg-white/80 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700 ring-1 ring-emerald-200">
           Hubungi Kami
         </div>
-        <h2 class="font-display text-3xl font-semibold text-slate-900 sm:text-4xl">
+        <h2 class="font-display text-3xl font-semibold leading-tight text-slate-900 sm:text-4xl">
           Bicarakan kebutuhan layanan kesehatan digital Anda.
         </h2>
-        <p class="text-base text-slate-600">
+        <p class="text-base leading-relaxed text-slate-600 sm:text-lg">
           Tim kami siap membantu merancang implementasi e-Health yang sesuai dengan kebutuhan organisasi Anda.
         </p>
 

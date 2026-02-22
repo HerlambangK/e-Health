@@ -4,7 +4,7 @@
       <div class="flex flex-col items-center text-center">
         <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Layanan</span>
         <h3 class="font-display mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl">Solusi utama e-Health</h3>
-        <p class="mt-3 max-w-2xl text-sm text-slate-600">
+        <p class="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
           Modul yang fleksibel untuk kebutuhan klinik, puskesmas, hingga rumah sakit dengan skala besar.
         </p>
       </div>
@@ -20,7 +20,7 @@
           </div>
           <div class="p-5">
             <h4 class="font-display text-lg font-semibold text-slate-900">{{ asset.title }}</h4>
-            <p class="mt-2 text-sm text-slate-600">{{ asset.description }}</p>
+            <p class="mt-2 text-sm leading-relaxed text-slate-600">{{ asset.description }}</p>
             <div class="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">
               Jelajahi fitur →
             </div>

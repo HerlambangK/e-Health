@@ -2,7 +2,7 @@
   <nav class="fixed inset-x-0 top-0 z-30">
     <div class="home-container">
       <div
-        class="mt-4 flex items-center justify-between rounded-full bg-white/80 px-4 py-3 shadow-sm ring-1 ring-black/5 backdrop-blur"
+        class="mt-2 flex items-center justify-between rounded-full bg-white/80 px-3 py-2 shadow-sm ring-1 ring-black/5 backdrop-blur sm:mt-4 sm:px-4 sm:py-3"
       >
         <NuxtLink to="/" class="flex items-center gap-3">
           <Logo class="h-10 w-10" />

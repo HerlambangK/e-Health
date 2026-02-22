@@ -10,6 +10,9 @@
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
+          <UButton to="/admin/map-3d" color="gray" variant="soft" icon="i-heroicons-map">
+            Map 3D IHC
+          </UButton>
           <UButton to="/admin/email-blast" color="gray" variant="soft" icon="i-heroicons-paper-airplane">
             Email Blast
           </UButton>

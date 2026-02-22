@@ -4,6 +4,7 @@
     <HomepageHeader />
     <HomepageAboutus />
     <HomepageCardabout />
+    <HomepageMap3d />
     <HomepageClientSlide />
     <HomepageContactform />
     <HomepageFooter />

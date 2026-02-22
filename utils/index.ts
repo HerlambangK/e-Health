@@ -108,6 +108,12 @@ export const accountNavigationLinks = [
 		roles: ['admin', 'doctor', 'nurse', 'receptionist'],
 	},
 	{
+		name: 'Map 3D IHC',
+		href: '/admin/map-3d',
+		icon: 'heroicons:map',
+		roles: ['admin'],
+	},
+	{
 		name: 'Email Blast',
 		href: '/admin/email-blast',
 		icon: 'heroicons:paper-airplane',

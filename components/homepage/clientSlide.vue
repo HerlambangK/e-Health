@@ -5,7 +5,7 @@
         <div class="flex flex-col items-center text-center gap-3">
           <span class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">Dipercaya oleh</span>
           <h2 class="font-display text-2xl font-semibold text-slate-900 sm:text-3xl">Mitra layanan kesehatan</h2>
-          <p class="max-w-xl text-sm text-slate-600">
+          <p class="max-w-xl text-base leading-relaxed text-slate-600">
             Tim kami telah membantu berbagai institusi untuk menyederhanakan proses operasional dan meningkatkan kualitas layanan.
           </p>
         </div>
