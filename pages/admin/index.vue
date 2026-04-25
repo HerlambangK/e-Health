@@ -10,6 +10,9 @@
           </p>
         </div>
         <div class="flex flex-wrap items-center gap-2">
+          <UButton to="/admin/room-mapping" color="gray" variant="soft" icon="i-heroicons-squares-2x2">
+            Mapping Ruangan
+          </UButton>
           <UButton to="/admin/map-3d" color="gray" variant="soft" icon="i-heroicons-map">
             Map 3D IHC
           </UButton>

@@ -114,6 +114,12 @@ export const accountNavigationLinks = [
 		roles: ['admin'],
 	},
 	{
+		name: 'Mapping Ruangan',
+		href: '/admin/room-mapping',
+		icon: 'heroicons:squares-2x2',
+		roles: ['admin'],
+	},
+	{
 		name: 'Email Blast',
 		href: '/admin/email-blast',
 		icon: 'heroicons:paper-airplane',

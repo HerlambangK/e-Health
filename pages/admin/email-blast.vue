@@ -340,6 +340,102 @@
         </div>
       </template>
 
+      <template #manual>
+        <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div class="text-sm font-semibold text-gray-900">Kirim Email Manual</div>
+              <div class="text-xs text-gray-500">
+                Tambahkan penerima satu per satu seperti mengirim email biasa. Gunakan template yang sudah dibuat.
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <UButton size="xs" color="primary" variant="soft" @click="addManualRecipient">
+                Tambah ke Daftar
+              </UButton>
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <UFormGroup label="Email" required>
+              <UInput
+                v-model="manualForm.email"
+                placeholder="contoh@domain.com"
+                :class="inputClass(manualForm.email, true, 'email')"
+              />
+            </UFormGroup>
+            <UFormGroup label="Nama" required>
+              <UInput v-model="manualForm.nama" placeholder="Nama penerima" :class="inputClass(manualForm.nama, true)" />
+            </UFormGroup>
+            <UFormGroup label="Lowongan" required>
+              <UInput
+                v-model="manualForm.lowongan"
+                placeholder="Posisi yang dilamar"
+                :class="inputClass(manualForm.lowongan, true)"
+              />
+            </UFormGroup>
+            <UFormGroup label="Username (opsional)">
+              <UInput v-model="manualForm.username" placeholder="username" />
+            </UFormGroup>
+            <UFormGroup label="Password (opsional)">
+              <UInput v-model="manualForm.password" placeholder="password" />
+            </UFormGroup>
+          </div>
+
+          <UAlert v-if="manualError" color="red" variant="soft" icon="i-heroicons-exclamation-triangle" class="mt-3">
+            {{ manualError }}
+          </UAlert>
+
+          <UAlert
+            v-if="testEmail"
+            color="amber"
+            variant="soft"
+            icon="i-heroicons-exclamation-triangle"
+            class="mt-3"
+          >
+            Mode test aktif. Email manual akan dikirim ke <strong>{{ testEmail }}</strong>.
+          </UAlert>
+
+          <div class="mt-4 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
+            <UTable
+              class="min-w-[680px] w-full"
+              :rows="manualRecipients"
+              :columns="manualColumns"
+              :empty-state="{ icon: 'i-heroicons-inbox', label: 'Belum ada penerima' }"
+            >
+              <template #status-data="{ row }">
+                <span
+                  :class="
+                    row.status === 'sent'
+                      ? 'text-emerald-600'
+                      : row.status === 'failed'
+                        ? 'text-rose-600'
+                        : 'text-gray-400'
+                  "
+                >
+                  {{ row.statusLabel || "-" }}
+                </span>
+              </template>
+              <template #actions-data="{ row }">
+                <div class="flex items-center gap-2">
+                  <UButton
+                    size="xs"
+                    color="primary"
+                    :loading="manualSendingId === row.id"
+                    @click="sendManualRecipient(row)"
+                  >
+                    Kirim
+                  </UButton>
+                  <UButton size="xs" color="red" variant="soft" @click="removeManualRecipient(row.id)">
+                    Hapus
+                  </UButton>
+                </div>
+              </template>
+            </UTable>
+          </div>
+        </div>
+      </template>
+
       <template #preview>
         <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
           <div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
@@ -437,7 +533,8 @@ const accordionItems = [
   { label: "2. Mapping Kolom", slot: "mapping" },
   { label: "3. Edit Data (Opsional)", slot: "edit" },
   { label: "4. Template Email", slot: "template" },
-  { label: "5. Preview & Kirim", slot: "preview" },
+  { label: "5. Kirim Manual (Satu per Satu)", slot: "manual" },
+  { label: "6. Preview & Kirim", slot: "preview" },
 ];
 
 const rows = ref<Record<string, any>[]>([]);
@@ -782,6 +879,162 @@ const filteredEditRows = computed(() => {
 
 const selectedRows = ref<any[]>([]);
 const showPasswords = ref(false);
+
+type ManualRecipient = {
+  id: string;
+  email: string;
+  nama: string;
+  lowongan: string;
+  username?: string;
+  password?: string;
+  status?: "sent" | "failed";
+  statusLabel?: string;
+};
+
+const manualForm = reactive({
+  email: "",
+  nama: "",
+  lowongan: "",
+  username: "",
+  password: "",
+});
+
+const manualRecipients = ref<ManualRecipient[]>([]);
+const manualError = ref("");
+const manualSendingId = ref<string | null>(null);
+
+const manualColumns = computed(() => {
+  const base = [
+    { key: "email", label: "Email" },
+    { key: "nama", label: "Nama" },
+    { key: "lowongan", label: "Lowongan" },
+  ];
+  if (needsUsername.value) base.push({ key: "username", label: "Username" });
+  if (needsPassword.value) base.push({ key: "password", label: "Password" });
+  base.push({ key: "status", label: "Status" });
+  base.push({ key: "actions", label: "" });
+  return base;
+});
+
+function createManualId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function validateManualForm() {
+  if (!manualForm.email || !isValidEmail(manualForm.email)) {
+    return "Email tidak valid.";
+  }
+  if (!manualForm.nama.trim()) {
+    return "Nama wajib diisi.";
+  }
+  if (!manualForm.lowongan.trim()) {
+    return "Lowongan wajib diisi.";
+  }
+  if (needsUsername.value && !manualForm.username.trim()) {
+    return "Username wajib diisi karena template menggunakan [username].";
+  }
+  if (needsPassword.value && !manualForm.password.trim()) {
+    return "Password wajib diisi karena template menggunakan [password].";
+  }
+  return "";
+}
+
+function addManualRecipient() {
+  manualError.value = "";
+  const error = validateManualForm();
+  if (error) {
+    manualError.value = error;
+    return;
+  }
+
+  manualRecipients.value.push({
+    id: createManualId(),
+    email: manualForm.email.trim(),
+    nama: manualForm.nama.trim(),
+    lowongan: manualForm.lowongan.trim(),
+    username: manualForm.username.trim(),
+    password: manualForm.password.trim(),
+    status: undefined,
+    statusLabel: undefined,
+  });
+
+  manualForm.email = "";
+  manualForm.nama = "";
+  manualForm.lowongan = "";
+  manualForm.username = "";
+  manualForm.password = "";
+}
+
+function removeManualRecipient(id: string) {
+  manualRecipients.value = manualRecipients.value.filter((row) => row.id !== id);
+}
+
+async function sendManualRecipient(recipient: ManualRecipient) {
+  if (!templateBody.value) {
+    toast.add({
+      title: "Template belum lengkap",
+      description: "Lengkapi template email sebelum mengirim.",
+      color: "red",
+    });
+    return;
+  }
+
+  if (manualSendingId.value) return;
+  manualSendingId.value = recipient.id;
+  recipient.status = undefined;
+  recipient.statusLabel = "Mengirim...";
+
+  try {
+    const payload = {
+      templateId: selectedTemplateId.value || undefined,
+      subject: templateSubject.value || undefined,
+      body: templateBody.value,
+      testEmail: testEmail.value || undefined,
+      recipients: [
+        {
+          email: recipient.email,
+          nama: recipient.nama,
+          lowongan: recipient.lowongan,
+          username: recipient.username || undefined,
+          password: recipient.password || undefined,
+        },
+      ],
+    };
+
+    const res: any = await $fetch("/api/admin/email-blast", {
+      method: "POST",
+      body: payload,
+    });
+
+    if (res?.data?.sent) {
+      recipient.status = "sent";
+      recipient.statusLabel = "Terkirim";
+      toast.add({
+        title: "Email terkirim",
+        description: `Email terkirim ke ${recipient.email}.`,
+        color: "green",
+      });
+    } else {
+      recipient.status = "failed";
+      recipient.statusLabel = "Gagal";
+      toast.add({
+        title: "Gagal mengirim email",
+        description: "Email tidak terkirim. Periksa data dan SMTP.",
+        color: "red",
+      });
+    }
+  } catch (error: any) {
+    recipient.status = "failed";
+    recipient.statusLabel = "Gagal";
+    toast.add({
+      title: "Gagal mengirim email",
+      description: error?.data?.error?.message || "Periksa konfigurasi SMTP dan data.",
+      color: "red",
+    });
+  } finally {
+    manualSendingId.value = null;
+  }
+}
 
 function removeRow(index: number) {
   if (index < 0 || index >= editableRows.value.length) return;
