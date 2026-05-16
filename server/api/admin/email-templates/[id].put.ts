@@ -1,4 +1,4 @@
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 import { loadTemplates, saveTemplates } from "~/server/utils/emailTemplates";
 
 export default defineEventHandler(async (event) => {
@@ -6,13 +6,13 @@ export default defineEventHandler(async (event) => {
     const id = event.context.params?.id as string;
     const body = await readBody(event);
     if (!id) {
-      return sendError(event, 400, "validation_error", "Template id is required");
+      return sendApiError(event, 400, "validation_error", "Template id is required");
     }
 
     const templates = await loadTemplates();
     const index = templates.findIndex((item) => item.id === id);
     if (index < 0) {
-      return sendError(event, 404, "not_found", "Template not found");
+      return sendApiError(event, 404, "not_found", "Template not found");
     }
 
     templates[index] = {
@@ -27,6 +27,6 @@ export default defineEventHandler(async (event) => {
     return sendSuccess(event, templates[index]);
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Failed to update template");
+    return sendApiError(event, 500, "server_error", "Failed to update template");
   }
 });

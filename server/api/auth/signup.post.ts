@@ -1,7 +1,7 @@
 import { Validator } from "#nuxt-server-utils";
 import SignupSchema from "~/schemas/Signup.schema";
 import { User } from "~/server/models/User";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   try {
     Validator.validateSchema(SignupSchema, body);
   } catch (error: any) {
-    return sendError(event, 400, "validation_error", "Invalid signup data", error);
+    return sendApiError(event, 400, "validation_error", "Invalid signup data", error);
   }
 
   const { passwordConfirm, ...payload } = body;
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const existingUser = await User.exists({ email: payload.email });
 
   if (existingUser) {
-    return sendError(
+    return sendApiError(
       event,
       409,
       "duplicate",

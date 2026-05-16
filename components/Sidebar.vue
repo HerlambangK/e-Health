@@ -1,27 +1,44 @@
 <template>
-  <div class="sidebar">
+  <div class="sidebar" :class="{ 'is-collapsed': isCollapsed }">
     <div class="header">
-      <div class="logo">
-        <NuxtLink to="/dashboard">
-          <Logo class="h-auto w-24 m-4 p-4" role="img" />
-        </NuxtLink>
-        <!-- <span class="logo-text">Feedbackjar</span> -->
-      </div>
-      <!-- <UButton
-        v-if="closeButton"
-        icon="i-heroicons-x-mark"
-        @click="$emit('close')"
+      <NuxtLink to="/dashboard" class="logo">
+        <Logo v-if="!isCollapsed" class="h-auto w-24 m-4 p-4" role="img" />
+        <Logo v-else class="h-auto w-8 m-2 p-2" role="img" />
+      </NuxtLink>
+      <UButton
+        :icon="isCollapsed ? 'i-heroicons-chevron-double-right' : 'i-heroicons-chevron-double-left'"
+        @click="$emit('toggle-collapse')"
         square
         color="white"
         variant="ghost"
-      /> -->
+        size="sm"
+        class="toggle-btn"
+      />
     </div>
     <nav class="menu">
       <ul role="list" class="menu-list">
         <li>
           <ul role="list" class="submenu">
             <li v-for="item in navigation" :key="item.name">
+              <UTooltip
+                v-if="isCollapsed"
+                :text="item.name"
+                :popper="{ placement: 'right' }"
+              >
+                <NuxtLink
+                  @click="$emit('close')"
+                  :to="item.href"
+                  class="navlink group"
+                >
+                  <Icon
+                    :name="item.icon"
+                    class="navlink-icon"
+                    aria-hidden="true"
+                  />
+                </NuxtLink>
+              </UTooltip>
               <NuxtLink
+                v-else
                 @click="$emit('close')"
                 :to="item.href"
                 class="navlink group"
@@ -45,17 +62,17 @@
           >
             <button class="user-settings-button">
               <div class="user-avatar">
-                <!-- <UAvatar :src="user.avatarUrl" :alt="user.name" /> -->
                 <UAvatar
                   src="https://randomuser.me/api/portraits/thumb/men/75.jpg"
                   alt="as"
+                  :size="isCollapsed ? 'sm' : 'md'"
                 />
               </div>
-              <span class="user-name">
+              <span v-if="!isCollapsed" class="user-name">
                 {{ data?.user?.email ? data?.user?.email : "none" }}
               </span>
-              <!-- <span class="user-name">{{ user.name }}</span> -->
               <Icon
+                v-if="!isCollapsed"
                 name="heroicons:ellipsis-vertical"
                 class="user-settings-icon"
               />
@@ -71,15 +88,22 @@
 import { accountNavigationLinks } from "~/utils";
 import { normalizeRole } from "~/utils/permissions";
 
-// import { GithubUser } from "@/lib/types/github";
 const { data, signOut } = useAuth();
 
 interface Props {
-  closeButton: boolean;
-  //   user: GithubUser;
-  // clear: () => void;
+  closeButton?: boolean;
+  isCollapsed?: boolean;
 }
-const props = defineProps<Props>();
+const props = withDefaults(defineProps<Props>(), {
+  closeButton: false,
+  isCollapsed: false,
+});
+
+const emit = defineEmits<{
+  (e: 'toggle-collapse'): void;
+  (e: 'close'): void;
+}>();
+
 const route = useRoute();
 // const selectedFilter = ref("all");
 
@@ -130,12 +154,32 @@ const userSettings = [
   @apply flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 px-4;
 }
 
+.sidebar.is-collapsed {
+  @apply px-2;
+}
+
 .header {
-  @apply flex h-14 shrink-0 items-center justify-between;
+  @apply flex h-14 shrink-0 items-center justify-between gap-1;
+}
+
+.is-collapsed .header {
+  @apply flex-col h-auto gap-2 pt-2;
 }
 
 .logo {
-  @apply flex items-center space-x-2;
+  @apply flex items-center;
+}
+
+.is-collapsed .logo {
+  @apply justify-center;
+}
+
+.toggle-btn {
+  @apply shrink-0;
+}
+
+.is-collapsed .toggle-btn {
+  @apply rotate-180;
 }
 
 .logo-icon {
@@ -168,6 +212,10 @@ const userSettings = [
 
 .navlink {
   @apply flex gap-x-3 items-center rounded-md px-2 py-1.5 text-sm leading-6 font-medium text-gray-700 dark:text-gray-400 hover:bg-gray-100 hover:dark:bg-gray-800;
+}
+
+.is-collapsed .navlink {
+  @apply justify-center px-0;
 }
 
 .navlink.router-link-exact-active {
@@ -206,12 +254,20 @@ const userSettings = [
   @apply -mx-4 mt-auto relative;
 }
 
+.is-collapsed .user-settings {
+  @apply -mx-2;
+}
+
 .user-settings-dropdown {
   @apply w-full;
 }
 
 .user-settings-button {
   @apply flex items-center w-full py-2.5 text-sm font-semibold leading-6 bg-gray-50 dark:bg-gray-950 dark:border-t border-gray-900 px-4;
+}
+
+.is-collapsed .user-settings-button {
+  @apply justify-center px-2;
 }
 
 .user-avatar {

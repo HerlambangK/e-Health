@@ -1,15 +1,15 @@
 <template>
   <div class="relative min-w-0 overflow-hidden rounded-[28px] bg-slate-100">
     <div
-      class="pointer-events-none absolute left-4 top-4 z-20 inline-flex items-center gap-2 rounded-full bg-white/92 px-3 py-1.5 text-[11px] font-semibold text-slate-700 shadow-lg backdrop-blur"
+      class="pointer-events-none absolute left-4 top-4 z-20 inline-flex items-center gap-1.5 rounded-lg bg-white/85 px-2.5 py-1 text-[10px] font-semibold text-slate-500 shadow-lg backdrop-blur"
     >
-      <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
-      Denah LT.1 dari PDF • klik area ruang untuk detail • scroll untuk jelajah
+      <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+      Klik ruang &bull; Scroll jelajah
     </div>
 
     <div
       ref="viewportRef"
-      class="relative max-h-[78vh] overflow-auto px-4 pb-4 pt-14"
+      class="relative max-h-[calc(100vh-9rem)] overflow-auto px-4 pb-4 pt-12"
       :style="viewportStyle"
     >
       <div class="relative mx-auto" :style="planStyle">
@@ -58,25 +58,25 @@
 
         <div
           v-if="tooltipRoom"
-          class="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-2xl bg-slate-900/96 px-3 py-2 text-white shadow-xl backdrop-blur"
+          class="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-[calc(100%+8px)] rounded-xl bg-slate-900/95 px-2.5 py-1.5 text-white shadow-xl backdrop-blur"
           :style="tooltipStyle"
         >
-          <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+          <p class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
             {{ roomCategoryStyles[tooltipRoom.category].label }}
           </p>
-          <p class="text-sm font-semibold">{{ tooltipRoom.name }}</p>
+          <p class="text-sm font-semibold leading-tight">{{ tooltipRoom.name }}</p>
           <p class="text-[11px] text-slate-300">{{ tooltipRoom.cluster }}</p>
-          <p class="max-w-[18rem] text-[11px] text-slate-400">{{ tooltipRoom.sourceLabel || tooltipRoom.name }}</p>
         </div>
       </div>
     </div>
 
     <div
       v-if="!isReady"
-      class="absolute inset-0 z-10 flex items-center justify-center bg-white/70 text-sm font-medium text-slate-700"
+      class="absolute inset-0 z-10 flex items-center justify-center bg-white/60"
     >
-      <div class="rounded-2xl bg-white/95 px-4 py-2 shadow-lg ring-1 ring-slate-200">
-        Menyiapkan denah lantai 1...
+      <div class="flex items-center gap-2 rounded-2xl bg-white/95 px-4 py-2.5 shadow-lg ring-1 ring-slate-200">
+        <span class="h-2 w-2 animate-pulse rounded-full bg-emerald-500"></span>
+        <span class="text-sm font-medium text-slate-600">Menyiapkan denah&hellip;</span>
       </div>
     </div>
 
@@ -84,9 +84,9 @@
       v-if="renderError"
       class="absolute inset-0 z-30 flex items-center justify-center bg-white/80 px-6 text-center text-slate-900"
     >
-      <div class="max-w-md rounded-3xl border border-slate-200 bg-white/95 p-5 shadow-2xl">
-        <p class="text-sm font-semibold">Denah interaktif belum berhasil dimuat</p>
-        <p class="mt-2 text-sm leading-6 text-slate-600">{{ renderError }}</p>
+      <div class="max-w-sm rounded-2xl bg-white/95 p-5 shadow-2xl ring-1 ring-slate-200">
+        <p class="text-sm font-semibold text-slate-900">Denah gagal dimuat</p>
+        <p class="mt-1.5 text-xs leading-5 text-slate-500">{{ renderError }}</p>
       </div>
     </div>
   </div>

@@ -1,5 +1,5 @@
 import Appointment from "~/server/models/Appointment";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -7,12 +7,12 @@ export default defineEventHandler(async (event) => {
     const deleted = await Appointment.findByIdAndDelete(id);
 
     if (!deleted) {
-      return sendError(event, 404, "not_found", "Appointment not found");
+      return sendApiError(event, 404, "not_found", "Appointment not found");
     }
 
     return sendSuccess(event, deleted);
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Internal Server Error");
+    return sendApiError(event, 500, "server_error", "Internal Server Error");
   }
 });

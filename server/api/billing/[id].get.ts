@@ -1,6 +1,6 @@
 import Billing from "~/server/models/Billing";
 import Pasien from "~/server/models/Pasien";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
     const billing = await Billing.findById(id).populate({ path: "patientId", select: "nama" });
 
     if (!billing) {
-      return sendError(event, 404, "not_found", "Billing not found");
+      return sendApiError(event, 404, "not_found", "Billing not found");
     }
 
     const user = event.context.user as any;
@@ -24,13 +24,13 @@ export default defineEventHandler(async (event) => {
         : String((billing as any).patientId);
 
       if (!patientId || recordPatientId !== String(patientId)) {
-        return sendError(event, 403, "forbidden", "Access denied");
+        return sendApiError(event, 403, "forbidden", "Access denied");
       }
     }
 
     return sendSuccess(event, billing);
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Internal Server Error");
+    return sendApiError(event, 500, "server_error", "Internal Server Error");
   }
 });

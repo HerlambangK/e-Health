@@ -1,5 +1,5 @@
 import Penyakit from "~/server/models/Penyakit";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -7,12 +7,12 @@ export default defineEventHandler(async (event) => {
     const penyakit = await Penyakit.findById(id);
 
     if (!penyakit) {
-      return sendError(event, 404, "not_found", "Penyakit not found");
+      return sendApiError(event, 404, "not_found", "Penyakit not found");
     }
 
     return sendSuccess(event, penyakit);
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Internal Server Error");
+    return sendApiError(event, 500, "server_error", "Internal Server Error");
   }
 });

@@ -3,7 +3,7 @@ import Pasien from "~/server/models/Pasien";
 import RekamMedis from "~/server/models/RekamMedis";
 import Appointment from "~/server/models/Appointment";
 import Billing from "~/server/models/Billing";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -70,6 +70,6 @@ export default defineEventHandler(async (event) => {
     return sendSuccess(event, summary);
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Internal Server Error");
+    return sendApiError(event, 500, "server_error", "Internal Server Error");
   }
 });

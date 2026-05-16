@@ -1,7 +1,7 @@
 import { Validator } from "#nuxt-server-utils";
 import RekamedisSchema from "~/schemas/Rekamedis.schema";
 import RekamMedis from "~/server/models/RekamMedis";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -12,6 +12,6 @@ export default defineEventHandler(async (event) => {
     return sendSuccess(event, created, 201);
   } catch (error: any) {
     console.error(error);
-    return sendError(event, 400, "validation_error", "Invalid data format", error);
+    return sendApiError(event, 400, "validation_error", "Invalid data format", error);
   }
 });

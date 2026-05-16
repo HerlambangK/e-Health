@@ -1,6 +1,6 @@
 import RekamMedis from "~/server/models/RekamMedis";
 import Pasien from "~/server/models/Pasien";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
       .populate({ path: "dokter", select: "namaDokter poli" });
 
     if (!rekamedis) {
-      return sendError(event, 404, "not_found", "Rekam medis not found");
+      return sendApiError(event, 404, "not_found", "Rekam medis not found");
     }
 
     const user = event.context.user as any;
@@ -26,13 +26,13 @@ export default defineEventHandler(async (event) => {
         : String((rekamedis as any).namaPasien);
 
       if (!patientId || recordPatientId !== String(patientId)) {
-        return sendError(event, 403, "forbidden", "Access denied");
+        return sendApiError(event, 403, "forbidden", "Access denied");
       }
     }
 
     return sendSuccess(event, rekamedis);
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Internal Server Error");
+    return sendApiError(event, 500, "server_error", "Internal Server Error");
   }
 });

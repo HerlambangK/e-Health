@@ -1,5 +1,5 @@
 import Pasien from "~/server/models/Pasien";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
         patientId = patient?._id;
       }
       if (!patientId || String(patientId) !== id) {
-        return sendError(event, 403, "forbidden", "Access denied");
+        return sendApiError(event, 403, "forbidden", "Access denied");
       }
     }
     const pasien = await Pasien.findById(id)
@@ -21,12 +21,12 @@ export default defineEventHandler(async (event) => {
       .populate({ path: "rekamedis", select: "_id" });
 
     if (!pasien) {
-      return sendError(event, 404, "not_found", "Pasien not found");
+      return sendApiError(event, 404, "not_found", "Pasien not found");
     }
 
     return sendSuccess(event, pasien);
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Internal Server Error");
+    return sendApiError(event, 500, "server_error", "Internal Server Error");
   }
 });

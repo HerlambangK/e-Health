@@ -1,11 +1,11 @@
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 import { loadTemplates, saveTemplates, type EmailTemplate } from "~/server/utils/emailTemplates";
 
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
     if (!body?.name || !body?.subject || !body?.body) {
-      return sendError(event, 400, "validation_error", "name, subject, body are required");
+      return sendApiError(event, 400, "validation_error", "name, subject, body are required");
     }
 
     const templates = await loadTemplates();
@@ -23,6 +23,6 @@ export default defineEventHandler(async (event) => {
     return sendSuccess(event, newTemplate, 201);
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Failed to create template");
+    return sendApiError(event, 500, "server_error", "Failed to create template");
   }
 });

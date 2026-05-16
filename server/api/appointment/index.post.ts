@@ -1,7 +1,7 @@
 import { Validator } from "#nuxt-server-utils";
 import AppointmentSchema from "~/schemas/Appointment.schema";
 import Appointment from "~/server/models/Appointment";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 function toDate(value: string) {
   const date = new Date(value);
@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
     const endAt = toDate(body.endAt);
 
     if (!startAt || !endAt || startAt >= endAt) {
-      return sendError(event, 400, "validation_error", "Invalid appointment time range");
+      return sendApiError(event, 400, "validation_error", "Invalid appointment time range");
     }
 
     const overlap = await Appointment.findOne({
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     });
 
     if (overlap) {
-      return sendError(event, 409, "conflict", "Appointment time overlaps with existing schedule");
+      return sendApiError(event, 409, "conflict", "Appointment time overlaps with existing schedule");
     }
 
     const created = await Appointment.create({
@@ -41,6 +41,6 @@ export default defineEventHandler(async (event) => {
     return sendSuccess(event, created, 201);
   } catch (error: any) {
     console.error(error);
-    return sendError(event, 400, "validation_error", "Invalid data format", error);
+    return sendApiError(event, 400, "validation_error", "Invalid data format", error);
   }
 });

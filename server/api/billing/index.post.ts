@@ -1,7 +1,7 @@
 import { Validator } from "#nuxt-server-utils";
 import BillingSchema from "~/schemas/Billing.schema";
 import Billing from "~/server/models/Billing";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 function calculateTotal(items: Array<{ quantity: number; price: number }>) {
   return items.reduce((total, item) => total + item.quantity * item.price, 0);
@@ -27,6 +27,6 @@ export default defineEventHandler(async (event) => {
     return sendSuccess(event, created, 201);
   } catch (error: any) {
     console.error(error);
-    return sendError(event, 400, "validation_error", "Invalid data format", error);
+    return sendApiError(event, 400, "validation_error", "Invalid data format", error);
   }
 });

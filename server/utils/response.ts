@@ -22,7 +22,7 @@ export function sendSuccess<T>(
   return { data, ...(meta ? { meta } : {}) };
 }
 
-export function sendError(
+export function sendApiError(
   event: any,
   statusCode: number,
   code: string,

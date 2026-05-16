@@ -1,4 +1,4 @@
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 import { loadTemplates } from "~/server/utils/emailTemplates";
 
 export default defineEventHandler(async (event) => {
@@ -7,6 +7,6 @@ export default defineEventHandler(async (event) => {
     return sendSuccess(event, templates);
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Failed to load templates");
+    return sendApiError(event, 500, "server_error", "Failed to load templates");
   }
 });

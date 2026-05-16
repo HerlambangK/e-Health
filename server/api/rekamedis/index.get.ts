@@ -2,7 +2,7 @@ import { getQuery } from "h3";
 import RekamMedis from "~/server/models/RekamMedis";
 import Pasien from "~/server/models/Pasien";
 import { parsePagination } from "~/server/utils/pagination";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
         patientId = patient?._id;
       }
       if (!patientId) {
-        return sendError(event, 403, "forbidden", "Patient record not linked");
+        return sendApiError(event, 403, "forbidden", "Patient record not linked");
       }
       filter.namaPasien = patientId;
     }
@@ -61,6 +61,6 @@ export default defineEventHandler(async (event) => {
     return sendSuccess(event, items, 200, { page, pageSize, total });
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Internal Server Error");
+    return sendApiError(event, 500, "server_error", "Internal Server Error");
   }
 });

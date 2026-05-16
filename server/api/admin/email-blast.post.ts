@@ -1,6 +1,6 @@
 import { Validator } from "#nuxt-server-utils";
 import EmailBlastSchema from "~/schemas/EmailBlast.schema";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 import { createTransporter, getSenderAddress } from "~/server/utils/mailer";
 import { findTemplate } from "~/server/utils/emailTemplates";
 
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (!bodyTemplate) {
-      return sendError(event, 400, "validation_error", "Template body is required");
+      return sendApiError(event, 400, "validation_error", "Template body is required");
     }
 
     const transporter = await createTransporter();
@@ -107,6 +107,6 @@ export default defineEventHandler(async (event) => {
     });
   } catch (error: any) {
     console.error(error);
-    return sendError(event, 400, "validation_error", "Invalid payload", error);
+    return sendApiError(event, 400, "validation_error", "Invalid payload", error);
   }
 });

@@ -1,17 +1,27 @@
 <template>
   <div class="h-full relative">
-    <div class="hidden md:flex flex-col w-60 min-h-screen fixed inset-y-0 z-50">
-      <!-- <ComponentSidebar /> -->
-      <Sidebar />
+    <div
+      :class="[
+        'hidden md:flex flex-col min-h-screen fixed inset-y-0 z-50 transition-all duration-300',
+        isCollapsed ? 'w-16' : 'w-60'
+      ]"
+    >
+      <Sidebar :isCollapsed="isCollapsed" @toggle-collapse="isCollapsed = !isCollapsed" />
     </div>
-    <main class="md:ml-60 pb-3 flex-grow px-3 bg-white">
+    <main
+      :class="[
+        'pb-3 flex-grow px-3 bg-white transition-all duration-300',
+        isCollapsed ? 'md:ml-16' : 'md:ml-60'
+      ]"
+    >
       <Navbar />
       <slot />
     </main>
   </div>
-  <!-- <ProModal /> -->
 </template>
 
-<script setup lang="ts"></script>
+<script setup lang="ts">
+const isCollapsed = ref(false);
+</script>
 
 <style scoped></style>

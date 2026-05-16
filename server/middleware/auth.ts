@@ -1,7 +1,7 @@
 import { getServerSession } from "#auth";
 import { getRequestURL } from "h3";
 import { hasPermission, normalizeRole, type Action, type Resource } from "~/utils/permissions";
-import { sendError } from "~/server/utils/response";
+import { sendApiError } from "~/server/utils/response";
 
 function mapResource(pathname: string): Resource | null {
   if (pathname.startsWith("/api/pasien")) return "pasien";
@@ -39,14 +39,14 @@ export default defineEventHandler(async (event) => {
 
   const session = await getServerSession(event);
   if (!session) {
-    return sendError(event, 401, "unauthorized", "Unauthorized");
+    return sendApiError(event, 401, "unauthorized", "Unauthorized");
   }
 
   const role = normalizeRole(session.user?.role);
   const isActive = session.user?.isActive !== false;
 
   if (!isActive) {
-    return sendError(event, 403, "inactive_account", "Account is inactive");
+    return sendApiError(event, 403, "inactive_account", "Account is inactive");
   }
 
   const resource = mapResource(pathname);
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
   const action = mapAction(event.method);
 
   if (!hasPermission(role, resource, action)) {
-    return sendError(event, 403, "forbidden", "You do not have access to this resource");
+    return sendApiError(event, 403, "forbidden", "You do not have access to this resource");
   }
 
   event.context.user = session?.user;

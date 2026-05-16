@@ -1,7 +1,7 @@
 import { getQuery } from "h3";
 import Obat from "~/server/models/Obat";
 import { parsePagination } from "~/server/utils/pagination";
-import { sendError, sendSuccess } from "~/server/utils/response";
+import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -22,6 +22,6 @@ export default defineEventHandler(async (event) => {
     return sendSuccess(event, items, 200, { page, pageSize, total });
   } catch (error) {
     console.error(error);
-    return sendError(event, 500, "server_error", "Internal Server Error");
+    return sendApiError(event, 500, "server_error", "Internal Server Error");
   }
 });
