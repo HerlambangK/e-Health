@@ -722,6 +722,26 @@ const optionalMappingOptions = computed(() => {
 
 const selectedOptional = ref<string | null>(null);
 
+const patternMap: Record<string, RegExp[]> = {
+  email: [/email/],
+  "nama-kandidat": [/nama/],
+  lowongan: [/lowongan/, /posisi/, /melamar/],
+  username: [/username/],
+  password: [/password/],
+  "link-konfirmasi": [/link/, /konfirmasi/],
+  "tanggal-melamar": [/tanggal/, /melamar/],
+  "nomor-hp": [/nomor hp/, /hp/, /telepon/],
+  "pesan-konfirmasi": [/pesan/],
+};
+
+function autoDetectColumn(id: string): string {
+  if (columns.value.length === 0) return "";
+  const lowerCols = columns.value.map((col) => col.toLowerCase());
+  const patterns = patternMap[id] || [];
+  const idx = lowerCols.findIndex((col) => patterns.some((p) => p.test(col)));
+  return idx >= 0 ? columns.value[idx] : "";
+}
+
 function addMapping() {
   const target = selectedOptional.value;
   if (!target) return;
@@ -733,13 +753,16 @@ function addMapping() {
     "nomor-hp": "Nomor HP",
     "pesan-konfirmasi": "Pesan Konfirmasi",
   };
+  isSettingMapping = true;
+  const column = autoDetectColumn(target);
   mappingEntries.value.push({
     id: target,
     label: labelMap[target] || target,
     placeholder: target,
     required: false,
-    column: "",
+    column,
   });
+  isSettingMapping = false;
   selectedOptional.value = null;
   mappingTouched.value = true;
 }
@@ -823,38 +846,11 @@ function parseSheet() {
 function setDefaultMapping() {
   if (mappingTouched.value) return;
   isSettingMapping = true;
-  const lowerCols = columns.value.map((col) => col.toLowerCase());
-  const find = (patterns: RegExp[]) => {
-    const idx = lowerCols.findIndex((col) => patterns.some((pattern) => pattern.test(col)));
-    return idx >= 0 ? columns.value[idx] : "";
-  };
-
-  const emailEntry = mappingEntries.value.find((entry) => entry.id === "email");
-  const nameEntry = mappingEntries.value.find((entry) => entry.id === "nama-kandidat");
-  const positionEntry = mappingEntries.value.find((entry) => entry.id === "lowongan");
-
-  if (emailEntry) emailEntry.column = find([/email/]);
-  if (nameEntry) nameEntry.column = find([/nama/]);
-  if (positionEntry) positionEntry.column = find([/lowongan/, /posisi/, /melamar/]);
-
-  const usernameEntry = mappingEntries.value.find((entry) => entry.id === "username");
-  if (usernameEntry) usernameEntry.column = find([/username/]);
-
-  const passwordEntry = mappingEntries.value.find((entry) => entry.id === "password");
-  if (passwordEntry) passwordEntry.column = find([/password/]);
-
-  const linkEntry = mappingEntries.value.find((entry) => entry.id === "link-konfirmasi");
-  if (linkEntry) linkEntry.column = find([/link/, /konfirmasi/]);
-
-  const tanggalEntry = mappingEntries.value.find((entry) => entry.id === "tanggal-melamar");
-  if (tanggalEntry) tanggalEntry.column = find([/tanggal/, /melamar/]);
-
-  const hpEntry = mappingEntries.value.find((entry) => entry.id === "nomor-hp");
-  if (hpEntry) hpEntry.column = find([/nomor hp/, /hp/, /telepon/]);
-
-  const pesanEntry = mappingEntries.value.find((entry) => entry.id === "pesan-konfirmasi");
-  if (pesanEntry) pesanEntry.column = find([/pesan/]);
-
+  for (const entry of mappingEntries.value) {
+    if (!entry.column) {
+      entry.column = autoDetectColumn(entry.id);
+    }
+  }
   isSettingMapping = false;
 }
 
