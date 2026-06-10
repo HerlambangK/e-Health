@@ -46,9 +46,30 @@ export default defineNuxtConfig({
 			from: process.env.SMTP_FROM,
 		},
 		mongodbUri: process.env.MONGODB_URI,
+		satusehat: {
+			baseUrl: process.env.SATUSEHAT_BASE_URL,
+			clientId: process.env.SATUSEHAT_CLIENT_ID,
+			clientSecret: process.env.SATUSEHAT_CLIENT_SECRET,
+			orgId: process.env.SATUSEHAT_ORG_ID,
+		},
+		sinoap: {
+			baseUrl: process.env.SINOAP_BASE_URL,
+			apiKey: process.env.SINOAP_API_KEY,
+			facilityId: process.env.SINOAP_FACILITY_ID,
+		},
+		bpjs: {
+			pCareUrl: process.env.BPJS_PCARE_URL,
+			vClaimUrl: process.env.BPJS_VCLAIM_URL,
+			consId: process.env.BPJS_CONS_ID,
+			secretKey: process.env.BPJS_SECRET_KEY,
+			userKey: process.env.BPJS_USER_KEY,
+			ppkCode: process.env.BPJS_PPK_CODE,
+		},
 		public: {
 			authOrigin: process.env.AUTH_ORIGIN,
 			mapboxToken: process.env.MAPBOX_ACCESS_TOKEN,
+			appName: 'e-Health SIMPRS',
+			rsName: process.env.RS_NAME || 'Rumah Sakit',
 		},
 	},
 
@@ -64,5 +85,13 @@ export default defineNuxtConfig({
 	ui: {},
 	nuxtServerUtils: {
 		mongodbUri: process.env.MONGODB_URI,
+	},
+	nitro: {
+		scheduledTasks: {
+			'*/30 * * * * *': ['satusehat-sync'],
+			'*/5 * * * *': ['retry-failed-sync'],
+			'0 2 * * *': ['bpjs-klaim'],
+			'0 8 1 * *': ['sinoap-laporan'],
+		},
 	},
 });

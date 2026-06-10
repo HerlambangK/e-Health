@@ -4,6 +4,7 @@ export type Role =
   | "nurse"
   | "receptionist"
   | "billing"
+  | "pharmacist"
   | "patient";
 
 export type Resource =
@@ -16,7 +17,17 @@ export type Resource =
   | "obat"
   | "penyakit"
   | "routes"
-  | "admin";
+  | "admin"
+  | "encounter"
+  | "antrian"
+  | "resep"
+  | "ranap"
+  | "rujukan"
+  | "tindakan"
+  | "icd"
+  | "farmasi"
+  | "satusehat"
+  | "sinoap";
 
 export type Action = "create" | "read" | "update" | "delete";
 
@@ -34,6 +45,16 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
     penyakit: allActions,
     routes: ["read"],
     admin: allActions,
+    encounter: allActions,
+    antrian: allActions,
+    resep: allActions,
+    ranap: allActions,
+    rujukan: allActions,
+    tindakan: allActions,
+    icd: allActions,
+    farmasi: allActions,
+    satusehat: allActions,
+    sinoap: allActions,
   },
   doctor: {
     pasien: ["read"],
@@ -46,6 +67,16 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
     penyakit: ["read"],
     routes: ["read"],
     admin: [],
+    encounter: ["create", "read", "update"],
+    antrian: ["read"],
+    resep: ["create", "read", "update"],
+    ranap: ["create", "read", "update"],
+    rujukan: ["create", "read", "update"],
+    tindakan: ["create", "read", "update"],
+    icd: ["read"],
+    farmasi: [],
+    satusehat: [],
+    sinoap: [],
   },
   nurse: {
     pasien: ["read"],
@@ -58,6 +89,16 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
     penyakit: ["read"],
     routes: ["read"],
     admin: [],
+    encounter: ["create", "read", "update"],
+    antrian: ["read"],
+    resep: ["read"],
+    ranap: ["create", "read", "update"],
+    rujukan: ["read"],
+    tindakan: ["create", "read", "update"],
+    icd: ["read"],
+    farmasi: [],
+    satusehat: [],
+    sinoap: [],
   },
   receptionist: {
     pasien: ["create", "read", "update"],
@@ -70,6 +111,38 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
     penyakit: ["read"],
     routes: ["read"],
     admin: [],
+    encounter: ["create", "read"],
+    antrian: ["create", "read", "update"],
+    resep: ["read"],
+    ranap: ["create", "read"],
+    rujukan: ["create", "read", "update"],
+    tindakan: ["read"],
+    icd: ["read"],
+    farmasi: [],
+    satusehat: [],
+    sinoap: [],
+  },
+  pharmacist: {
+    pasien: ["read"],
+    dokter: ["read"],
+    rekamedis: ["read"],
+    appointment: ["read"],
+    billing: ["read"],
+    dashboard: ["read"],
+    obat: ["create", "read", "update"],
+    penyakit: [],
+    routes: ["read"],
+    admin: [],
+    encounter: ["read"],
+    antrian: ["read"],
+    resep: ["read", "update"],
+    ranap: ["read"],
+    rujukan: ["read"],
+    tindakan: ["read"],
+    icd: ["read"],
+    farmasi: ["create", "read", "update"],
+    satusehat: ["read"],
+    sinoap: ["read"],
   },
   billing: {
     pasien: ["read"],
@@ -82,6 +155,16 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
     penyakit: [],
     routes: [],
     admin: [],
+    encounter: ["read"],
+    antrian: ["read"],
+    resep: ["read"],
+    ranap: ["read"],
+    rujukan: ["read"],
+    tindakan: ["read"],
+    icd: [],
+    farmasi: [],
+    satusehat: [],
+    sinoap: [],
   },
   patient: {
     pasien: ["read"],
@@ -94,6 +177,16 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
     penyakit: [],
     routes: [],
     admin: [],
+    encounter: ["read"],
+    antrian: ["read"],
+    resep: ["read"],
+    ranap: ["read"],
+    rujukan: ["read"],
+    tindakan: ["read"],
+    icd: [],
+    farmasi: [],
+    satusehat: [],
+    sinoap: [],
   },
 };
 
@@ -130,6 +223,12 @@ export const ROUTE_ACCESS: Array<{ pattern: RegExp; roles: Role[] }> = [
     roles: ["admin", "doctor", "nurse", "receptionist", "billing"],
   },
   { pattern: /^\/map/, roles: ["admin", "doctor", "nurse", "receptionist"] },
+  { pattern: /^\/pendaftaran/, roles: ["admin", "receptionist", "nurse"] },
+  { pattern: /^\/poli/, roles: ["admin", "doctor", "nurse"] },
+  { pattern: /^\/emr/, roles: ["admin", "doctor", "nurse"] },
+  { pattern: /^\/farmasi/, roles: ["admin", "pharmacist", "nurse"] },
+  { pattern: /^\/ranap/, roles: ["admin", "doctor", "nurse"] },
+  { pattern: /^\/rujukan/, roles: ["admin", "doctor", "receptionist"] },
 ];
 
 export function canAccessRoute(role: Role, path: string) {
@@ -146,6 +245,7 @@ export function normalizeRole(role?: string | null): Role {
     candidate === "nurse" ||
     candidate === "receptionist" ||
     candidate === "billing" ||
+    candidate === "pharmacist" ||
     candidate === "patient"
   ) {
     return candidate;

@@ -125,11 +125,43 @@ export const accountNavigationLinks = [
 		icon: 'heroicons:paper-airplane',
 		roles: ['admin'],
 	},
-	// {
-	//   name: "Account",
-	//   href: "/patient-record/account/[id]",
-	//   icon: "heroicons:cog-6-tooth",
-	// },
+	// SIMPRS Features
+	{
+		name: 'Pendaftaran',
+		href: '/pendaftaran',
+		icon: 'heroicons:clipboard-document-check',
+		roles: ['admin', 'receptionist', 'nurse'],
+	},
+	{
+		name: 'Antrian',
+		href: '/pendaftaran/antrian',
+		icon: 'heroicons:queue-list',
+		roles: ['admin', 'receptionist', 'nurse'],
+	},
+	{
+		name: 'Poli',
+		href: '/poli',
+		icon: 'heroicons:building-office',
+		roles: ['admin', 'doctor', 'nurse'],
+	},
+	{
+		name: 'Farmasi',
+		href: '/farmasi',
+		icon: 'heroicons:beaker',
+		roles: ['admin', 'pharmacist', 'nurse'],
+	},
+	{
+		name: 'Rawat Inap',
+		href: '/ranap',
+		icon: 'heroicons:home-modern',
+		roles: ['admin', 'doctor', 'nurse'],
+	},
+	{
+		name: 'Rujukan',
+		href: '/rujukan',
+		icon: 'heroicons:arrow-right-circle',
+		roles: ['admin', 'doctor', 'receptionist'],
+	},
 ];
 
 export function formatTanggal(tanggal: string) {

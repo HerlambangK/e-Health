@@ -2,15 +2,29 @@
   <div class="pb-10 flex-grow">
     <div class="flex flex-wrap items-center gap-3 py-4">
       <USelectMenu v-model="selectedDataset" :options="datasetOptions" class="w-52" />
-      <UButton @click="exportToExcel" :disabled="!rows.length">Download Excel</UButton>
+      <UButton @click="exportToExcel" :disabled="!rows.length || pending">Download Excel</UButton>
+    </div>
+
+    <div v-if="errorMsg || fetchError" class="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+      {{ errorMsg || fetchError }}
     </div>
 
     <UTable
       :rows="rows"
       :columns="columns"
-      :loading="loading"
+      :loading="pending"
       :loading-state="{ icon: 'i-heroicons-arrow-path-20-solid', label: 'Loading...' }"
-    />
+    >
+      <template #namaPasien-data="{ row }">
+        {{ row.namaPasien?.nama ?? row.namaPasien ?? "-" }}
+      </template>
+      <template #namaDokter-data="{ row }">
+        {{ row.dokter?.namaDokter ?? row.namaDokter ?? "-" }}
+      </template>
+      <template #dokter-data="{ row }">
+        {{ row.dokter?.namaDokter ?? row.dokter ?? "-" }}
+      </template>
+    </UTable>
   </div>
 </template>
 
@@ -29,25 +43,41 @@ const datasetOptions = [
 ];
 
 const selectedDataset = ref("pasien");
+const errorMsg = ref("");
+const fetchError = ref("");
 
-const { data: datasetResponse, pending: loading } = await useLazyAsyncData(
-  "export-dataset",
-  async () => {
-    if (selectedDataset.value === "dokter") {
-      return $fetch("/api/dokter", { query: { page: 1, pageSize: 200 } });
+async function fetchData(dataset: string) {
+  fetchError.value = "";
+  try {
+    if (dataset === "dokter") {
+      return await $fetch("/api/dokter", { query: { page: 1, pageSize: 200 } });
     }
-    if (selectedDataset.value === "rekamedis") {
-      return $fetch("/api/rekamedis", { query: { page: 1, pageSize: 200 } });
+    if (dataset === "rekamedis") {
+      return await $fetch("/api/rekamedis", { query: { page: 1, pageSize: 200 } });
     }
-    return $fetch("/api/pasien", { query: { page: 1, pageSize: 200 } });
-  },
-  {
-    default: () => ({ data: [] }),
-    watch: [selectedDataset],
+    return await $fetch("/api/pasien", { query: { page: 1, pageSize: 200 } });
+  } catch (e: any) {
+    fetchError.value = e?.data?.error?.message ?? e?.message ?? "Gagal memuat data";
+    return { data: [] };
   }
-);
+}
 
-const rows = computed(() => (datasetResponse.value as any)?.data ?? []);
+const datasetResponse = ref<{ data: any[] }>({ data: [] });
+const pending = ref(true);
+
+onMounted(async () => {
+  pending.value = true;
+  datasetResponse.value = await fetchData(selectedDataset.value);
+  pending.value = false;
+});
+
+watch(selectedDataset, async (val) => {
+  pending.value = true;
+  datasetResponse.value = await fetchData(val);
+  pending.value = false;
+});
+
+const rows = computed(() => datasetResponse.value?.data ?? []);
 
 const columns = computed(() => {
   switch (selectedDataset.value) {
@@ -77,37 +107,62 @@ const columns = computed(() => {
   }
 });
 
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function exportToExcel() {
-  let dataToExport: any[] = [];
+  try {
+    errorMsg.value = "";
+    const data = rows.value;
+    if (!data || !data.length) {
+      errorMsg.value = "Tidak ada data untuk diekspor.";
+      return;
+    }
 
-  if (selectedDataset.value === "dokter") {
-    dataToExport = rows.value.map((row: any) => ({
-      Nama: row.namaDokter,
-      NIP: row.nip,
-      Spesialisasi: row.spesialisasi,
-      Poli: row.poli,
-      Jadwal: row.jadwal,
-    }));
-  } else if (selectedDataset.value === "rekamedis") {
-    dataToExport = rows.value.map((row: any) => ({
-      Pasien: row.namaPasien?.nama ?? row.namaPasien,
-      Dokter: row.dokter?.namaDokter ?? row.namaDokter,
-      Keluhan: row.keluhan,
-      KontrolTerakhir: row.kontrolTerakhir,
-    }));
-  } else {
-    dataToExport = rows.value.map((row: any) => ({
-      Nama: row.nama,
-      Umur: row.umur,
-      Dokter: row.dokter?.namaDokter ?? row.dokter,
-      Poli: row.poli,
-      Asuransi: row.jenisAsuransi,
-    }));
+    let mapped: Record<string, any>[];
+
+    if (selectedDataset.value === "dokter") {
+      mapped = data.map((r: any) => ({
+        Nama: r.namaDokter ?? "",
+        NIP: r.nip ?? "",
+        Spesialisasi: r.spesialisasi ?? "",
+        Poli: r.poli ?? "",
+        Jadwal: r.jadwal ?? "",
+      }));
+    } else if (selectedDataset.value === "rekamedis") {
+      mapped = data.map((r: any) => ({
+        Pasien: r.namaPasien?.nama ?? r.namaPasien ?? "",
+        Dokter: r.dokter?.namaDokter ?? r.namaDokter ?? "",
+        Keluhan: r.keluhan ?? "",
+        "Kontrol Terakhir": r.kontrolTerakhir ?? "",
+      }));
+    } else {
+      mapped = data.map((r: any) => ({
+        Nama: r.nama ?? "",
+        Umur: r.umur ?? "",
+        Dokter: r.dokter?.namaDokter ?? r.dokter ?? "",
+        Poli: r.poli ?? "",
+        Asuransi: r.jenisAsuransi ?? "",
+      }));
+    }
+
+    const ws = XLSX.utils.json_to_sheet(mapped);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Export");
+
+    const wbOut = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    const blob = new Blob([wbOut], { type: "application/octet-stream" });
+    downloadBlob(blob, `ehealth-${selectedDataset.value}.xlsx`);
+  } catch (e: any) {
+    errorMsg.value = e?.message ?? "Gagal mengekspor data.";
   }
-
-  const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Export");
-  XLSX.writeFile(workbook, `ehealth-${selectedDataset.value}.xlsx`);
 }
 </script>

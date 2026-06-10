@@ -23,7 +23,7 @@ const userSchema = new Schema(
     isAdmin: { type: Boolean, default: false },
     role: {
       type: String,
-      enum: ["admin", "doctor", "nurse", "receptionist", "billing", "patient"],
+      enum: ["admin", "doctor", "nurse", "receptionist", "billing", "pharmacist", "patient"],
       default: "patient",
       index: true,
     },
