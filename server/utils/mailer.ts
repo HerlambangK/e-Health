@@ -57,6 +57,9 @@ export async function createTransporter() {
     host: smtp.host,
     port: smtp.port ?? 587,
     secure: smtp.secure ?? false,
+    pool: true,
+    maxConnections: 10,
+    maxMessages: 100,
     auth: {
       user: smtp.user,
       pass: smtp.pass,

@@ -13,8 +13,9 @@ function applyPlaceholders(value: string, payload: Record<string, string>) {
   return output;
 }
 
-const PARALLEL = 5;
-const THROTTLE_MS = 2000;
+const PARALLEL = 10;
+const RATE_PER_SEC = 2;
+const DB_INTERVAL = 10;
 
 async function runBlast(campaignId: string, recipients: any[]) {
   const campaign = await EmailCampaign.findById(campaignId);
@@ -23,11 +24,20 @@ async function runBlast(campaignId: string, recipients: any[]) {
   const { templateSubject, templateBody, from, testEmail } = campaign;
   const transporter = await createTransporter();
 
+  let batchCount = 0;
+  let accSent = 0;
+  let accFailed = 0;
+  const accFailList: Array<{ email: string; error: string }> = [];
+  let accNextIndex = 0;
+
   for (let i = 0; i < recipients.length; i += PARALLEL) {
-    const fresh = await EmailCampaign.findById(campaignId);
-    if (!fresh || fresh.status === "cancelled") return;
+    if (batchCount % 5 === 0) {
+      const fresh = await EmailCampaign.findById(campaignId);
+      if (!fresh || fresh.status === "cancelled") return;
+    }
 
     const batch = recipients.slice(i, i + PARALLEL);
+    const batchStart = Date.now();
 
     const results = await Promise.allSettled(
       batch.map(async (recipient) => {
@@ -59,9 +69,9 @@ async function runBlast(campaignId: string, recipients: any[]) {
       })
     );
 
+    const batchElapsed = Date.now() - batchStart;
     let batchSent = 0;
     let batchFailed = 0;
-    const newFailed: Array<{ email: string; error: string }> = [];
 
     for (let j = 0; j < results.length; j++) {
       const result = results[j];
@@ -69,21 +79,42 @@ async function runBlast(campaignId: string, recipients: any[]) {
         batchSent++;
       } else {
         batchFailed++;
-        newFailed.push({
+        accFailList.push({
           email: batch[j].email ?? "",
           error: result.reason?.message || "unknown error",
         });
       }
     }
 
-    await EmailCampaign.findByIdAndUpdate(campaignId, {
-      $inc: { sent: batchSent, failed: batchFailed, nextIndex: PARALLEL },
-      $push: { failedList: { $each: newFailed } },
-    });
+    accSent += batchSent;
+    accFailed += batchFailed;
+    accNextIndex += PARALLEL;
+    batchCount++;
+
+    if (batchCount % DB_INTERVAL === 0 || i + PARALLEL >= recipients.length) {
+      await EmailCampaign.findByIdAndUpdate(campaignId, {
+        $inc: { sent: accSent, failed: accFailed, nextIndex: accNextIndex },
+        $push: { failedList: { $each: accFailList.splice(0) } },
+      });
+      accSent = 0;
+      accFailed = 0;
+      accNextIndex = 0;
+    }
 
     if (i + PARALLEL < recipients.length) {
-      await new Promise((r) => setTimeout(r, THROTTLE_MS));
+      const minBatchTime = (PARALLEL / RATE_PER_SEC) * 1000;
+      const delay = Math.max(0, minBatchTime - batchElapsed);
+      if (delay > 0) {
+        await new Promise((r) => setTimeout(r, delay));
+      }
     }
+  }
+
+  if (accSent > 0 || accFailed > 0 || accFailList.length > 0) {
+    await EmailCampaign.findByIdAndUpdate(campaignId, {
+      $inc: { sent: accSent, failed: accFailed, nextIndex: accNextIndex },
+      $push: { failedList: { $each: accFailList } },
+    });
   }
 
   await EmailCampaign.findByIdAndUpdate(campaignId, {
