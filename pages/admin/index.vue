@@ -25,6 +25,45 @@
         </div>
       </header>
 
+      <UCard v-if="campaignActive || recentCampaigns.length" class="border-amber-200 bg-amber-50">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold text-amber-800">Email Blast</p>
+            <template v-if="campaignActive">
+              <p class="text-xs text-amber-600">{{ campaignActive.name }}</p>
+              <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-amber-700">
+                <span>Terkirim: <strong>{{ campaignActive.sent }}</strong> / {{ campaignActive.total }}</span>
+                <span v-if="campaignActive.failed > 0">Gagal: <strong class="text-red-600">{{ campaignActive.failed }}</strong></span>
+              </div>
+            </template>
+            <template v-else>
+              <p class="text-xs text-gray-500">Tidak ada blast berjalan</p>
+            </template>
+            <div v-if="recentCampaigns.length" class="mt-3 border-t border-amber-200 pt-2 space-y-1.5">
+              <p class="text-xs font-medium text-gray-500">Terakhir:</p>
+              <div
+                v-for="c in recentCampaigns.slice(0, 3)"
+                :key="c.campaignId"
+                class="flex items-center justify-between text-xs text-gray-600"
+              >
+                <span class="truncate max-w-[180px]">{{ c.name }}</span>
+                <span class="shrink-0">
+                  <UBadge
+                    :color="c.status === 'done' ? 'green' : 'red'"
+                    variant="soft"
+                    size="xs"
+                    :label="`${c.sent}/${c.total}`"
+                  />
+                </span>
+              </div>
+            </div>
+          </div>
+          <UButton to="/admin/email-blast" size="xs" color="amber" variant="soft">
+            Lihat Detail
+          </UButton>
+        </div>
+      </UCard>
+
       <section class="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <UCard class="xl:col-span-2" :ui="{ body: { padding: 'p-5 sm:p-6' } }">
           <div class="flex flex-col gap-5">
@@ -364,6 +403,35 @@ const totalDoctors = computed(() => summary.value?.totals?.doctors ?? 0);
 
 const isPasien = ref(false);
 const isDokter = ref(false);
+
+const campaignActive = ref<any>(null);
+const recentCampaigns = ref<any[]>([]);
+let campaignTimer: ReturnType<typeof setInterval> | null = null;
+
+async function checkCampaigns() {
+  try {
+    const res: any = await $fetch("/api/admin/email-blast/campaigns?limit=5");
+    campaignActive.value = res?.data?.active || null;
+    recentCampaigns.value = res?.data?.recent || [];
+    if (!campaignActive.value) {
+      if (campaignTimer) { clearInterval(campaignTimer); campaignTimer = null; }
+    }
+  } catch {
+    campaignActive.value = null;
+    recentCampaigns.value = [];
+  }
+}
+
+onMounted(async () => {
+  await checkCampaigns();
+  if (campaignActive.value) {
+    campaignTimer = setInterval(checkCampaigns, 5000);
+  }
+});
+
+onUnmounted(() => {
+  if (campaignTimer) { clearInterval(campaignTimer); campaignTimer = null; }
+});
 
 const columns = [
   {

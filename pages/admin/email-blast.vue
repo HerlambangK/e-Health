@@ -27,7 +27,48 @@
       </div>
     </div>
 
-    <UAccordion multiple :items="accordionItems" :ui="{ wrapper: 'space-y-4' }">
+    <div v-if="activeCampaign" class="rounded-xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div class="min-w-0 flex-1">
+          <h3 class="text-sm font-semibold text-amber-800">{{ activeCampaign.name }}</h3>
+          <div class="mt-3">
+            <UProgress :value="activeCampaign.progressPercent" color="amber" size="md" />
+          </div>
+          <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-amber-700">
+            <span>Terkirim: <strong>{{ activeCampaign.sent }}</strong> / {{ activeCampaign.total }}</span>
+            <span v-if="activeCampaign.failed > 0">Gagal: <strong class="text-red-600">{{ activeCampaign.failed }}</strong></span>
+            <span v-if="activeCampaign.skipped > 0">Skip: {{ activeCampaign.skipped }}</span>
+            <span v-if="activeCampaign.status === 'running' && activeCampaign.estimatedRemainingSeconds > 0">
+              Estimasi sisa: <strong>{{ formatTime(activeCampaign.estimatedRemainingSeconds) }}</strong>
+            </span>
+            <UBadge v-if="activeCampaign.status === 'done'" color="green" variant="soft" size="xs">Selesai</UBadge>
+            <UBadge v-if="activeCampaign.status === 'cancelled'" color="red" variant="soft" size="xs">Dibatalkan</UBadge>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <UButton
+            v-if="activeCampaign.status === 'running'"
+            size="xs"
+            color="red"
+            variant="soft"
+            @click="cancelBlast"
+          >
+            Batalkan
+          </UButton>
+          <UButton
+            v-if="activeCampaign.status !== 'running'"
+            size="xs"
+            color="gray"
+            variant="soft"
+            @click="dismissCampaign"
+          >
+            Tutup
+          </UButton>
+        </div>
+      </div>
+    </div>
+
+    <UAccordion v-if="!activeCampaign || activeCampaign.status !== 'running'" multiple :items="accordionItems" :ui="{ wrapper: 'space-y-4' }">
       <template #upload>
         <div class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
           <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -204,11 +245,19 @@
             </div>
           </div>
 
-          <div class="mt-4 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
+          <div class="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-500">Baris per halaman</span>
+              <USelect v-model="editPageSize" :options="[10, 20, 50, 100]" size="xs" class="w-24" />
+            </div>
+            <span class="text-xs text-gray-500">Total: {{ editTotal }} baris</span>
+          </div>
+
+          <div class="mt-3 w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain">
             <UTable
               v-model="selectedRows"
               class="min-w-[720px] w-full"
-              :rows="filteredEditRows"
+              :rows="pagedEditRows"
               :columns="editColumns"
               :empty-state="{ icon: 'i-heroicons-inbox', label: 'Tidak ada data' }"
             >
@@ -258,6 +307,38 @@
                 :class="inputClass(getCellValue(row._rowIndex, mappingKeys.password), requiredFields.password)"
               />
             </template>
+            <template v-if="showColumn('link-konfirmasi')" #linkKonfirmasi-data="{ row }">
+              <UInput
+                :model-value="getCellValue(row._rowIndex, mappingKeys.linkKonfirmasi)"
+                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.linkKonfirmasi, val)"
+                size="xs"
+                :disabled="!mappingKeys.linkKonfirmasi"
+              />
+            </template>
+            <template v-if="showColumn('tanggal-melamar')" #tanggalMelamar-data="{ row }">
+              <UInput
+                :model-value="getCellValue(row._rowIndex, mappingKeys.tanggalMelamar)"
+                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.tanggalMelamar, val)"
+                size="xs"
+                :disabled="!mappingKeys.tanggalMelamar"
+              />
+            </template>
+            <template v-if="showColumn('nomor-hp')" #nomorHp-data="{ row }">
+              <UInput
+                :model-value="getCellValue(row._rowIndex, mappingKeys.nomorHp)"
+                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.nomorHp, val)"
+                size="xs"
+                :disabled="!mappingKeys.nomorHp"
+              />
+            </template>
+            <template v-if="showColumn('pesan-konfirmasi')" #pesanKonfirmasi-data="{ row }">
+              <UInput
+                :model-value="getCellValue(row._rowIndex, mappingKeys.pesanKonfirmasi)"
+                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.pesanKonfirmasi, val)"
+                size="xs"
+                :disabled="!mappingKeys.pesanKonfirmasi"
+              />
+            </template>
             <template #actions-data="{ row }">
               <UButton
                 icon="i-heroicons-trash"
@@ -268,6 +349,15 @@
               />
             </template>
             </UTable>
+          </div>
+
+          <div class="mt-3">
+            <UPagination
+              v-model="editPage"
+              :page-count="editPageSize"
+              :total="editTotal"
+              :ui="{ wrapper: 'flex flex-wrap items-center gap-2 justify-center sm:justify-start' }"
+            />
           </div>
         </div>
       </template>
@@ -327,6 +417,10 @@
                   <UBadge color="gray" variant="soft">[username]</UBadge>
                   <UBadge color="gray" variant="soft">[password]</UBadge>
                   <UBadge color="gray" variant="soft">[email]</UBadge>
+                  <UBadge color="gray" variant="soft">[link-konfirmasi]</UBadge>
+                  <UBadge color="gray" variant="soft">[tanggal-melamar]</UBadge>
+                  <UBadge color="gray" variant="soft">[nomor-hp]</UBadge>
+                  <UBadge color="gray" variant="soft">[pesan-konfirmasi]</UBadge>
                 </div>
               </div>
             </div>
@@ -379,6 +473,18 @@
             </UFormGroup>
             <UFormGroup label="Password (opsional)">
               <UInput v-model="manualForm.password" placeholder="password" />
+            </UFormGroup>
+            <UFormGroup label="Link Konfirmasi (opsional)">
+              <UInput v-model="manualForm.linkKonfirmasi" placeholder="http://..." />
+            </UFormGroup>
+            <UFormGroup label="Tanggal Melamar (opsional)">
+              <UInput v-model="manualForm.tanggalMelamar" placeholder="21 Maret 2025" />
+            </UFormGroup>
+            <UFormGroup label="Nomor HP (opsional)">
+              <UInput v-model="manualForm.nomorHp" placeholder="0812..." />
+            </UFormGroup>
+            <UFormGroup label="Pesan Konfirmasi (opsional)">
+              <UInput v-model="manualForm.pesanKonfirmasi" placeholder="Pesan..." />
             </UFormGroup>
           </div>
 
@@ -496,19 +602,25 @@
               </div>
 
               <div class="rounded-lg border border-gray-100 p-4">
-                <div class="flex flex-col gap-2">
+                <UFormGroup label="Nama Campaign" required>
+                  <UInput v-model="campaignName" placeholder="Contoh: Konfirmasi Resume Juni 2026" />
+                </UFormGroup>
+                <div class="mt-3 flex flex-col gap-2">
                   <UButton
                     color="primary"
                     size="lg"
                     :loading="isSending"
-                    :disabled="!canSend"
+                    :disabled="!canSend || !!activeCampaign"
                     class="w-full"
                     @click="sendBlast"
                   >
                     Kirim Email Blast
                   </UButton>
                   <p v-if="!canSend" class="text-xs text-gray-500">
-                    Pastikan data valid dan template sudah lengkap.
+                    Pastikan data valid, template lengkap, dan nama campaign diisi.
+                  </p>
+                  <p v-if="!!activeCampaign && activeCampaign.status === 'running'" class="text-xs text-amber-600">
+                    Masih ada proses blast berjalan. Tunggu selesai atau batalkan terlebih dahulu.
                   </p>
                 </div>
               </div>
@@ -517,6 +629,42 @@
         </div>
       </template>
     </UAccordion>
+
+    <div v-if="campaigns.length" class="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
+      <div class="text-sm font-semibold text-gray-900 mb-4">Riwayat Blast</div>
+      <div class="space-y-3">
+        <div
+          v-for="c in campaigns"
+          :key="c.campaignId"
+          class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between rounded-lg border border-gray-100 p-3"
+        >
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-medium text-gray-800 truncate">{{ c.name }}</span>
+              <UBadge
+                :color="c.status === 'done' ? 'green' : c.status === 'cancelled' ? 'red' : 'amber'"
+                variant="soft"
+                size="xs"
+                :label="c.status === 'done' ? 'Selesai' : c.status === 'cancelled' ? 'Dibatalkan' : 'Berjalan'"
+              />
+            </div>
+            <div class="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-500">
+              <span>{{ formatDateTime(c.createdAt) }}</span>
+              <span v-if="c.status !== 'running'" class="text-green-600">
+                Terkirim: {{ c.sent }} / {{ c.total }}
+              </span>
+              <span v-if="c.failed > 0" class="text-red-500">Gagal: {{ c.failed }}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 sm:shrink-0">
+            <div class="flex items-center gap-2">
+              <UProgress :value="c.progressPercent" size="xs" class="w-20 sm:w-28" />
+              <span class="text-xs text-gray-500 w-8 text-right">{{ c.progressPercent }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -562,6 +710,10 @@ const optionalMappingOptions = computed(() => {
   const available = [
     { id: "username", label: "Username", placeholder: "username" },
     { id: "password", label: "Password", placeholder: "password" },
+    { id: "link-konfirmasi", label: "Link Konfirmasi", placeholder: "link-konfirmasi" },
+    { id: "tanggal-melamar", label: "Tanggal Melamar", placeholder: "tanggal-melamar" },
+    { id: "nomor-hp", label: "Nomor HP", placeholder: "nomor-hp" },
+    { id: "pesan-konfirmasi", label: "Pesan Konfirmasi", placeholder: "pesan-konfirmasi" },
   ];
   return available
     .filter((item) => !mappingEntries.value.some((entry) => entry.id === item.id))
@@ -573,10 +725,17 @@ const selectedOptional = ref<string | null>(null);
 function addMapping() {
   const target = selectedOptional.value;
   if (!target) return;
-  const label = target === "username" ? "Username" : "Password";
+  const labelMap: Record<string, string> = {
+    username: "Username",
+    password: "Password",
+    "link-konfirmasi": "Link Konfirmasi",
+    "tanggal-melamar": "Tanggal Melamar",
+    "nomor-hp": "Nomor HP",
+    "pesan-konfirmasi": "Pesan Konfirmasi",
+  };
   mappingEntries.value.push({
     id: target,
-    label,
+    label: labelMap[target] || target,
     placeholder: target,
     required: false,
     column: "",
@@ -676,13 +835,25 @@ function setDefaultMapping() {
 
   if (emailEntry) emailEntry.column = find([/email/]);
   if (nameEntry) nameEntry.column = find([/nama/]);
-  if (positionEntry) positionEntry.column = find([/lowongan/, /posisi/]);
+  if (positionEntry) positionEntry.column = find([/lowongan/, /posisi/, /melamar/]);
 
   const usernameEntry = mappingEntries.value.find((entry) => entry.id === "username");
   if (usernameEntry) usernameEntry.column = find([/username/]);
 
   const passwordEntry = mappingEntries.value.find((entry) => entry.id === "password");
   if (passwordEntry) passwordEntry.column = find([/password/]);
+
+  const linkEntry = mappingEntries.value.find((entry) => entry.id === "link-konfirmasi");
+  if (linkEntry) linkEntry.column = find([/link/, /konfirmasi/]);
+
+  const tanggalEntry = mappingEntries.value.find((entry) => entry.id === "tanggal-melamar");
+  if (tanggalEntry) tanggalEntry.column = find([/tanggal/, /melamar/]);
+
+  const hpEntry = mappingEntries.value.find((entry) => entry.id === "nomor-hp");
+  if (hpEntry) hpEntry.column = find([/nomor hp/, /hp/, /telepon/]);
+
+  const pesanEntry = mappingEntries.value.find((entry) => entry.id === "pesan-konfirmasi");
+  if (pesanEntry) pesanEntry.column = find([/pesan/]);
 
   isSettingMapping = false;
 }
@@ -746,6 +917,10 @@ const mappingKeys = computed(() => ({
   position: mappingMap.value.lowongan,
   username: mappingMap.value.username,
   password: mappingMap.value.password,
+  linkKonfirmasi: mappingMap.value["link-konfirmasi"],
+  tanggalMelamar: mappingMap.value["tanggal-melamar"],
+  nomorHp: mappingMap.value["nomor-hp"],
+  pesanKonfirmasi: mappingMap.value["pesan-konfirmasi"],
 }));
 
 const needsUsername = computed(() => templateBody.value.includes("[username]"));
@@ -799,6 +974,10 @@ const mappedRecipients = computed(() =>
     lowongan: String(row[mappingKeys.value.position] || "").trim(),
     username: String(row[mappingKeys.value.username] || "").trim(),
     password: String(row[mappingKeys.value.password] || "").trim(),
+    linkKonfirmasi: String(row[mappingKeys.value.linkKonfirmasi] || "").trim(),
+    tanggalMelamar: String(row[mappingKeys.value.tanggalMelamar] || "").trim(),
+    nomorHp: String(row[mappingKeys.value.nomorHp] || "").trim(),
+    pesanKonfirmasi: String(row[mappingKeys.value.pesanKonfirmasi] || "").trim(),
   }))
 );
 
@@ -831,6 +1010,10 @@ const previewColumns = computed(() => {
   }
   if (showColumn("username")) base.push({ key: "username", label: "Username" });
   if (showColumn("password")) base.push({ key: "password", label: "Password" });
+  if (showColumn("link-konfirmasi")) base.push({ key: "linkKonfirmasi", label: "Link Konfirmasi" });
+  if (showColumn("tanggal-melamar")) base.push({ key: "tanggalMelamar", label: "Tanggal Melamar" });
+  if (showColumn("nomor-hp")) base.push({ key: "nomorHp", label: "Nomor HP" });
+  if (showColumn("pesan-konfirmasi")) base.push({ key: "pesanKonfirmasi", label: "Pesan Konfirmasi" });
   base.push({ key: "status", label: "Status" });
   return base;
 });
@@ -843,6 +1026,10 @@ const editColumns = computed(() => {
   ];
   if (showColumn("username")) base.push({ key: "username", label: "Username" });
   if (showColumn("password")) base.push({ key: "password", label: "Password" });
+  if (showColumn("link-konfirmasi")) base.push({ key: "linkKonfirmasi", label: "Link Konfirmasi" });
+  if (showColumn("tanggal-melamar")) base.push({ key: "tanggalMelamar", label: "Tanggal Melamar" });
+  if (showColumn("nomor-hp")) base.push({ key: "nomorHp", label: "Nomor HP" });
+  if (showColumn("pesan-konfirmasi")) base.push({ key: "pesanKonfirmasi", label: "Pesan Konfirmasi" });
   base.push({ key: "actions", label: "" });
   return base;
 });
@@ -872,13 +1059,29 @@ const filteredEditRows = computed(() => {
       mapped.email.toLowerCase().includes(query) ||
       mapped.nama.toLowerCase().includes(query) ||
       mapped.lowongan.toLowerCase().includes(query) ||
-      mapped.username.toLowerCase().includes(query)
+      mapped.username.toLowerCase().includes(query) ||
+      mapped.linkKonfirmasi.toLowerCase().includes(query) ||
+      mapped.tanggalMelamar.toLowerCase().includes(query) ||
+      mapped.nomorHp.toLowerCase().includes(query) ||
+      mapped.pesanKonfirmasi.toLowerCase().includes(query)
     );
   });
 });
 
 const selectedRows = ref<any[]>([]);
 const showPasswords = ref(false);
+
+const editPage = ref(1);
+const editPageSize = ref(20);
+const editTotal = computed(() => filteredEditRows.value.length);
+const pagedEditRows = computed(() => {
+  const start = (editPage.value - 1) * editPageSize.value;
+  return filteredEditRows.value.slice(start, start + editPageSize.value);
+});
+
+watch([editPageSize, editFilter, editFilterMode], () => {
+  editPage.value = 1;
+});
 
 type ManualRecipient = {
   id: string;
@@ -887,6 +1090,10 @@ type ManualRecipient = {
   lowongan: string;
   username?: string;
   password?: string;
+  linkKonfirmasi?: string;
+  tanggalMelamar?: string;
+  nomorHp?: string;
+  pesanKonfirmasi?: string;
   status?: "sent" | "failed";
   statusLabel?: string;
 };
@@ -897,6 +1104,10 @@ const manualForm = reactive({
   lowongan: "",
   username: "",
   password: "",
+  linkKonfirmasi: "",
+  tanggalMelamar: "",
+  nomorHp: "",
+  pesanKonfirmasi: "",
 });
 
 const manualRecipients = ref<ManualRecipient[]>([]);
@@ -911,6 +1122,10 @@ const manualColumns = computed(() => {
   ];
   if (needsUsername.value) base.push({ key: "username", label: "Username" });
   if (needsPassword.value) base.push({ key: "password", label: "Password" });
+  if (showColumn("link-konfirmasi")) base.push({ key: "linkKonfirmasi", label: "Link Konfirmasi" });
+  if (showColumn("tanggal-melamar")) base.push({ key: "tanggalMelamar", label: "Tanggal Melamar" });
+  if (showColumn("nomor-hp")) base.push({ key: "nomorHp", label: "Nomor HP" });
+  if (showColumn("pesan-konfirmasi")) base.push({ key: "pesanKonfirmasi", label: "Pesan Konfirmasi" });
   base.push({ key: "status", label: "Status" });
   base.push({ key: "actions", label: "" });
   return base;
@@ -954,6 +1169,10 @@ function addManualRecipient() {
     lowongan: manualForm.lowongan.trim(),
     username: manualForm.username.trim(),
     password: manualForm.password.trim(),
+    linkKonfirmasi: manualForm.linkKonfirmasi.trim(),
+    tanggalMelamar: manualForm.tanggalMelamar.trim(),
+    nomorHp: manualForm.nomorHp.trim(),
+    pesanKonfirmasi: manualForm.pesanKonfirmasi.trim(),
     status: undefined,
     statusLabel: undefined,
   });
@@ -963,6 +1182,10 @@ function addManualRecipient() {
   manualForm.lowongan = "";
   manualForm.username = "";
   manualForm.password = "";
+  manualForm.linkKonfirmasi = "";
+  manualForm.tanggalMelamar = "";
+  manualForm.nomorHp = "";
+  manualForm.pesanKonfirmasi = "";
 }
 
 function removeManualRecipient(id: string) {
@@ -986,6 +1209,7 @@ async function sendManualRecipient(recipient: ManualRecipient) {
 
   try {
     const payload = {
+      name: `Manual-${new Date().toLocaleString("id-ID")}`,
       templateId: selectedTemplateId.value || undefined,
       subject: templateSubject.value || undefined,
       body: templateBody.value,
@@ -997,6 +1221,10 @@ async function sendManualRecipient(recipient: ManualRecipient) {
           lowongan: recipient.lowongan,
           username: recipient.username || undefined,
           password: recipient.password || undefined,
+          linkKonfirmasi: recipient.linkKonfirmasi || undefined,
+          tanggalMelamar: recipient.tanggalMelamar || undefined,
+          nomorHp: recipient.nomorHp || undefined,
+          pesanKonfirmasi: recipient.pesanKonfirmasi || undefined,
         },
       ],
     };
@@ -1006,12 +1234,12 @@ async function sendManualRecipient(recipient: ManualRecipient) {
       body: payload,
     });
 
-    if (res?.data?.sent) {
+    if (res?.data?.status === "running" || res?.data?.campaignId) {
       recipient.status = "sent";
       recipient.statusLabel = "Terkirim";
       toast.add({
-        title: "Email terkirim",
-        description: `Email terkirim ke ${recipient.email}.`,
+        title: "Email dikirim",
+        description: `Email dikirim ke ${recipient.email}.`,
         color: "green",
       });
     } else {
@@ -1164,11 +1392,42 @@ async function deleteTemplate() {
 }
 
 const testEmail = ref("");
+const campaignName = ref("");
+const activeCampaign = ref<any>(null);
+const campaigns = ref<any[]>([]);
+let pollTimer: ReturnType<typeof setInterval> | null = null;
+
+function formatTime(seconds: number) {
+  if (seconds < 60) return `${seconds} detik`;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins} menit ${secs} detik`;
+}
+
+function formatDateTime(dateStr: string) {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+}
+
+async function fetchCampaigns() {
+  try {
+    const res: any = await $fetch("/api/admin/email-blast/campaigns?limit=10");
+    campaigns.value = res?.data?.recent || [];
+    if (res?.data?.active) {
+      activeCampaign.value = res.data.active;
+    }
+  } catch {
+    campaigns.value = [];
+  }
+}
 
 const canSend = computed(() => {
   if (rows.value.length === 0) return false;
   if (!mappingKeys.value.email || !mappingKeys.value.name || !mappingKeys.value.position) return false;
   if (!templateBody.value) return false;
+  if (!campaignName.value.trim()) return false;
+  if (activeCampaign.value?.status === "running") return false;
   return validRecipients.value.length > 0 && !isSending.value;
 });
 
@@ -1191,6 +1450,10 @@ const previewEmail = computed(() => {
     username: first.username || "",
     password: first.password || "",
     email: first.email || "",
+    "link-konfirmasi": first.linkKonfirmasi || "",
+    "tanggal-melamar": first.tanggalMelamar || "",
+    "nomor-hp": first.nomorHp || "",
+    "pesan-konfirmasi": first.pesanKonfirmasi || "",
   };
   const subjectText = applyPlaceholders(templateSubject.value || "Email Informasi", payload);
   const bodyText = applyPlaceholders(templateBody.value || "", payload);
@@ -1215,11 +1478,22 @@ async function sendBlast() {
     }
     isSending.value = true;
     const payload = {
+      name: campaignName.value.trim(),
       templateId: selectedTemplateId.value || undefined,
       subject: templateSubject.value || undefined,
       body: templateBody.value,
       testEmail: testEmail.value || undefined,
-      recipients: validRecipients.value,
+      recipients: validRecipients.value.map((r) => ({
+        email: r.email,
+        nama: r.nama,
+        lowongan: r.lowongan,
+        username: r.username || undefined,
+        password: r.password || undefined,
+        linkKonfirmasi: r.linkKonfirmasi || undefined,
+        tanggalMelamar: r.tanggalMelamar || undefined,
+        nomorHp: r.nomorHp || undefined,
+        pesanKonfirmasi: r.pesanKonfirmasi || undefined,
+      })),
     };
 
     const res: any = await $fetch("/api/admin/email-blast", {
@@ -1228,10 +1502,13 @@ async function sendBlast() {
     });
 
     toast.add({
-      title: "Email blast dikirim",
-      description: `Terkirim: ${res?.data?.sent ?? 0}, skip: ${res?.data?.skipped ?? 0}`,
+      title: "Blast dimulai",
+      description: `Campaign "${res?.data?.name}" — ${res?.data?.total} penerima. Proses berjalan di background.`,
       color: "green",
     });
+
+    await checkActiveCampaign();
+    startPolling();
   } catch (error: any) {
     toast.add({
       title: "Gagal mengirim email",
@@ -1242,4 +1519,92 @@ async function sendBlast() {
     isSending.value = false;
   }
 }
+
+async function checkActiveCampaign() {
+  try {
+    const res: any = await $fetch("/api/admin/email-blast/progress");
+    activeCampaign.value = res?.data || null;
+  } catch {
+    activeCampaign.value = null;
+  }
+}
+
+function startPolling() {
+  stopPolling();
+  pollTimer = setInterval(async () => {
+    if (!activeCampaign.value?.campaignId) return;
+    try {
+      const res: any = await $fetch(`/api/admin/email-blast/progress?campaignId=${activeCampaign.value.campaignId}`);
+      activeCampaign.value = res?.data || null;
+      if (activeCampaign.value?.status === "done") {
+        stopPolling();
+        fetchCampaigns();
+        toast.add({
+          title: "Blast selesai",
+          description: `Terkirim ${activeCampaign.value.sent}, gagal ${activeCampaign.value.failed}.`,
+          color: "green",
+        });
+      } else if (activeCampaign.value?.status === "cancelled") {
+        stopPolling();
+        fetchCampaigns();
+        toast.add({
+          title: "Blast dibatalkan",
+          description: `Terkirim ${activeCampaign.value.sent} dari ${activeCampaign.value.total}.`,
+          color: "orange",
+        });
+      }
+    } catch {
+      stopPolling();
+      activeCampaign.value = null;
+    }
+  }, 2000);
+}
+
+function stopPolling() {
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
+}
+
+async function cancelBlast() {
+  if (!activeCampaign.value?.campaignId) return;
+  if (!window.confirm(`Batalkan blast "${activeCampaign.value.name}"? Email yang sudah terkirim tidak dapat ditarik.`)) return;
+  try {
+    await $fetch("/api/admin/email-blast/cancel", {
+      method: "POST",
+      body: { campaignId: activeCampaign.value.campaignId },
+    });
+    toast.add({ title: "Blast dibatalkan", color: "orange" });
+    stopPolling();
+    await checkActiveCampaign();
+    await fetchCampaigns();
+  } catch (error: any) {
+    toast.add({
+      title: "Gagal membatalkan",
+      description: error?.data?.error?.message || "Coba lagi.",
+      color: "red",
+    });
+  }
+}
+
+function dismissCampaign() {
+  activeCampaign.value = null;
+  campaignName.value = "";
+  stopPolling();
+  fetchCampaigns();
+}
+
+onMounted(() => {
+  fetchCampaigns();
+  checkActiveCampaign().then(() => {
+    if (activeCampaign.value?.status === "running") {
+      startPolling();
+    }
+  });
+});
+
+onUnmounted(() => {
+  stopPolling();
+});
 </script>

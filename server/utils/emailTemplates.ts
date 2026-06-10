@@ -37,6 +37,14 @@ const defaultTemplates: EmailTemplate[] = [
       "Halo [nama-kandidat],\n\nBerikut akun tes online untuk posisi [lowongan]:\nUsername: [username]\nPassword: [password]\n\nTerima kasih.",
     updatedAt: new Date().toISOString(),
   },
+  {
+    id: "konfirmasi-resume",
+    name: "Konfirmasi & Perbarui Resume",
+    subject: "Konfirmasi Lamaran [lowongan] - PT SSK",
+    body:
+      "Halo, [nama-kandidat]\n\nKami dari PT Sejahtera Sehat Karyautama (PT SSK)\n\nTerima kasih atas lamaran Anda pada lowongan [lowongan] di [tanggal-melamar].\n\nKami memerlukan konfirmasi Anda apakah masih bersedia untuk melanjutkan proses rekrutmen.\n\nApabila bersedia, mohon untuk mengkonfirmasi dan memperbarui resume Anda pada link berikut:\n\n[link-konfirmasi]\n\nTerima kasih.",
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 async function ensureDataDir() {
