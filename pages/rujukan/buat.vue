@@ -72,6 +72,7 @@ onMounted(async () => {
   if (route.query.encounterId) {
     form.encounterId = route.query.encounterId as string;
   }
-  pasienList.value = await $fetch("/api/pasien");
+  const res = await $fetch<{ data: any[] }>("/api/pasien");
+  pasienList.value = res.data || [];
 });
 </script>

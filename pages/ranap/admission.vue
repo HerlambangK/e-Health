@@ -89,8 +89,10 @@ onMounted(async () => {
     form.encounterId = route.query.encounterId as string;
   }
 
-  pasienList.value = await $fetch("/api/pasien");
-  dokterList.value = await $fetch("/api/dokter");
+  const pasienRes = await $fetch<{ data: any[] }>("/api/pasien");
+  pasienList.value = pasienRes.data || [];
+  const dokterRes = await $fetch<{ data: any[] }>("/api/dokter");
+  dokterList.value = dokterRes.data || [];
   const bedData = await $fetch("/api/ranap/bed", { params: { status: "available" } });
   availableBeds.value = bedData.data.beds || [];
 });

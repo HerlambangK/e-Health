@@ -75,9 +75,12 @@ function mulai(antrian: any) {
 }
 
 async function loadData() {
-  antrianList.value = await $fetch("/api/antrian", { params: { poliId } });
-  displayAntrian.value = await $fetch("/api/antrian/display", { params: { poliId } });
-  poli.value = await $fetch(`/api/poli/${poliId}`);
+  const antrianRes = await $fetch<{ data: any[] }>("/api/antrian", { params: { poliId } });
+  antrianList.value = antrianRes.data || [];
+  const displayRes = await $fetch<{ data: any[] }>("/api/antrian/display", { params: { poliId } });
+  displayAntrian.value = displayRes.data || [];
+  const poliRes = await $fetch<{ data: any }>(`/api/poli/${poliId}`);
+  poli.value = poliRes.data;
 }
 
 onMounted(loadData);

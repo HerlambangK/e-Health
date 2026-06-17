@@ -32,6 +32,7 @@
 const poliList = ref<any[]>([]);
 
 onMounted(async () => {
-  poliList.value = await $fetch("/api/poli");
+  const res = await $fetch<{ data: any[] }>("/api/poli");
+  poliList.value = res.data || [];
 });
 </script>

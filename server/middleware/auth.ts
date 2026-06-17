@@ -14,6 +14,16 @@ function mapResource(pathname: string): Resource | null {
   if (pathname.startsWith("/api/penyakit")) return "penyakit";
   if (pathname.startsWith("/api/routes")) return "routes";
   if (pathname.startsWith("/api/admin")) return "admin";
+  if (pathname.startsWith("/api/encounter")) return "encounter";
+  if (pathname.startsWith("/api/antrian")) return "antrian";
+  if (pathname.startsWith("/api/resep")) return "resep";
+  if (pathname.startsWith("/api/ranap")) return "ranap";
+  if (pathname.startsWith("/api/rujukan")) return "rujukan";
+  if (pathname.startsWith("/api/tindakan")) return "tindakan";
+  if (pathname.startsWith("/api/icd")) return "icd";
+  if (pathname.startsWith("/api/farmasi")) return "farmasi";
+  if (pathname.startsWith("/api/satusehat")) return "satusehat";
+  if (pathname.startsWith("/api/sinoap")) return "sinoap";
   return null;
 }
 

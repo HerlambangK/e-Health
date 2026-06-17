@@ -146,6 +146,11 @@ function tambahObat() {
 }
 
 onMounted(async () => {
-  encounter.value = await $fetch(`/api/encounter/${encounterId}`);
+  try {
+    const res = await $fetch<{ data: any }>(`/api/encounter/${encounterId}`);
+    encounter.value = res.data;
+  } catch (err) {
+    console.error("Gagal memuat encounter:", err);
+  }
 });
 </script>

@@ -125,6 +125,12 @@ export const accountNavigationLinks = [
 		icon: 'heroicons:paper-airplane',
 		roles: ['admin'],
 	},
+	{
+		name: 'Riwayat Blast',
+		href: '/admin/blast-history',
+		icon: 'heroicons:clock',
+		roles: ['admin'],
+	},
 	// SIMPRS Features
 	{
 		name: 'Pendaftaran',

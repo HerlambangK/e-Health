@@ -31,14 +31,12 @@ export default defineEventHandler(async (event) => {
     createdBy: user?._id,
   });
 
-  for (const item of resep.items) {
-    await enqueue("satusehat-sync", {
-      type: "medication",
-      resourceId: resep._id.toString(),
-      action: "create",
-      priority: "normal",
-    });
-  }
+  await enqueue("satusehat-sync", {
+    type: "medication",
+    resourceId: resep._id.toString(),
+    action: "create",
+    priority: "normal",
+  });
 
   return { data: resep };
 });

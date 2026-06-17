@@ -83,7 +83,8 @@ async function discharge(id: string) {
 }
 
 async function loadData() {
-  ranapAktif.value = await $fetch("/api/ranap", { params: { status: "active" } });
+  const res = await $fetch<{ data: any[] }>("/api/ranap", { params: { status: "active" } });
+  ranapAktif.value = res.data || [];
   const bedData = await $fetch("/api/ranap/bed");
   stats.total = bedData.data.total;
   stats.tersedia = bedData.data.tersedia;

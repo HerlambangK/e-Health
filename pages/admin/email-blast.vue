@@ -99,7 +99,7 @@
                 @change="handleFileChange"
               />
               <p class="mt-2 text-xs text-gray-500">
-                Pastikan file berisi kolom email, nama kandidat, dan lowongan yang dilamar.
+                Pastikan file berisi kolom email dan nama kandidat.
               </p>
               <p v-if="selectedFileName" class="mt-2 text-xs text-gray-500">
                 File terpilih: <span class="font-medium text-gray-700">{{ selectedFileName }}</span>
@@ -139,8 +139,46 @@
               </p>
             </div>
             <div class="text-xs text-gray-500">
-              Wajib: <span class="font-medium text-gray-700">Email, Nama, Lowongan</span>
+              Wajib: <span class="font-medium text-gray-700">Email, Nama</span>
             </div>
+          </div>
+
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <USelectMenu
+              v-model="loadedMappingId"
+              :options="mappingConfigOptions"
+              placeholder="Muat mapping tersimpan"
+              value-attribute="value"
+              class="w-full sm:w-56"
+            />
+            <UButton
+              size="xs"
+              color="primary"
+              variant="soft"
+              :disabled="!loadedMappingId"
+              @click="loadMapping"
+            >
+              Muat
+            </UButton>
+            <UButton
+              v-if="loadedMappingId"
+              size="xs"
+              color="red"
+              variant="soft"
+              icon="i-heroicons-trash"
+              class="sm:ml-1"
+              @click="deleteMappingConfig"
+            />
+            <UButton
+              size="xs"
+              color="green"
+              variant="soft"
+              :disabled="!mappingEntries[0]?.column || columns.length === 0"
+              @click="openSaveMappingDialog"
+              class="sm:ml-auto"
+            >
+              Simpan Mapping
+            </UButton>
           </div>
 
           <div class="mt-4 space-y-3">
@@ -174,18 +212,18 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
-              <USelectMenu
-                v-model="selectedOptional"
-                :options="optionalMappingOptions"
-                placeholder="Tambah mapping"
-                value-attribute="value"
+              <UInput
+                v-model="newMappingName"
+                size="xs"
+                placeholder="Nama placeholder, cth: alamat"
                 class="w-full sm:w-56"
+                @keyup.enter="addMapping"
               />
               <UButton
                 size="xs"
                 color="primary"
                 variant="soft"
-                :disabled="!selectedOptional"
+                :disabled="!newMappingName.trim()"
                 @click="addMapping"
               >
                 Tambah Mapping
@@ -196,6 +234,23 @@
           <UAlert v-if="rows.length === 0" color="gray" variant="soft" icon="i-heroicons-information-circle" class="mt-3">
             Upload file terlebih dahulu untuk melihat opsi kolom.
           </UAlert>
+
+          <UModal v-model="saveMappingModalOpen" :ui="{ width: 'sm:max-w-md' }">
+            <div class="p-6">
+              <h3 class="text-lg font-semibold text-gray-900 mb-4">Simpan Mapping</h3>
+              <UFormGroup label="Nama Mapping" required>
+                <UInput v-model="saveMappingName" placeholder="contoh: mapping rekrutmen" />
+              </UFormGroup>
+              <div class="mt-4 flex justify-end gap-2">
+                <UButton size="sm" color="gray" variant="soft" @click="saveMappingModalOpen = false">
+                  Batal
+                </UButton>
+                <UButton size="sm" color="primary" :disabled="!saveMappingName.trim()" @click="saveMapping">
+                  Simpan
+                </UButton>
+              </div>
+            </div>
+          </UModal>
         </div>
       </template>
 
@@ -212,7 +267,7 @@
               <UInput
                 v-model="editFilter"
                 size="xs"
-                placeholder="Cari nama/email/lowongan"
+                placeholder="Cari nama/email"
                 icon="i-heroicons-magnifying-glass"
                 class="w-full sm:w-56"
               />
@@ -261,85 +316,17 @@
               :columns="editColumns"
               :empty-state="{ icon: 'i-heroicons-inbox', label: 'Tidak ada data' }"
             >
-            <template #email-data="{ row }">
-              <UInput
-                :model-value="getCellValue(row._rowIndex, mappingKeys.email)"
-                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.email, val)"
-                size="xs"
-                :disabled="!mappingKeys.email"
-                :class="inputClass(getCellValue(row._rowIndex, mappingKeys.email), requiredFields.email, 'email')"
-              />
-            </template>
-            <template #nama-data="{ row }">
-              <UInput
-                :model-value="getCellValue(row._rowIndex, mappingKeys.name)"
-                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.name, val)"
-                size="xs"
-                :disabled="!mappingKeys.name"
-                :class="inputClass(getCellValue(row._rowIndex, mappingKeys.name), requiredFields.name)"
-              />
-            </template>
-            <template #lowongan-data="{ row }">
-              <UInput
-                :model-value="getCellValue(row._rowIndex, mappingKeys.position)"
-                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.position, val)"
-                size="xs"
-                :disabled="!mappingKeys.position"
-                :class="inputClass(getCellValue(row._rowIndex, mappingKeys.position), requiredFields.position)"
-              />
-            </template>
-            <template v-if="showColumn('username')" #username-data="{ row }">
-              <UInput
-                :model-value="getCellValue(row._rowIndex, mappingKeys.username)"
-                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.username, val)"
-                size="xs"
-                :disabled="!mappingKeys.username"
-                :class="inputClass(getCellValue(row._rowIndex, mappingKeys.username), requiredFields.username)"
-              />
-            </template>
-            <template v-if="showColumn('password')" #password-data="{ row }">
-              <UInput
-                :model-value="getCellValue(row._rowIndex, mappingKeys.password)"
-                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.password, val)"
-                size="xs"
-                :type="showPasswords ? 'text' : 'password'"
-                :disabled="!mappingKeys.password"
-                :class="inputClass(getCellValue(row._rowIndex, mappingKeys.password), requiredFields.password)"
-              />
-            </template>
-            <template v-if="showColumn('link-konfirmasi')" #linkKonfirmasi-data="{ row }">
-              <UInput
-                :model-value="getCellValue(row._rowIndex, mappingKeys.linkKonfirmasi)"
-                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.linkKonfirmasi, val)"
-                size="xs"
-                :disabled="!mappingKeys.linkKonfirmasi"
-              />
-            </template>
-            <template v-if="showColumn('tanggal-melamar')" #tanggalMelamar-data="{ row }">
-              <UInput
-                :model-value="getCellValue(row._rowIndex, mappingKeys.tanggalMelamar)"
-                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.tanggalMelamar, val)"
-                size="xs"
-                :disabled="!mappingKeys.tanggalMelamar"
-              />
-            </template>
-            <template v-if="showColumn('nomor-hp')" #nomorHp-data="{ row }">
-              <UInput
-                :model-value="getCellValue(row._rowIndex, mappingKeys.nomorHp)"
-                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.nomorHp, val)"
-                size="xs"
-                :disabled="!mappingKeys.nomorHp"
-              />
-            </template>
-            <template v-if="showColumn('pesan-konfirmasi')" #pesanKonfirmasi-data="{ row }">
-              <UInput
-                :model-value="getCellValue(row._rowIndex, mappingKeys.pesanKonfirmasi)"
-                @update:model-value="(val) => setCellValue(row._rowIndex, mappingKeys.pesanKonfirmasi, val)"
-                size="xs"
-                :disabled="!mappingKeys.pesanKonfirmasi"
-              />
-            </template>
-            <template #actions-data="{ row }">
+              <template v-for="entry in dynamicColumns" :key="entry.id" #[entry.id+'-data']="{ row }">
+                <UInput
+                  :model-value="getCellValue(row._rowIndex, entry.column)"
+                  @update:model-value="(val) => setCellValue(row._rowIndex, entry.column, val)"
+                  size="xs"
+                  :disabled="!entry.column"
+                  :type="entry.placeholder === 'password' && !showPasswords ? 'password' : 'text'"
+                  :class="inputClass(getCellValue(row._rowIndex, entry.column), requiredFields[entry.placeholder] || false, entry.placeholder === 'email' ? 'email' : undefined)"
+                />
+              </template>
+              <template #actions-data="{ row }">
               <UButton
                 icon="i-heroicons-trash"
                 size="xs"
@@ -412,15 +399,7 @@
               <div class="rounded-lg border border-gray-100 bg-gray-50/40 p-3 text-xs text-gray-600">
                 Placeholder tersedia:
                 <div class="mt-2 flex flex-wrap gap-2">
-                  <UBadge color="gray" variant="soft">[nama-kandidat]</UBadge>
-                  <UBadge color="gray" variant="soft">[lowongan]</UBadge>
-                  <UBadge color="gray" variant="soft">[username]</UBadge>
-                  <UBadge color="gray" variant="soft">[password]</UBadge>
-                  <UBadge color="gray" variant="soft">[email]</UBadge>
-                  <UBadge color="gray" variant="soft">[link-konfirmasi]</UBadge>
-                  <UBadge color="gray" variant="soft">[tanggal-melamar]</UBadge>
-                  <UBadge color="gray" variant="soft">[nomor-hp]</UBadge>
-                  <UBadge color="gray" variant="soft">[pesan-konfirmasi]</UBadge>
+                  <UBadge v-for="entry in mappingEntries" :key="entry.id" color="gray" variant="soft">{{ `[${entry.placeholder}]` }}</UBadge>
                 </div>
               </div>
             </div>
@@ -461,30 +440,16 @@
             <UFormGroup label="Nama" required>
               <UInput v-model="manualForm.nama" placeholder="Nama penerima" :class="inputClass(manualForm.nama, true)" />
             </UFormGroup>
-            <UFormGroup label="Lowongan" required>
+            <UFormGroup
+              v-for="entry in mappingEntries.filter(e => !e.required && e.id !== 'email' && e.id !== 'nama-kandidat')"
+              :key="entry.id"
+              :label="entry.label"
+              :required="needsPlaceholder(entry.placeholder)"
+            >
               <UInput
-                v-model="manualForm.lowongan"
-                placeholder="Posisi yang dilamar"
-                :class="inputClass(manualForm.lowongan, true)"
+                v-model="manualForm[entry.placeholder]"
+                :placeholder="entry.label.toLowerCase()"
               />
-            </UFormGroup>
-            <UFormGroup label="Username (opsional)">
-              <UInput v-model="manualForm.username" placeholder="username" />
-            </UFormGroup>
-            <UFormGroup label="Password (opsional)">
-              <UInput v-model="manualForm.password" placeholder="password" />
-            </UFormGroup>
-            <UFormGroup label="Link Konfirmasi (opsional)">
-              <UInput v-model="manualForm.linkKonfirmasi" placeholder="http://..." />
-            </UFormGroup>
-            <UFormGroup label="Tanggal Melamar (opsional)">
-              <UInput v-model="manualForm.tanggalMelamar" placeholder="21 Maret 2025" />
-            </UFormGroup>
-            <UFormGroup label="Nomor HP (opsional)">
-              <UInput v-model="manualForm.nomorHp" placeholder="0812..." />
-            </UFormGroup>
-            <UFormGroup label="Pesan Konfirmasi (opsional)">
-              <UInput v-model="manualForm.pesanKonfirmasi" placeholder="Pesan..." />
             </UFormGroup>
           </div>
 
@@ -566,11 +531,7 @@
                   :rows="pagedPreviewRows"
                   :columns="previewColumns"
                   :empty-state="{ icon: 'i-heroicons-inbox', label: 'Tidak ada data' }"
-                >
-                  <template v-if="showColumn('password')" #password-data="{ row }">
-                    <span>{{ showPasswords ? row.password : "••••••" }}</span>
-                  </template>
-                </UTable>
+                />
               </div>
 
               <div class="mt-3">
@@ -661,10 +622,108 @@
               <UProgress :value="c.progressPercent" size="xs" class="w-20 sm:w-28" />
               <span class="text-xs text-gray-500 w-8 text-right">{{ c.progressPercent }}%</span>
             </div>
+            <UButton
+              size="xs"
+              color="gray"
+              variant="soft"
+              icon="i-heroicons-eye"
+              @click="openLogDetail(c)"
+            >
+              Detail
+            </UButton>
           </div>
         </div>
       </div>
     </div>
+
+    <UModal v-model="logModalOpen" :ui="{ width: 'sm:max-w-5xl' }">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">
+              Detail Log — {{ logCampaign?.name }}
+            </h3>
+            <p class="text-xs text-gray-500">
+              Terkirim: {{ logSentCount }} · Gagal: {{ logFailedCount }} · Total: {{ logTotal }}
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <UButton
+              size="xs"
+              color="gray"
+              variant="soft"
+              :loading="logExportLoading"
+              @click="exportLogCSV"
+            >
+              Export CSV
+            </UButton>
+            <UButton
+              size="xs"
+              color="gray"
+              variant="ghost"
+              icon="i-heroicons-x-mark"
+              @click="logModalOpen = false"
+            />
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <UButton
+              v-for="tab in logStatusTabs"
+              :key="tab.value"
+              size="xs"
+              :color="logStatusFilter === tab.value ? 'primary' : 'gray'"
+              :variant="logStatusFilter === tab.value ? 'solid' : 'soft'"
+              @click="setLogFilter(tab.value)"
+            >
+              {{ tab.label }}
+            </UButton>
+          </div>
+          <UInput
+            v-model="logSearch"
+            size="xs"
+              placeholder="Cari email, nama..."
+            icon="i-heroicons-magnifying-glass"
+            class="w-full sm:w-64"
+          />
+        </div>
+
+        <div class="w-full overflow-x-auto">
+          <UTable
+            :rows="logItems"
+            :columns="logColumns"
+            :loading="logLoading"
+            :empty-state="{ icon: 'i-heroicons-inbox', label: 'Tidak ada log' }"
+          >
+            <template #status-data="{ row }">
+              <UBadge
+                :color="row.status === 'sent' ? 'green' : row.status === 'failed' ? 'red' : 'gray'"
+                variant="soft"
+                size="xs"
+                :label="row.status === 'sent' ? 'Terkirim' : row.status === 'failed' ? 'Gagal' : 'Skip'"
+              />
+            </template>
+            <template #error-data="{ row }">
+              <span class="text-xs text-red-500 max-w-[200px] truncate block">{{ row.error || "-" }}</span>
+            </template>
+            <template #waktu-data="{ row }">
+              <span class="text-xs whitespace-nowrap">
+                {{ formatDateTime(row.sentAt || row.failedAt || row.createdAt) }}
+              </span>
+            </template>
+          </UTable>
+        </div>
+
+        <div class="mt-4 flex justify-center">
+          <UPagination
+            v-model="logPage"
+            :page-count="logPageSize"
+            :total="logTotal"
+          />
+        </div>
+      </div>
+    </UModal>
   </div>
 </template>
 
@@ -693,6 +752,7 @@ const isSending = ref(false);
 
 const sheetNames = ref<string[]>([]);
 const selectedSheet = ref("");
+const selectedFileName = ref("");
 const sheetOptions = computed(() => sheetNames.value.map((name) => ({ label: name, value: name })));
 const headerRowIndex = ref(1);
 const workbookRef = ref<any>(null);
@@ -700,27 +760,16 @@ const autoParse = ref(false);
 const mappingTouched = ref(false);
 let isSettingMapping = false;
 
-const mappingEntries = ref([
+type MappingEntry = { id: string; label: string; placeholder: string; required: boolean; column: string };
+
+const STORAGE_KEY = "email-blast:v2";
+
+const mappingEntries = ref<MappingEntry[]>([
   { id: "email", label: "Email", placeholder: "email", required: true, column: "" },
   { id: "nama-kandidat", label: "Nama", placeholder: "nama-kandidat", required: true, column: "" },
-  { id: "lowongan", label: "Lowongan", placeholder: "lowongan", required: true, column: "" },
 ]);
 
-const optionalMappingOptions = computed(() => {
-  const available = [
-    { id: "username", label: "Username", placeholder: "username" },
-    { id: "password", label: "Password", placeholder: "password" },
-    { id: "link-konfirmasi", label: "Link Konfirmasi", placeholder: "link-konfirmasi" },
-    { id: "tanggal-melamar", label: "Tanggal Melamar", placeholder: "tanggal-melamar" },
-    { id: "nomor-hp", label: "Nomor HP", placeholder: "nomor-hp" },
-    { id: "pesan-konfirmasi", label: "Pesan Konfirmasi", placeholder: "pesan-konfirmasi" },
-  ];
-  return available
-    .filter((item) => !mappingEntries.value.some((entry) => entry.id === item.id))
-    .map((item) => ({ label: item.label, value: item.id }));
-});
-
-const selectedOptional = ref<string | null>(null);
+const newMappingName = ref("");
 
 const patternMap: Record<string, RegExp[]> = {
   email: [/email/],
@@ -742,34 +791,41 @@ function autoDetectColumn(id: string): string {
   return idx >= 0 ? columns.value[idx] : "";
 }
 
+function autoDetectPlaceholder(column: string): string | null {
+  const lower = column.toLowerCase();
+  for (const [id, patterns] of Object.entries(patternMap)) {
+    if (patterns.some((p) => p.test(lower))) {
+      return id;
+    }
+  }
+  return null;
+}
+
 function addMapping() {
-  const target = selectedOptional.value;
-  if (!target) return;
-  const labelMap: Record<string, string> = {
-    username: "Username",
-    password: "Password",
-    "link-konfirmasi": "Link Konfirmasi",
-    "tanggal-melamar": "Tanggal Melamar",
-    "nomor-hp": "Nomor HP",
-    "pesan-konfirmasi": "Pesan Konfirmasi",
-  };
+  const name = newMappingName.value.trim();
+  if (!name) return;
+  const id = name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  if (!id || mappingEntries.value.some((e) => e.id === id)) return;
+
   isSettingMapping = true;
-  const column = autoDetectColumn(target);
+  const column = autoDetectColumn(id);
   mappingEntries.value.push({
-    id: target,
-    label: labelMap[target] || target,
-    placeholder: target,
+    id,
+    label: name,
+    placeholder: id,
     required: false,
     column,
   });
   isSettingMapping = false;
-  selectedOptional.value = null;
+  newMappingName.value = "";
   mappingTouched.value = true;
+  saveToLocalStorage();
 }
 
 function removeMapping(id: string) {
   mappingEntries.value = mappingEntries.value.filter((entry) => entry.id !== id);
   mappingTouched.value = true;
+  saveToLocalStorage();
 }
 
 watch(
@@ -777,10 +833,93 @@ watch(
   () => {
     if (!isSettingMapping) {
       mappingTouched.value = true;
+      saveToLocalStorage();
     }
   },
   { deep: true }
 );
+
+function sanitizePlaceholder(col: string): string {
+  return col.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+}
+
+function setDefaultMapping() {
+  if (mappingTouched.value) return;
+  isSettingMapping = true;
+
+  for (const entry of mappingEntries.value) {
+    if (!entry.column) {
+      entry.column = autoDetectColumn(entry.id);
+    }
+  }
+
+  const usedColumns = new Set(mappingEntries.value.map((e) => e.column).filter(Boolean));
+  for (const col of columns.value) {
+    if (usedColumns.has(col)) continue;
+    if (!col || col.startsWith("Column ")) continue;
+
+    const detected = autoDetectPlaceholder(col);
+    const id = detected && !mappingEntries.value.some((e) => e.id === detected)
+      ? detected
+      : sanitizePlaceholder(col);
+    if (!id || mappingEntries.value.some((e) => e.id === id || e.column === col)) continue;
+
+    mappingEntries.value.push({
+      id,
+      label: col,
+      placeholder: id,
+      required: false,
+      column: col,
+    });
+    usedColumns.add(col);
+  }
+
+  isSettingMapping = false;
+}
+
+function saveToLocalStorage() {
+  try {
+    const data = {
+      rows: rows.value,
+      columns: columns.value,
+      mappingEntries: mappingEntries.value.map((e) => ({ ...e })),
+      selectedSheet: selectedSheet.value,
+      headerRowIndex: headerRowIndex.value,
+      fileName: selectedFileName.value,
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  } catch {}
+}
+
+function loadFromLocalStorage(): boolean {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return false;
+    const data = JSON.parse(raw);
+    if (!data.rows?.length) return false;
+
+    rows.value = data.rows || [];
+    columns.value = data.columns || [];
+    mappingEntries.value = data.mappingEntries || [];
+    selectedSheet.value = data.selectedSheet || "";
+    headerRowIndex.value = data.headerRowIndex || 1;
+    if (data.fileName) selectedFileName.value = data.fileName;
+    editableRows.value = (data.rows || []).map((row: any) => ({ ...row }));
+    autoParse.value = true;
+    mappingTouched.value = true;
+
+    if (data.fileName && data.selectedSheet) {
+      sheetNames.value = [data.selectedSheet];
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function clearLocalStorage() {
+  localStorage.removeItem(STORAGE_KEY);
+}
 
 const columnOptions = computed(() => columns.value.map((col) => ({ label: col, value: col })));
 
@@ -841,24 +980,16 @@ function parseSheet() {
   editableRows.value = rows.value.map((row) => ({ ...row }));
   columns.value = headers;
   setDefaultMapping();
-}
-
-function setDefaultMapping() {
-  if (mappingTouched.value) return;
-  isSettingMapping = true;
-  for (const entry of mappingEntries.value) {
-    if (!entry.column) {
-      entry.column = autoDetectColumn(entry.id);
-    }
-  }
-  isSettingMapping = false;
+  saveToLocalStorage();
 }
 
 async function handleFileChange(event: Event) {
   parseError.value = "";
   const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file) return;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    selectedFileName.value = file.name;
 
   try {
     const data = await file.arrayBuffer();
@@ -874,6 +1005,7 @@ async function handleFileChange(event: Event) {
     const table = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }) as any[][];
     headerRowIndex.value = findHeaderRowIndex(table);
     mappingTouched.value = false;
+    clearLocalStorage();
   } catch (error: any) {
     parseError.value = error?.message || "Gagal membaca file Excel.";
   }
@@ -899,36 +1031,42 @@ watch(headerRowIndex, () => {
   if (autoParse.value) parseSheet();
 });
 
-const mappingMap = computed(() => {
-  const map: Record<string, string> = {};
+const mappingKeys = computed(() => {
+  const keys: Record<string, string> = {};
   for (const entry of mappingEntries.value) {
-    map[entry.placeholder] = entry.column || "";
+    keys[entry.placeholder] = entry.column || "";
+  }
+  return keys;
+});
+
+const entryByPlaceholder = computed(() => {
+  const map: Record<string, MappingEntry> = {};
+  for (const entry of mappingEntries.value) {
+    map[entry.placeholder] = entry;
   }
   return map;
 });
 
-const mappingKeys = computed(() => ({
-  email: mappingMap.value.email,
-  name: mappingMap.value["nama-kandidat"],
-  position: mappingMap.value.lowongan,
-  username: mappingMap.value.username,
-  password: mappingMap.value.password,
-  linkKonfirmasi: mappingMap.value["link-konfirmasi"],
-  tanggalMelamar: mappingMap.value["tanggal-melamar"],
-  nomorHp: mappingMap.value["nomor-hp"],
-  pesanKonfirmasi: mappingMap.value["pesan-konfirmasi"],
-}));
+function needsPlaceholder(placeholder: string) {
+  return templateBody.value.includes(`[${placeholder}]`);
+}
 
-const needsUsername = computed(() => templateBody.value.includes("[username]"));
-const needsPassword = computed(() => templateBody.value.includes("[password]"));
+const requiredFields = computed(() => {
+  const fields: Record<string, boolean> = {
+    email: true,
+    "nama-kandidat": true,
+  };
+  for (const entry of mappingEntries.value) {
+    if (!entry.required && needsPlaceholder(entry.placeholder)) {
+      fields[entry.placeholder] = true;
+    }
+  }
+  return fields;
+});
 
-const requiredFields = computed(() => ({
-  email: true,
-  name: true,
-  position: true,
-  username: needsUsername.value,
-  password: needsPassword.value,
-}));
+const dynamicColumns = computed(() =>
+  mappingEntries.value.filter((e) => e.column)
+);
 
 function showColumn(id: string) {
   return mappingEntries.value.some((entry) => entry.id === id);
@@ -943,6 +1081,7 @@ function setCellValue(rowIndex: number, key: string, value: any) {
   if (!key) return;
   if (!editableRows.value[rowIndex]) return;
   editableRows.value[rowIndex][key] = value;
+  saveToLocalStorage();
 }
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -964,70 +1103,56 @@ function inputClass(value: string, required: boolean, kind?: "email") {
 }
 
 const mappedRecipients = computed(() =>
-  editableRows.value.map((row) => ({
-    email: String(row[mappingKeys.value.email] || "").trim(),
-    nama: String(row[mappingKeys.value.name] || "").trim(),
-    lowongan: String(row[mappingKeys.value.position] || "").trim(),
-    username: String(row[mappingKeys.value.username] || "").trim(),
-    password: String(row[mappingKeys.value.password] || "").trim(),
-    linkKonfirmasi: String(row[mappingKeys.value.linkKonfirmasi] || "").trim(),
-    tanggalMelamar: String(row[mappingKeys.value.tanggalMelamar] || "").trim(),
-    nomorHp: String(row[mappingKeys.value.nomorHp] || "").trim(),
-    pesanKonfirmasi: String(row[mappingKeys.value.pesanKonfirmasi] || "").trim(),
-  }))
+  editableRows.value.map((row) => {
+    const recipient: Record<string, string> = {};
+    for (const entry of mappingEntries.value) {
+      const colName = entry.column;
+      recipient[entry.placeholder] = colName ? String(row[colName] ?? "").trim() : "";
+    }
+    return recipient;
+  })
 );
 
 const validRecipients = computed(() =>
   mappedRecipients.value.filter((item) => {
-    if (!item.email || !isValidEmail(item.email)) return false;
-    if (!item.nama || !item.lowongan) return false;
-    if (needsUsername.value && !item.username) return false;
-    if (needsPassword.value && !item.password) return false;
+    const email = item.email || "";
+    if (!email || !isValidEmail(email)) return false;
+    const nama = item["nama-kandidat"] || "";
+    if (!nama) return false;
+    for (const entry of mappingEntries.value) {
+      if (needsPlaceholder(entry.placeholder) && !item[entry.placeholder]) return false;
+    }
     return true;
   })
 );
 
 const previewTableRows = computed(() =>
-  mappedRecipients.value.map((item) => ({
-    ...item,
-    target: (testEmail.value || "").trim() || item.email,
-    status: validRecipients.value.includes(item) ? "valid" : "invalid",
-  }))
+  mappedRecipients.value.map((item) => {
+    const masked = { ...item };
+    if (!showPasswords.value && "password" in masked) {
+      masked.password = "••••••";
+    }
+    return {
+      ...masked,
+      target: (testEmail.value || "").trim() || item.email,
+      status: validRecipients.value.includes(item) ? "valid" : "invalid",
+    };
+  })
 );
 
 const previewColumns = computed(() => {
-  const base = [
-    { key: "email", label: "Email" },
-    { key: "nama", label: "Nama" },
-    { key: "lowongan", label: "Lowongan" },
-  ];
+  const base = dynamicColumns.value.map((e) => ({ key: e.id, label: e.label }));
   if (testEmail.value) {
     base.splice(1, 0, { key: "target", label: "Kirim ke" });
   }
-  if (showColumn("username")) base.push({ key: "username", label: "Username" });
-  if (showColumn("password")) base.push({ key: "password", label: "Password" });
-  if (showColumn("link-konfirmasi")) base.push({ key: "linkKonfirmasi", label: "Link Konfirmasi" });
-  if (showColumn("tanggal-melamar")) base.push({ key: "tanggalMelamar", label: "Tanggal Melamar" });
-  if (showColumn("nomor-hp")) base.push({ key: "nomorHp", label: "Nomor HP" });
-  if (showColumn("pesan-konfirmasi")) base.push({ key: "pesanKonfirmasi", label: "Pesan Konfirmasi" });
   base.push({ key: "status", label: "Status" });
   return base;
 });
 
 const editColumns = computed(() => {
-  const base = [
-    { key: "email", label: "Email" },
-    { key: "nama", label: "Nama" },
-    { key: "lowongan", label: "Lowongan" },
-  ];
-  if (showColumn("username")) base.push({ key: "username", label: "Username" });
-  if (showColumn("password")) base.push({ key: "password", label: "Password" });
-  if (showColumn("link-konfirmasi")) base.push({ key: "linkKonfirmasi", label: "Link Konfirmasi" });
-  if (showColumn("tanggal-melamar")) base.push({ key: "tanggalMelamar", label: "Tanggal Melamar" });
-  if (showColumn("nomor-hp")) base.push({ key: "nomorHp", label: "Nomor HP" });
-  if (showColumn("pesan-konfirmasi")) base.push({ key: "pesanKonfirmasi", label: "Pesan Konfirmasi" });
-  base.push({ key: "actions", label: "" });
-  return base;
+  const cols = dynamicColumns.value.map((e) => ({ key: e.id, label: e.label }));
+  cols.push({ key: "actions", label: "" });
+  return cols;
 });
 
 const editTableRows = computed(() =>
@@ -1051,16 +1176,11 @@ const filteredEditRows = computed(() => {
     if (editFilterMode.value === "invalid" && validRecipients.value.includes(mapped)) return false;
 
     if (!query) return true;
-    return (
-      mapped.email.toLowerCase().includes(query) ||
-      mapped.nama.toLowerCase().includes(query) ||
-      mapped.lowongan.toLowerCase().includes(query) ||
-      mapped.username.toLowerCase().includes(query) ||
-      mapped.linkKonfirmasi.toLowerCase().includes(query) ||
-      mapped.tanggalMelamar.toLowerCase().includes(query) ||
-      mapped.nomorHp.toLowerCase().includes(query) ||
-      mapped.pesanKonfirmasi.toLowerCase().includes(query)
-    );
+    for (const entry of mappingEntries.value) {
+      const val = mapped[entry.placeholder];
+      if (val && val.toLowerCase().includes(query)) return true;
+    }
+    return false;
   });
 });
 
@@ -1083,27 +1203,14 @@ type ManualRecipient = {
   id: string;
   email: string;
   nama: string;
-  lowongan: string;
-  username?: string;
-  password?: string;
-  linkKonfirmasi?: string;
-  tanggalMelamar?: string;
-  nomorHp?: string;
-  pesanKonfirmasi?: string;
   status?: "sent" | "failed";
   statusLabel?: string;
+  [key: string]: any;
 };
 
-const manualForm = reactive({
+const manualForm = reactive<Record<string, any>>({
   email: "",
   nama: "",
-  lowongan: "",
-  username: "",
-  password: "",
-  linkKonfirmasi: "",
-  tanggalMelamar: "",
-  nomorHp: "",
-  pesanKonfirmasi: "",
 });
 
 const manualRecipients = ref<ManualRecipient[]>([]);
@@ -1111,25 +1218,11 @@ const manualError = ref("");
 const manualSendingId = ref<string | null>(null);
 
 const manualColumns = computed(() => {
-  const base = [
-    { key: "email", label: "Email" },
-    { key: "nama", label: "Nama" },
-    { key: "lowongan", label: "Lowongan" },
-  ];
-  if (needsUsername.value) base.push({ key: "username", label: "Username" });
-  if (needsPassword.value) base.push({ key: "password", label: "Password" });
-  if (showColumn("link-konfirmasi")) base.push({ key: "linkKonfirmasi", label: "Link Konfirmasi" });
-  if (showColumn("tanggal-melamar")) base.push({ key: "tanggalMelamar", label: "Tanggal Melamar" });
-  if (showColumn("nomor-hp")) base.push({ key: "nomorHp", label: "Nomor HP" });
-  if (showColumn("pesan-konfirmasi")) base.push({ key: "pesanKonfirmasi", label: "Pesan Konfirmasi" });
-  base.push({ key: "status", label: "Status" });
-  base.push({ key: "actions", label: "" });
-  return base;
+  const cols = mappingEntries.value.map((e) => ({ key: e.id, label: e.label }));
+  cols.push({ key: "status", label: "Status" });
+  cols.push({ key: "actions", label: "" });
+  return cols;
 });
-
-function createManualId() {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
 
 function validateManualForm() {
   if (!manualForm.email || !isValidEmail(manualForm.email)) {
@@ -1138,14 +1231,19 @@ function validateManualForm() {
   if (!manualForm.nama.trim()) {
     return "Nama wajib diisi.";
   }
-  if (!manualForm.lowongan.trim()) {
-    return "Lowongan wajib diisi.";
+  for (const entry of mappingEntries.value) {
+    if (!entry.required) continue;
+    const val = manualForm[entry.placeholder];
+    if (!val?.trim()) {
+      return `${entry.label} wajib diisi karena template menggunakan [${entry.placeholder}].`;
+    }
   }
-  if (needsUsername.value && !manualForm.username.trim()) {
-    return "Username wajib diisi karena template menggunakan [username].";
-  }
-  if (needsPassword.value && !manualForm.password.trim()) {
-    return "Password wajib diisi karena template menggunakan [password].";
+  for (const entry of mappingEntries.value) {
+    if (entry.required || !needsPlaceholder(entry.placeholder)) continue;
+    const val = manualForm[entry.placeholder];
+    if (!val?.trim()) {
+      return `${entry.label} wajib diisi karena template menggunakan [${entry.placeholder}].`;
+    }
   }
   return "";
 }
@@ -1158,30 +1256,21 @@ function addManualRecipient() {
     return;
   }
 
-  manualRecipients.value.push({
+  const recipient: ManualRecipient = {
     id: createManualId(),
-    email: manualForm.email.trim(),
-    nama: manualForm.nama.trim(),
-    lowongan: manualForm.lowongan.trim(),
-    username: manualForm.username.trim(),
-    password: manualForm.password.trim(),
-    linkKonfirmasi: manualForm.linkKonfirmasi.trim(),
-    tanggalMelamar: manualForm.tanggalMelamar.trim(),
-    nomorHp: manualForm.nomorHp.trim(),
-    pesanKonfirmasi: manualForm.pesanKonfirmasi.trim(),
-    status: undefined,
-    statusLabel: undefined,
-  });
+  };
+  for (const entry of mappingEntries.value) {
+    const val = manualForm[entry.placeholder] || "";
+    (recipient as any)[entry.placeholder] = val.trim();
+  }
 
+  manualRecipients.value.push(recipient);
+
+  for (const entry of mappingEntries.value) {
+    manualForm[entry.placeholder] = "";
+  }
   manualForm.email = "";
   manualForm.nama = "";
-  manualForm.lowongan = "";
-  manualForm.username = "";
-  manualForm.password = "";
-  manualForm.linkKonfirmasi = "";
-  manualForm.tanggalMelamar = "";
-  manualForm.nomorHp = "";
-  manualForm.pesanKonfirmasi = "";
 }
 
 function removeManualRecipient(id: string) {
@@ -1204,25 +1293,18 @@ async function sendManualRecipient(recipient: ManualRecipient) {
   recipient.statusLabel = "Mengirim...";
 
   try {
+    const recipientData: Record<string, any> = {};
+    for (const entry of mappingEntries.value) {
+      recipientData[entry.placeholder] = recipient[entry.placeholder] || undefined;
+    }
+
     const payload = {
       name: `Manual-${new Date().toLocaleString("id-ID")}`,
       templateId: selectedTemplateId.value || undefined,
       subject: templateSubject.value || undefined,
       body: templateBody.value,
       testEmail: testEmail.value || undefined,
-      recipients: [
-        {
-          email: recipient.email,
-          nama: recipient.nama,
-          lowongan: recipient.lowongan,
-          username: recipient.username || undefined,
-          password: recipient.password || undefined,
-          linkKonfirmasi: recipient.linkKonfirmasi || undefined,
-          tanggalMelamar: recipient.tanggalMelamar || undefined,
-          nomorHp: recipient.nomorHp || undefined,
-          pesanKonfirmasi: recipient.pesanKonfirmasi || undefined,
-        },
-      ],
+      recipients: [recipientData],
     };
 
     const res: any = await $fetch("/api/admin/email-blast", {
@@ -1299,6 +1381,79 @@ const { data: templatesResponse, refresh: refreshTemplates } = await useAsyncDat
   () => $fetch("/api/admin/email-templates"),
   { default: () => ({ data: [] }) }
 );
+
+const { data: mappingConfigsResponse, refresh: refreshMappingConfigs } = await useAsyncData(
+  "mapping-configs",
+  () => $fetch("/api/admin/mapping-configs"),
+  { default: () => ({ data: [] }) }
+);
+
+const mappingConfigs = computed(() => (mappingConfigsResponse.value as any)?.data ?? []);
+const mappingConfigOptions = computed(() =>
+  mappingConfigs.value.map((item: any) => ({ label: item.name, value: item.id }))
+);
+
+const loadedMappingId = ref<string | null>(null);
+const saveMappingModalOpen = ref(false);
+const saveMappingName = ref("");
+
+function openSaveMappingDialog() {
+  saveMappingName.value = "";
+  saveMappingModalOpen.value = true;
+}
+
+async function saveMapping() {
+  if (!saveMappingName.value.trim()) return;
+  try {
+    await $fetch("/api/admin/mapping-configs", {
+      method: "POST",
+      body: {
+        name: saveMappingName.value.trim(),
+        mappings: mappingEntries.value.map((entry) => ({ ...entry })),
+        columnsSnapshot: [...columns.value],
+      },
+    });
+    saveMappingModalOpen.value = false;
+    saveMappingName.value = "";
+    await refreshMappingConfigs();
+    toast.add({ title: "Mapping disimpan", color: "green" });
+  } catch (error: any) {
+    toast.add({
+      title: "Gagal menyimpan mapping",
+      description: error?.data?.error?.message || "Coba lagi.",
+      color: "red",
+    });
+  }
+}
+
+async function loadMapping() {
+  if (!loadedMappingId.value) return;
+  const config = mappingConfigs.value.find((item: any) => item.id === loadedMappingId.value);
+  if (!config) return;
+
+  isSettingMapping = true;
+  mappingEntries.value = config.mappings.map((m: any) => ({ ...m }));
+  isSettingMapping = false;
+  mappingTouched.value = true;
+
+  toast.add({ title: `Mapping "${config.name}" dimuat`, color: "green" });
+}
+
+async function deleteMappingConfig() {
+  if (!loadedMappingId.value) return;
+  const config = mappingConfigs.value.find((item: any) => item.id === loadedMappingId.value);
+  if (!config) return;
+  if (!window.confirm(`Hapus mapping "${config.name}"?`)) return;
+
+  try {
+    await $fetch(`/api/admin/mapping-configs/${loadedMappingId.value}`, { method: "DELETE" });
+    loadedMappingId.value = null;
+    await refreshMappingConfigs();
+    toast.add({ title: "Mapping dihapus", color: "green" });
+  } catch (error: any) {
+    toast.add({ title: "Gagal menghapus mapping", color: "red" });
+  }
+}
 
 const templates = computed(() => (templatesResponse.value as any)?.data ?? []);
 const templateOptions = computed(() =>
@@ -1408,8 +1563,8 @@ function formatDateTime(dateStr: string) {
 
 async function fetchCampaigns() {
   try {
-    const res: any = await $fetch("/api/admin/email-blast/campaigns?limit=10");
-    campaigns.value = res?.data?.recent || [];
+    const res: any = await $fetch("/api/admin/email-blast/campaigns?pageSize=10");
+    campaigns.value = res?.data?.campaigns || res?.data?.recent || [];
     if (res?.data?.active) {
       activeCampaign.value = res.data.active;
     }
@@ -1420,7 +1575,7 @@ async function fetchCampaigns() {
 
 const canSend = computed(() => {
   if (rows.value.length === 0) return false;
-  if (!mappingKeys.value.email || !mappingKeys.value.name || !mappingKeys.value.position) return false;
+  if (!mappingKeys.value.email || !mappingKeys.value["nama-kandidat"]) return false;
   if (!templateBody.value) return false;
   if (!campaignName.value.trim()) return false;
   if (activeCampaign.value?.status === "running") return false;
@@ -1440,17 +1595,10 @@ const previewEmail = computed(() => {
   if (!first) {
     return { subject: "-", body: "-" };
   }
-  const payload = {
-    "nama-kandidat": first.nama,
-    lowongan: first.lowongan,
-    username: first.username || "",
-    password: first.password || "",
-    email: first.email || "",
-    "link-konfirmasi": first.linkKonfirmasi || "",
-    "tanggal-melamar": first.tanggalMelamar || "",
-    "nomor-hp": first.nomorHp || "",
-    "pesan-konfirmasi": first.pesanKonfirmasi || "",
-  };
+  const payload: Record<string, string> = {};
+  for (const entry of mappingEntries.value) {
+    payload[entry.placeholder] = first[entry.placeholder] || "";
+  }
   const subjectText = applyPlaceholders(templateSubject.value || "Email Informasi", payload);
   const bodyText = applyPlaceholders(templateBody.value || "", payload);
   return { subject: subjectText, body: bodyText };
@@ -1479,17 +1627,7 @@ async function sendBlast() {
       subject: templateSubject.value || undefined,
       body: templateBody.value,
       testEmail: testEmail.value || undefined,
-      recipients: validRecipients.value.map((r) => ({
-        email: r.email,
-        nama: r.nama,
-        lowongan: r.lowongan,
-        username: r.username || undefined,
-        password: r.password || undefined,
-        linkKonfirmasi: r.linkKonfirmasi || undefined,
-        tanggalMelamar: r.tanggalMelamar || undefined,
-        nomorHp: r.nomorHp || undefined,
-        pesanKonfirmasi: r.pesanKonfirmasi || undefined,
-      })),
+      recipients: validRecipients.value.map((r) => ({ ...r })),
     };
 
     const res: any = await $fetch("/api/admin/email-blast", {
@@ -1592,6 +1730,7 @@ function dismissCampaign() {
 }
 
 onMounted(() => {
+  loadFromLocalStorage();
   fetchCampaigns();
   checkActiveCampaign().then(() => {
     if (activeCampaign.value?.status === "running") {
@@ -1602,5 +1741,128 @@ onMounted(() => {
 
 onUnmounted(() => {
   stopPolling();
+});
+
+const logModalOpen = ref(false);
+const logCampaign = ref<any>(null);
+const logItems = ref<any[]>([]);
+const logLoading = ref(false);
+const logExportLoading = ref(false);
+const logStatusFilter = ref("all");
+const logSearch = ref("");
+const logPage = ref(1);
+const logPageSize = ref(20);
+const logTotal = ref(0);
+const logSentCount = ref(0);
+const logFailedCount = ref(0);
+
+const logStatusTabs = [
+  { label: "Semua", value: "all" },
+  { label: "Terkirim", value: "sent" },
+  { label: "Gagal", value: "failed" },
+];
+
+const logColumns = [
+  { key: "recipientEmail", label: "Email" },
+  { key: "recipientName", label: "Nama" },
+  { key: "recipientData.lowongan", label: "Lowongan" },
+  { key: "status", label: "Status" },
+  { key: "error", label: "Error" },
+  { key: "waktu", label: "Waktu" },
+];
+
+function openLogDetail(campaign: any) {
+  logCampaign.value = campaign;
+  logStatusFilter.value = "all";
+  logSearch.value = "";
+  logPage.value = 1;
+  logModalOpen.value = true;
+  fetchLogs();
+}
+
+function setLogFilter(status: string) {
+  logStatusFilter.value = status;
+  logPage.value = 1;
+  fetchLogs();
+}
+
+async function fetchLogs() {
+  if (!logCampaign.value?.campaignId) return;
+  logLoading.value = true;
+  try {
+    const params: Record<string, any> = {
+      campaignId: logCampaign.value.campaignId,
+      page: logPage.value,
+      pageSize: logPageSize.value,
+    };
+    if (logStatusFilter.value !== "all") {
+      params.status = logStatusFilter.value;
+    }
+    if (logSearch.value.trim()) {
+      params.q = logSearch.value.trim();
+    }
+    const res: any = await $fetch("/api/admin/email-blast/logs", { params });
+    logItems.value = res?.data?.items || [];
+    logTotal.value = res?.data?.total || 0;
+    logSentCount.value = res?.data?.sentCount || 0;
+    logFailedCount.value = res?.data?.failedCount || 0;
+  } catch {
+    logItems.value = [];
+    logTotal.value = 0;
+  } finally {
+    logLoading.value = false;
+  }
+}
+
+async function exportLogCSV() {
+  if (!logCampaign.value?.campaignId) return;
+  logExportLoading.value = true;
+  try {
+    const params: Record<string, any> = {
+      campaignId: logCampaign.value.campaignId,
+    };
+    if (logStatusFilter.value !== "all") {
+      params.status = logStatusFilter.value;
+    }
+    const res: any = await $fetch("/api/admin/email-blast/logs/export", { params });
+    const csv = res?.data?.csv;
+    const filename = res?.data?.filename || "email_logs.csv";
+
+    if (csv) {
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.add({
+        title: "Export berhasil",
+        description: `${res?.data?.total || 0} data log diunduh sebagai CSV.`,
+        color: "green",
+      });
+    }
+  } catch {
+    toast.add({
+      title: "Export gagal",
+      description: "Gagal mengekspor log email. Coba lagi.",
+      color: "red",
+    });
+  } finally {
+    logExportLoading.value = false;
+  }
+}
+
+let logSearchTimer: ReturnType<typeof setTimeout> | null = null;
+watch(logSearch, () => {
+  if (logSearchTimer) clearTimeout(logSearchTimer);
+  logSearchTimer = setTimeout(() => {
+    logPage.value = 1;
+    fetchLogs();
+  }, 400);
+});
+
+watch(logPage, () => {
+  if (logModalOpen.value) fetchLogs();
 });
 </script>

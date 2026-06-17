@@ -1,18 +1,45 @@
 import { z } from "h3-zod";
 
+const AlamatSchema = z.object({
+  jalan: z.string(),
+  kelurahan: z.string().optional(),
+  kecamatan: z.string().optional(),
+  kota: z.string(),
+  provinsi: z.string(),
+  kodePos: z.string().optional(),
+});
+
+const KontakDaruratSchema = z.object({
+  nama: z.string(),
+  hubungan: z.string(),
+  telepon: z.string(),
+});
+
+const AsuransiSchema = z.object({
+  jenis: z.enum(["BPJS", "umum", "asuransi", "gratis"]),
+  nomor: z.string().optional(),
+});
+
 const PasienSchema = z.object({
   nama: z.string().min(3),
   umur: z.coerce.number().min(0),
+  jenis_kelamin: z.enum(["L", "P"]).optional(),
+  tgl_lahir: z.string().optional(),
+  nik: z.string().optional(),
+  noRM: z.string().optional(),
+  alamat: AlamatSchema.optional(),
   address: z.string().min(4),
   notlp: z.string().min(8),
-  gender: z.string().optional(),
-  birthDate: z.string().optional(),
-  emergencyContact: z.string().optional(),
-  allergies: z.array(z.string()).optional(),
-  dokter: z.string().min(1), // ID dokter yang berelasi
-  poli: z.string().min(1), // Nama poli yang berelasi
+  telepon: z.string().optional(),
+  email: z.string().email().optional(),
+  gol_darah: z.enum(["A", "B", "AB", "O"]).optional(),
+  asuransi: AsuransiSchema.optional(),
   jenisAsuransi: z.string().min(2),
-  rekamedis: z.string().min(1), // ID rekamedis yang berelasi
+  alergi: z.array(z.string()).optional(),
+  kontak_darurat: KontakDaruratSchema.optional(),
+  dokter: z.string().optional(),
+  poli: z.string().min(1),
+  rekamedis: z.string().optional(),
   userId: z.string().optional(),
   fotoProfil: z
     .string()

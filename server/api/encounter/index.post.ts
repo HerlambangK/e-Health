@@ -33,11 +33,15 @@ export default defineEventHandler(async (event) => {
 
   if (body.buatAntrian !== false) {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const startOfDay = new Date(today);
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
     const count = await Antrian.countDocuments({
       poliId: encounter.poliId,
       tanggal: {
-        $gte: new Date(today.setHours(0, 0, 0, 0)),
-        $lt: new Date(today.setHours(23, 59, 59, 999)),
+        $gte: startOfDay,
+        $lt: endOfDay,
       },
     });
 

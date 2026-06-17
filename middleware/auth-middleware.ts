@@ -23,6 +23,7 @@ export default defineNuxtRouteMiddleware((to) => {
       nurse: "/patient-record",
       receptionist: "/patient-record",
       billing: "/patient-record/billing",
+      pharmacist: "/farmasi",
       patient: "/dashboard",
     };
 

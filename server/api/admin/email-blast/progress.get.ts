@@ -46,7 +46,6 @@ function formatCampaign(campaign: any) {
     progressPercent: progress,
     elapsedSeconds,
     estimatedRemainingSeconds,
-    failedList: campaign.failedList?.slice(-10) || [],
     testEmail: campaign.testEmail || null,
     startedAt: campaign.createdAt,
     completedAt: campaign.completedAt || null,

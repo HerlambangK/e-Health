@@ -11,7 +11,6 @@ export interface IEmailCampaign extends Document {
   failed: number;
   skipped: number;
   nextIndex: number;
-  failedList: Array<{ email: string; error: string }>;
   status: "running" | "done" | "cancelled";
   completedAt?: Date;
   createdAt: Date;
@@ -30,12 +29,6 @@ const EmailCampaignSchema = new Schema<IEmailCampaign>(
     failed: { type: Number, default: 0 },
     skipped: { type: Number, default: 0 },
     nextIndex: { type: Number, default: 0 },
-    failedList: [
-      {
-        email: String,
-        error: String,
-      },
-    ],
     status: {
       type: String,
       enum: ["running", "done", "cancelled"],

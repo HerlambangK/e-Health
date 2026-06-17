@@ -1,9 +1,21 @@
 import SyncLog from "~/server/models/SyncLog";
 import { processSyncJob } from "~/server/jobs/satusehat.job";
+import { processQueue } from "~/server/jobs/queue";
 
 export default defineTask({
   meta: { name: "satusehat-sync", description: "Sync pending data ke SatuSehat" },
   async run() {
+    let queueProcessed = 0;
+
+    for (let i = 0; i < 10; i++) {
+      const job = await processQueue();
+      if (job) {
+        queueProcessed++;
+      } else {
+        break;
+      }
+    }
+
     const pending = await SyncLog.find({
       sistem: "satusehat",
       status: "pending",
@@ -22,6 +34,8 @@ export default defineTask({
       });
     }
 
-    return { result: `Processed ${pending.length} pending syncs` };
+    return {
+      result: `Processed ${queueProcessed} queue jobs, ${pending.length} pending syncs`,
+    };
   },
 });

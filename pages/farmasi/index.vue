@@ -65,6 +65,7 @@
 const resepList = ref<any[]>([]);
 
 onMounted(async () => {
-  resepList.value = await $fetch("/api/resep/antrian-farmasi");
+  const res = await $fetch<{ data: any[] }>("/api/resep/antrian-farmasi");
+  resepList.value = res.data || [];
 });
 </script>

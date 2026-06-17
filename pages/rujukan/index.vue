@@ -42,12 +42,13 @@ const filterStatus = ref("");
 const rujukanList = ref<any[]>([]);
 
 async function loadData() {
-  rujukanList.value = await $fetch("/api/rujukan", {
+  const res = await $fetch<{ data: any[] }>("/api/rujukan", {
     params: {
       ...(filterTipe.value ? { tipe: filterTipe.value } : {}),
       ...(filterStatus.value ? { status: filterStatus.value } : {}),
     },
   });
+  rujukanList.value = res.data || [];
 }
 
 watch([filterTipe, filterStatus], loadData);

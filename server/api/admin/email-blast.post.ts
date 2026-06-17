@@ -4,6 +4,7 @@ import { sendApiError, sendSuccess } from "~/server/utils/response";
 import { createTransporter, getSenderAddress } from "~/server/utils/mailer";
 import { findTemplate } from "~/server/utils/emailTemplates";
 import EmailCampaign from "~/server/models/EmailCampaign";
+import EmailLog from "~/server/models/EmailLog";
 
 function applyPlaceholders(value: string, payload: Record<string, string>) {
   let output = value;
@@ -13,9 +14,13 @@ function applyPlaceholders(value: string, payload: Record<string, string>) {
   return output;
 }
 
-const PARALLEL = 10;
-const RATE_PER_SEC = 2;
+const PARALLEL = 3;
 const DB_INTERVAL = 10;
+
+function isRateLimitError(error: any): boolean {
+  const msg = String(error?.message || error?.response || "").toLowerCase();
+  return /421|450|rate.?limit|too.?many|try.?again/i.test(msg);
+}
 
 async function runBlast(campaignId: string, recipients: any[]) {
   const campaign = await EmailCampaign.findById(campaignId);
@@ -27,8 +32,20 @@ async function runBlast(campaignId: string, recipients: any[]) {
   let batchCount = 0;
   let accSent = 0;
   let accFailed = 0;
-  const accFailList: Array<{ email: string; error: string }> = [];
   let accNextIndex = 0;
+  let consecutiveRateLimited = 0;
+  const logBatch: Array<{
+    campaignId: string;
+    recipientEmail: string;
+    recipientName: string;
+    recipientData: Record<string, any>;
+    subject: string;
+    body: string;
+    status: "sent" | "failed";
+    error: string | null;
+    sentAt: Date | null;
+    failedAt: Date | null;
+  }> = [];
 
   for (let i = 0; i < recipients.length; i += PARALLEL) {
     if (batchCount % 5 === 0) {
@@ -37,25 +54,18 @@ async function runBlast(campaignId: string, recipients: any[]) {
     }
 
     const batch = recipients.slice(i, i + PARALLEL);
-    const batchStart = Date.now();
+    const now = new Date();
 
-    const results = await Promise.allSettled(
-      batch.map(async (recipient) => {
-        const payload = {
-          "nama-kandidat": recipient.nama ?? "",
-          lowongan: recipient.lowongan ?? "",
-          username: recipient.username ?? "",
-          password: recipient.password ?? "",
-          email: recipient.email ?? "",
-          "link-konfirmasi": recipient.linkKonfirmasi ?? "",
-          "tanggal-melamar": recipient.tanggalMelamar ?? "",
-          "nomor-hp": recipient.nomorHp ?? "",
-          "pesan-konfirmasi": recipient.pesanKonfirmasi ?? "",
-        };
+      const results = await Promise.allSettled(
+        batch.map(async (recipient: Record<string, string>) => {
+          const payload: Record<string, string> = {};
+          for (const [key, val] of Object.entries(recipient)) {
+            payload[key] = val ?? "";
+          }
 
-        const resolvedSubject = applyPlaceholders(templateSubject || "Email Informasi", payload);
-        const resolvedBody = applyPlaceholders(templateBody, payload);
-        const target = testEmail || recipient.email;
+          const resolvedSubject = applyPlaceholders(templateSubject || "Email Informasi", payload);
+          const resolvedBody = applyPlaceholders(templateBody, payload);
+          const target = testEmail || payload.email;
 
         await transporter.sendMail({
           from,
@@ -65,27 +75,86 @@ async function runBlast(campaignId: string, recipients: any[]) {
           html: resolvedBody.replaceAll("\n", "<br />"),
         });
 
-        return recipient.email;
+        return { recipient, resolvedSubject, resolvedBody };
       })
     );
 
-    const batchElapsed = Date.now() - batchStart;
     let batchSent = 0;
     let batchFailed = 0;
 
     for (let j = 0; j < results.length; j++) {
       const result = results[j];
+      const recipient = batch[j];
+      const recipientData: Record<string, any> = {};
+      for (const [key, val] of Object.entries(recipient)) {
+        if (key !== "email") {
+          recipientData[key] = val ?? "";
+        }
+      }
+
       if (result.status === "fulfilled") {
         batchSent++;
+        logBatch.push({
+          campaignId,
+          recipientEmail: recipient.email ?? "",
+          recipientName: recipient.nama ?? "",
+          recipientData,
+          subject: result.value.resolvedSubject,
+          body: result.value.resolvedBody,
+          status: "sent",
+          error: null,
+          sentAt: now,
+          failedAt: null,
+        });
       } else {
         batchFailed++;
-        accFailList.push({
-          email: batch[j].email ?? "",
+        const payload: Record<string, string> = {};
+        for (const [key, val] of Object.entries(recipient)) {
+          payload[key] = val ?? "";
+        }
+        const resolvedSubject = applyPlaceholders(templateSubject || "Email Informasi", payload);
+        const resolvedBody = applyPlaceholders(templateBody, payload);
+        logBatch.push({
+          campaignId,
+          recipientEmail: recipient.email ?? "",
+          recipientName: recipient.nama ?? "",
+          recipientData,
+          subject: resolvedSubject,
+          body: resolvedBody,
+          status: "failed",
           error: result.reason?.message || "unknown error",
+          sentAt: null,
+          failedAt: now,
         });
       }
     }
 
+    if (batchSent === 0 && batchFailed > 0) {
+      const allRateLimited = results.every(
+        (r) => r.status === "rejected" && isRateLimitError(r.reason)
+      );
+      if (allRateLimited) {
+        consecutiveRateLimited++;
+        const backoff = Math.min(30000 * consecutiveRateLimited, 300000);
+        console.warn(
+          `[EmailBlast] Rate limited at ${campaign._id}, sent ${accSent}/${recipients.length}, backing off ${backoff / 1000}s`
+        );
+        await EmailCampaign.findByIdAndUpdate(campaignId, {
+          $inc: { sent: accSent, failed: accFailed, nextIndex: accNextIndex },
+        });
+        if (logBatch.length > 0) {
+          await EmailLog.insertMany(logBatch.splice(0));
+        }
+        accSent = 0;
+        accFailed = 0;
+        accNextIndex = 0;
+        await new Promise((r) => setTimeout(r, backoff));
+        i -= PARALLEL;
+        continue;
+      }
+    }
+
+    consecutiveRateLimited = 0;
     accSent += batchSent;
     accFailed += batchFailed;
     accNextIndex += PARALLEL;
@@ -94,27 +163,23 @@ async function runBlast(campaignId: string, recipients: any[]) {
     if (batchCount % DB_INTERVAL === 0 || i + PARALLEL >= recipients.length) {
       await EmailCampaign.findByIdAndUpdate(campaignId, {
         $inc: { sent: accSent, failed: accFailed, nextIndex: accNextIndex },
-        $push: { failedList: { $each: accFailList.splice(0) } },
       });
+      if (logBatch.length > 0) {
+        await EmailLog.insertMany(logBatch.splice(0));
+      }
       accSent = 0;
       accFailed = 0;
       accNextIndex = 0;
     }
-
-    if (i + PARALLEL < recipients.length) {
-      const minBatchTime = (PARALLEL / RATE_PER_SEC) * 1000;
-      const delay = Math.max(0, minBatchTime - batchElapsed);
-      if (delay > 0) {
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
   }
 
-  if (accSent > 0 || accFailed > 0 || accFailList.length > 0) {
+  if (accSent > 0 || accFailed > 0) {
     await EmailCampaign.findByIdAndUpdate(campaignId, {
       $inc: { sent: accSent, failed: accFailed, nextIndex: accNextIndex },
-      $push: { failedList: { $each: accFailList } },
     });
+  }
+  if (logBatch.length > 0) {
+    await EmailLog.insertMany(logBatch);
   }
 
   await EmailCampaign.findByIdAndUpdate(campaignId, {
@@ -134,17 +199,7 @@ export default defineEventHandler(async (event) => {
       subject?: string;
       body: string;
       testEmail?: string;
-      recipients: Array<{
-        email: string;
-        nama: string;
-        lowongan: string;
-        username?: string;
-        password?: string;
-        linkKonfirmasi?: string;
-        tanggalMelamar?: string;
-        nomorHp?: string;
-        pesanKonfirmasi?: string;
-      }>;
+      recipients: Array<Record<string, string>>;
     };
 
     const active = await EmailCampaign.findOne({ status: "running" });
@@ -174,10 +229,8 @@ export default defineEventHandler(async (event) => {
 
     const from = getSenderAddress();
 
-    const validRecipients = recipients.filter((r) => {
+    const validRecipients = recipients.filter((r: any) => {
       if (!r.email) return false;
-      if (bodyTemplate.includes("[username]") && !r.username) return false;
-      if (bodyTemplate.includes("[password]") && !r.password) return false;
       return true;
     });
 
@@ -196,7 +249,6 @@ export default defineEventHandler(async (event) => {
       failed: 0,
       skipped: recipients.length - validRecipients.length,
       nextIndex: 0,
-      failedList: [],
       status: "running",
     });
 

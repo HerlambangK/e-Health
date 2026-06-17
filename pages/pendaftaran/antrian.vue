@@ -90,16 +90,19 @@ async function panggil(id: string) {
 }
 
 async function loadAntrian() {
-  antrianList.value = await $fetch("/api/antrian", {
+  const antrianRes = await $fetch<{ data: any[] }>("/api/antrian", {
     params: { poliId: selectedPoli.value || undefined },
   });
-  displayAntrian.value = await $fetch("/api/antrian/display", {
+  antrianList.value = antrianRes.data || [];
+  const displayRes = await $fetch<{ data: any[] }>("/api/antrian/display", {
     params: { poliId: selectedPoli.value || undefined },
   });
+  displayAntrian.value = displayRes.data || [];
 }
 
 onMounted(async () => {
-  poliList.value = await $fetch("/api/poli");
+  const poliRes = await $fetch<{ data: any[] }>("/api/poli");
+  poliList.value = poliRes.data || [];
   await loadAntrian();
 });
 </script>

@@ -72,7 +72,8 @@ async function konfirmasi() {
 onMounted(async () => {
   const resepId = route.query.resepId as string;
   if (resepId) {
-    resep.value = await $fetch(`/api/resep/${resepId}`);
+    const res = await $fetch<{ data: any }>(`/api/resep/${resepId}`);
+    resep.value = res.data;
     dispenseItems.value = resep.value.items.map(() => ({ jumlahDiberikan: 1, noBatch: "" }));
   }
 });

@@ -5,7 +5,7 @@ import { enqueue } from "~/server/jobs/queue";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
-  const ranapId = getRouterParam(event, "id") || body.ranapId;
+  const ranapId = body.ranapId;
 
   const ranap = await Ranap.findById(ranapId);
   if (!ranap) throw createError({ statusCode: 404, message: "Ranap tidak ditemukan" });

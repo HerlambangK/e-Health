@@ -38,6 +38,7 @@ const route = useRoute();
 const ranap = ref<any>(null);
 
 onMounted(async () => {
-  ranap.value = await $fetch(`/api/ranap/${route.params.ranapId}`);
+  const res = await $fetch<{ data: any }>(`/api/ranap/${route.params.ranapId}`);
+  ranap.value = res.data;
 });
 </script>

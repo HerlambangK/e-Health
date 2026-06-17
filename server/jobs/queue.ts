@@ -53,14 +53,14 @@ export async function enqueue(
   });
 }
 
-export async function processQueue(): Promise<void> {
+export async function processQueue(): Promise<IJob | null> {
   const job = await JobModel.findOneAndUpdate(
     { status: "pending", runAt: { $lte: new Date() } },
     { status: "processing", $inc: { attempts: 1 } },
     { sort: { priority: 1, createdAt: 1 }, new: true }
   );
 
-  if (!job) return;
+  if (!job) return null;
 
   try {
     if (handlers[job.type]) {
@@ -75,4 +75,6 @@ export async function processQueue(): Promise<void> {
       runAt: new Date(Date.now() + Math.pow(2, job.attempts) * 30_000),
     });
   }
+
+  return job;
 }

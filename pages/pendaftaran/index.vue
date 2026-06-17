@@ -71,7 +71,12 @@ const filteredPatients = computed(() => {
 });
 
 onMounted(async () => {
-  pasienList.value = await $fetch("/api/pasien");
+  try {
+    const res = await $fetch<{ data: any[] }>("/api/pasien");
+    pasienList.value = res.data || [];
+  } catch (err) {
+    console.error("Gagal memuat daftar pasien:", err);
+  }
 });
 
 function selectPatient(patient: any) {
