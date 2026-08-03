@@ -400,7 +400,45 @@
                       {{ pal.label }}
                     </span>
                   </label>
+                  <label class="flex cursor-pointer items-center gap-1.5 text-sm text-gray-700">
+                    <UCheckbox :model-value="selectedPalette === 'custom'" @update:model-value="selectedPalette = 'custom'" />
+                    <span class="inline-flex items-center gap-1.5">
+                      <span class="h-3 w-3 rounded-full" :style="{ backgroundColor: effectivePaletteId }"></span>
+                      Custom
+                    </span>
+                  </label>
                 </div>
+                <div v-if="selectedPalette === 'custom'" class="mt-2 flex items-center gap-2">
+                  <input
+                    v-model="customColor"
+                    type="color"
+                    class="h-8 w-12 cursor-pointer rounded border border-gray-200 bg-transparent p-0"
+                  />
+                  <UInput v-model="customColor" placeholder="#3b82f6" class="w-36" />
+                </div>
+              </UFormGroup>
+
+              <UFormGroup label="Isi Konten (berlaku untuk semua template)">
+                <div class="grid grid-cols-2 gap-2">
+                  <div v-for="f in TEMPLATE_FIELDS" :key="f.placeholder">
+                    <label class="mb-1 block text-xs text-gray-500">{{ f.label }}</label>
+                    <UTextarea
+                      v-if="f.type === 'textarea'"
+                      v-model="templateFieldValues[f.placeholder]"
+                      rows="2"
+                      :placeholder="`[${f.placeholder}]`"
+                    />
+                    <UInput
+                      v-else
+                      :type="f.type"
+                      v-model="templateFieldValues[f.placeholder]"
+                      :placeholder="`[${f.placeholder}]`"
+                    />
+                  </div>
+                </div>
+                <p class="mt-2 text-xs text-gray-400">
+                  Kosongkan untuk memakai data Excel. Nilai yang diisi akan menimpa data Excel dan langsung tampil di preview.
+                </p>
               </UFormGroup>
 
               <UFormGroup label="Nama Template">
@@ -790,7 +828,7 @@
 
 <script setup lang="ts">
 import * as XLSX from "xlsx";
-import { EMAIL_PALETTES, applyPlaceholders, isHtmlBody, applyPalette } from "~/utils/emailHtml";
+import { EMAIL_PALETTES, applyPlaceholders, isHtmlBody, applyPalette, isHexColor } from "~/utils/emailHtml";
 
 definePageMeta({
   layout: "default",
@@ -1534,6 +1572,50 @@ const templateSubject = ref("");
 const templateBody = ref("");
 
 const selectedPalette = ref("hijau");
+const customColor = ref("#3b82f6");
+
+const effectivePaletteId = computed(() => {
+  if (selectedPalette.value === "custom") {
+    const hex = (customColor.value || "").trim();
+    return isHexColor(hex) ? hex : "#3b82f6";
+  }
+  return selectedPalette.value;
+});
+
+const TEMPLATE_FIELDS = [
+  { placeholder: "tanggal-tes", label: "Tanggal Tes", type: "date" },
+  { placeholder: "waktu-tes", label: "Waktu Tes", type: "time" },
+  { placeholder: "media-tes", label: "Media Tes", type: "text" },
+  { placeholder: "link-zoom", label: "Tautan Zoom", type: "text" },
+  { placeholder: "id-zoom", label: "ID Rapat Zoom", type: "text" },
+  { placeholder: "password-zoom", label: "Kode Sandi Zoom", type: "text" },
+  { placeholder: "link-konfirmasi", label: "Tautan Konfirmasi", type: "text" },
+  { placeholder: "isi-pengumuman", label: "Isi Pengumuman", type: "textarea" },
+] as const;
+
+const templateFieldValues = ref<Record<string, string>>({});
+
+const effectiveFieldValues = computed<Record<string, string>>(() => {
+  const out: Record<string, string> = {};
+  for (const f of TEMPLATE_FIELDS) {
+    const raw = (templateFieldValues.value[f.placeholder] || "").trim();
+    if (!raw) continue;
+    if (f.type === "date") {
+      const d = new Date(`${raw}T00:00:00`);
+      if (!isNaN(d.getTime())) {
+        out[f.placeholder] = d.toLocaleDateString("id-ID", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        continue;
+      }
+    }
+    out[f.placeholder] = raw;
+  }
+  return out;
+});
 
 const SAMPLE_VALUES: Record<string, string> = {
   "nama-kandidat": "Budi Santoso",
@@ -1564,7 +1646,7 @@ const templatePreviewPayload = computed<Record<string, string>>(() => {
     const val = first?.[ph];
     payload[ph] = val || SAMPLE_VALUES[ph] || `[${ph}]`;
   }
-  return payload;
+  return { ...payload, ...effectiveFieldValues.value };
 });
 
 const templatePreview = computed(() => {
@@ -1572,7 +1654,7 @@ const templatePreview = computed(() => {
   const subject = applyPlaceholders(templateSubject.value || "Email Informasi", payload);
   const raw = applyPlaceholders(templateBody.value || "", payload);
   const html = isHtmlBody(raw)
-    ? applyPalette(applyPlaceholders(templateBody.value || "", payload, true), selectedPalette.value)
+    ? applyPalette(applyPlaceholders(templateBody.value || "", payload, true), effectivePaletteId.value)
     : "";
   return { subject, body: raw, html };
 });
@@ -1704,10 +1786,11 @@ const previewEmail = computed(() => {
   for (const entry of mappingEntries.value) {
     payload[entry.placeholder] = first[entry.placeholder] || "";
   }
-  const subjectText = applyPlaceholders(templateSubject.value || "Email Informasi", payload);
-  const bodyText = applyPlaceholders(templateBody.value || "", payload);
+  const merged = { ...payload, ...effectiveFieldValues.value };
+  const subjectText = applyPlaceholders(templateSubject.value || "Email Informasi", merged);
+  const bodyText = applyPlaceholders(templateBody.value || "", merged);
   const html = isHtmlBody(bodyText)
-    ? applyPalette(applyPlaceholders(templateBody.value || "", payload, true), selectedPalette.value)
+    ? applyPalette(applyPlaceholders(templateBody.value || "", merged, true), effectivePaletteId.value)
     : "";
   return { subject: subjectText, body: bodyText, html };
 });
@@ -1736,8 +1819,8 @@ async function sendBlast() {
       body: templateBody.value,
       testEmail: testEmail.value || undefined,
       noreply: noreply.value,
-      palette: selectedPalette.value || undefined,
-      recipients: validRecipients.value.map((r) => ({ ...r })),
+      palette: effectivePaletteId.value || undefined,
+      recipients: validRecipients.value.map((r) => ({ ...r, ...effectiveFieldValues.value })),
     };
 
     const res: any = await $fetch("/api/admin/email-blast", {

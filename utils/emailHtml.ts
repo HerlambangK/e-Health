@@ -25,16 +25,16 @@ export const EMAIL_PALETTES: EmailPalette[] = [
   {
     id: "biru",
     label: "Biru",
-    swatch: "#2563eb",
+    swatch: "#3b82f6",
     colors: {
-      primary: "#2563eb",
-      primaryDark: "#1d4ed8",
-      accent: "#3b82f6",
+      primary: "#3b82f6",
+      primaryDark: "#2563eb",
+      accent: "#60a5fa",
       bgSoft: "#eff6ff",
       border: "#dbeafe",
       textMuted: "#64748b",
       buttonText: "#ffffff",
-      headerBg: "#1d4ed8",
+      headerBg: "#2563eb",
       footerBg: "#f8fafc",
     },
   },
@@ -89,7 +89,61 @@ export const EMAIL_PALETTES: EmailPalette[] = [
 ];
 
 export function getPalette(id?: string): EmailPalette {
+  if (isHexColor(id)) return buildPaletteFromHex(id as string);
   return EMAIL_PALETTES.find((p) => p.id === id) || EMAIL_PALETTES[0];
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  let h = String(hex || "").trim().replace(/^#/, "");
+  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return [59, 130, 246];
+  const n = parseInt(h, 16);
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+
+function rgbToHex(rgb: [number, number, number]): string {
+  return (
+    "#" +
+    rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")
+  );
+}
+
+function mix(color: string, target: [number, number, number], t: number): string {
+  const c = hexToRgb(color);
+  const out = c.map((v, i) => v + (target[i] - v) * t) as [number, number, number];
+  return rgbToHex(out);
+}
+
+function luminance(color: string): number {
+  const [r, g, b] = hexToRgb(color);
+  return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+export function isHexColor(value: string): boolean {
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(value || "").trim());
+}
+
+export function buildPaletteFromHex(hex: string): EmailPalette {
+  const base = String(hex || "").trim();
+  const primary = isHexColor(base) ? base : "#3b82f6";
+  const WHITE: [number, number, number] = [255, 255, 255];
+  const BLACK: [number, number, number] = [15, 23, 42];
+  return {
+    id: primary.toLowerCase(),
+    label: "Custom",
+    swatch: primary,
+    colors: {
+      primary,
+      primaryDark: mix(primary, BLACK, 0.12),
+      accent: mix(primary, WHITE, 0.15),
+      bgSoft: mix(primary, WHITE, 0.92),
+      border: mix(primary, WHITE, 0.78),
+      textMuted: "#64748b",
+      buttonText: luminance(primary) > 0.6 ? "#0f172a" : "#ffffff",
+      headerBg: mix(primary, BLACK, 0.12),
+      footerBg: "#f8fafc",
+    },
+  };
 }
 
 export function escapeHtml(value: string): string {
