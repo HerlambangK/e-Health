@@ -376,6 +376,25 @@
                   value-attribute="value"
                 />
               </UFormGroup>
+
+              <UFormGroup label="Pilih Warna">
+                <div class="flex flex-wrap gap-3">
+                  <label
+                    v-for="pal in EMAIL_PALETTES"
+                    :key="pal.id"
+                    class="flex cursor-pointer items-center gap-1.5 text-sm text-gray-700"
+                  >
+                    <UCheckbox :model-value="selectedPalette === pal.id" @update:model-value="selectedPalette = pal.id" />
+                    <span class="inline-flex items-center gap-1.5">
+                      <span class="h-3 w-3 rounded-full" :style="{ backgroundColor: pal.swatch }"></span>
+                      {{ pal.label }}
+                    </span>
+                  </label>
+                </div>
+              </UFormGroup>
+
+              <UCheckbox v-model="showTemplatePreview" label="Tampilkan preview email" />
+
               <UFormGroup label="Nama Template">
                 <UInput v-model="templateName" placeholder="Nama template" />
               </UFormGroup>
@@ -408,6 +427,28 @@
               <UFormGroup label="Body">
                 <UTextarea v-model="templateBody" rows="12" placeholder="Tulis body template" />
               </UFormGroup>
+              <p v-if="isHtmlBody(templateBody)" class="mt-2 text-xs text-gray-400">
+                Template ini berformat HTML/CSS. Placeholder data dan warna akan diganti otomatis saat dikirim.
+              </p>
+            </div>
+          </div>
+
+          <div v-if="showTemplatePreview" class="mt-6">
+            <div class="mb-2 flex items-center justify-between">
+              <span class="text-xs font-semibold text-gray-700">Preview Email</span>
+              <span class="text-xs text-gray-400">Contoh dengan data placeholder</span>
+            </div>
+            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
+              <div class="mb-2 text-xs text-gray-500">
+                <span class="font-semibold text-gray-700">Subject:</span> {{ templatePreview.subject }}
+              </div>
+              <iframe
+                v-if="templatePreview.html"
+                :srcdoc="templatePreview.html"
+                sandbox=""
+                class="h-[520px] w-full rounded-lg border border-gray-200 bg-white"
+              ></iframe>
+              <pre v-else class="whitespace-pre-wrap rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700">{{ templatePreview.body }}</pre>
             </div>
           </div>
         </div>
@@ -555,7 +596,11 @@
                     <span class="font-semibold">Subject:</span>
                     <div class="mt-1 text-gray-700">{{ previewEmail.subject }}</div>
                   </div>
-                  <div>
+                  <div v-if="previewEmail.html">
+                    <span class="font-semibold">Tampilan Email:</span>
+                    <iframe :srcdoc="previewEmail.html" sandbox="" class="mt-1 h-[420px] w-full rounded-lg border border-gray-200"></iframe>
+                  </div>
+                  <div v-else>
                     <span class="font-semibold">Body:</span>
                     <pre class="mt-1 whitespace-pre-wrap text-gray-700">{{ previewEmail.body }}</pre>
                   </div>
@@ -737,6 +782,7 @@
 
 <script setup lang="ts">
 import * as XLSX from "xlsx";
+import { EMAIL_PALETTES, applyPlaceholders, isHtmlBody, applyPalette } from "~/utils/emailHtml";
 
 definePageMeta({
   layout: "default",
@@ -1320,6 +1366,7 @@ async function sendManualRecipient(recipient: ManualRecipient) {
       subject: templateSubject.value || undefined,
       body: templateBody.value,
       testEmail: testEmail.value || undefined,
+      palette: selectedPalette.value || undefined,
       recipients: [recipientData],
     };
 
@@ -1481,6 +1528,51 @@ const templateName = ref("");
 const templateSubject = ref("");
 const templateBody = ref("");
 
+const selectedPalette = ref("hijau");
+const showTemplatePreview = ref(false);
+
+const SAMPLE_VALUES: Record<string, string> = {
+  "nama-kandidat": "Budi Santoso",
+  lowongan: "Perawat",
+  username: "budi.santoso",
+  password: "rahasia123",
+  email: "kandidat@contoh.com",
+  "link-konfirmasi": "https://app.sejahterasehatkaryautama.co.id/",
+  "link-zoom": "https://us06web.zoom.us/j/0000000000",
+  "id-zoom": "000 0000 0000",
+  "password-zoom": "000000",
+  "tanggal-tes": "Rabu, 5 Agustus 2026",
+  "waktu-tes": "18.30 WIB - selesai",
+  "media-tes": "Zoom Meeting",
+  "tanggal-melamar": "28 Juli 2026",
+  "isi-pengumuman": "Mohon menunggu informasi selanjutnya dari tim rekrutmen kami.",
+};
+
+const templatePlaceholders = computed(() => {
+  const matches = templateBody.value.match(/\[([a-z0-9-]+)\]/gi) || [];
+  return [...new Set(matches.map((m) => m.slice(1, -1)))];
+});
+
+const templatePreviewPayload = computed<Record<string, string>>(() => {
+  const first = validRecipients.value[0];
+  const payload: Record<string, string> = {};
+  for (const ph of templatePlaceholders.value) {
+    const val = first?.[ph];
+    payload[ph] = val || SAMPLE_VALUES[ph] || `[${ph}]`;
+  }
+  return payload;
+});
+
+const templatePreview = computed(() => {
+  const payload = templatePreviewPayload.value;
+  const subject = applyPlaceholders(templateSubject.value || "Email Informasi", payload);
+  const raw = applyPlaceholders(templateBody.value || "", payload);
+  const html = isHtmlBody(raw)
+    ? applyPalette(applyPlaceholders(templateBody.value || "", payload, true), selectedPalette.value)
+    : "";
+  return { subject, body: raw, html };
+});
+
 watch(
   templates,
   (value) => {
@@ -1599,18 +1691,10 @@ const canSend = computed(() => {
   return validRecipients.value.length > 0 && !isSending.value;
 });
 
-function applyPlaceholders(value: string, payload: Record<string, string>) {
-  let output = value || "";
-  for (const [key, val] of Object.entries(payload)) {
-    output = output.replaceAll(`[${key}]`, val ?? "");
-  }
-  return output;
-}
-
 const previewEmail = computed(() => {
   const first = validRecipients.value[0];
   if (!first) {
-    return { subject: "-", body: "-" };
+    return { subject: "-", body: "-", html: "" };
   }
   const payload: Record<string, string> = {};
   for (const entry of mappingEntries.value) {
@@ -1618,7 +1702,10 @@ const previewEmail = computed(() => {
   }
   const subjectText = applyPlaceholders(templateSubject.value || "Email Informasi", payload);
   const bodyText = applyPlaceholders(templateBody.value || "", payload);
-  return { subject: subjectText, body: bodyText };
+  const html = isHtmlBody(bodyText)
+    ? applyPalette(applyPlaceholders(templateBody.value || "", payload, true), selectedPalette.value)
+    : "";
+  return { subject: subjectText, body: bodyText, html };
 });
 
 async function sendBlast() {
@@ -1645,6 +1732,7 @@ async function sendBlast() {
       body: templateBody.value,
       testEmail: testEmail.value || undefined,
       noreply: noreply.value,
+      palette: selectedPalette.value || undefined,
       recipients: validRecipients.value.map((r) => ({ ...r })),
     };
 

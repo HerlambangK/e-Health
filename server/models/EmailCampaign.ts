@@ -7,6 +7,7 @@ export interface IEmailCampaign extends Document {
   from: string;
   testEmail?: string;
   noreply: boolean;
+  paletteId?: string;
   total: number;
   sent: number;
   failed: number;
@@ -26,6 +27,7 @@ const EmailCampaignSchema = new Schema<IEmailCampaign>(
     from: { type: String, required: true },
     testEmail: String,
     noreply: { type: Boolean, default: false },
+    paletteId: String,
     total: { type: Number, default: 0 },
     sent: { type: Number, default: 0 },
     failed: { type: Number, default: 0 },

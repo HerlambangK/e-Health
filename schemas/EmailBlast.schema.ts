@@ -11,6 +11,7 @@ const EmailBlastSchema = z.object({
   body: z.string().min(1),
   testEmail: z.string().email().optional(),
   noreply: z.boolean().optional().default(false),
+  palette: z.string().optional(),
   recipients: z.array(RecipientSchema).min(1),
 });
 

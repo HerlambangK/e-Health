@@ -3,6 +3,7 @@ import EmailBlastSchema from "~/schemas/EmailBlast.schema";
 import { sendApiError, sendSuccess } from "~/server/utils/response";
 import { createTransporter, getSenderAddress, getReplyToAddress } from "~/server/utils/mailer";
 import { findTemplate } from "~/server/utils/emailTemplates";
+import { buildMailParts } from "~/utils/emailHtml";
 import EmailCampaign from "~/server/models/EmailCampaign";
 import EmailLog from "~/server/models/EmailLog";
 
@@ -68,7 +69,7 @@ async function runBlast(campaignId: string, recipients: any[]) {
           }
 
           const resolvedSubject = applyPlaceholders(templateSubject || "Email Informasi", payload);
-          const resolvedBody = applyPlaceholders(templateBody, payload);
+          const mailParts = buildMailParts(templateBody, payload, campaign.paletteId);
           const target = testEmail || payload.email;
 
         await transporter.sendMail({
@@ -76,11 +77,11 @@ async function runBlast(campaignId: string, recipients: any[]) {
           replyTo,
           to: target,
           subject: resolvedSubject,
-          text: resolvedBody,
-          html: resolvedBody.replaceAll("\n", "<br />"),
+          text: mailParts.text,
+          html: mailParts.html,
         });
 
-        return { recipient, resolvedSubject, resolvedBody };
+        return { recipient, resolvedSubject, resolvedBody: mailParts.html };
       })
     );
 
@@ -118,14 +119,14 @@ async function runBlast(campaignId: string, recipients: any[]) {
           payload[key] = val ?? "";
         }
         const resolvedSubject = applyPlaceholders(templateSubject || "Email Informasi", payload);
-        const resolvedBody = applyPlaceholders(templateBody, payload);
+        const mailParts = buildMailParts(templateBody, payload, campaign.paletteId);
         logBatch.push({
           campaignId,
           recipientEmail: recipient.email ?? "",
           recipientName: recipient["nama-kandidat"] || recipient.nama || "",
           recipientData,
           subject: resolvedSubject,
-          body: resolvedBody,
+          body: mailParts.html,
           status: "failed",
           error: result.reason?.message || "unknown error",
           sentAt: null,
@@ -198,13 +199,14 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     Validator.validateSchema(EmailBlastSchema, body);
 
-    const { name, templateId, subject, body: templateBody, recipients, testEmail, noreply } = body as {
+    const { name, templateId, subject, body: templateBody, recipients, testEmail, noreply, palette } = body as {
       name: string;
       templateId?: string;
       subject?: string;
       body: string;
       testEmail?: string;
       noreply?: boolean;
+      palette?: string;
       recipients: Array<Record<string, string>>;
     };
 
@@ -251,6 +253,7 @@ export default defineEventHandler(async (event) => {
       from,
       testEmail: testEmail || null,
       noreply: noreply ?? false,
+      paletteId: palette || null,
       total: validRecipients.length,
       sent: 0,
       failed: 0,

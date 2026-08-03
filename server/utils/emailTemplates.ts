@@ -42,6 +42,249 @@ const defaultTemplates: EmailTemplate[] = [
     body: "Halo, [nama-kandidat]\n\nKami dari PT Sejahtera Sehat Karyautama (PT SSK)\n\nTerima kasih atas lamaran Anda pada lowongan [lowongan] di [tanggal-melamar].\n\nKami memerlukan konfirmasi Anda apakah masih bersedia untuk melanjutkan proses rekrutmen.\n\nApabila bersedia, mohon untuk mengkonfirmasi dan memperbarui resume Anda pada link berikut:\n\n[link-konfirmasi]\n\nTerima kasih.",
     updatedAt: new Date().toISOString(),
   },
+  {
+    id: "tpl-html-undangan-tes",
+    name: "Undangan Tes Online (HTML)",
+    subject: "Undangan Tes Online - [lowongan]",
+    body: `<div style="background-color:#f1f5f9; padding:28px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px; margin:0 auto; font-family:Arial, Helvetica, sans-serif; background-color:#ffffff; border-radius:14px; overflow:hidden;">
+    <tr>
+      <td style="background-color:{headerBg}; padding:30px 32px; text-align:center;">
+        <div style="font-size:11px; letter-spacing:3px; color:rgba(255,255,255,0.8);">PT SEJAHTERA SEHAT KARYAUTAMA</div>
+        <div style="font-size:22px; font-weight:bold; color:#ffffff; margin-top:6px;">Undangan Tes Online</div>
+        <div style="width:48px; height:3px; background-color:{accent}; margin:12px auto 0;"></div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:34px 34px;">
+        <div style="font-size:13px; color:{textMuted};">Kepada Yth.</div>
+        <div style="font-size:18px; font-weight:bold; color:#1e293b; margin-top:2px;">[nama-kandidat]</div>
+        <p style="font-size:14px; line-height:1.8; color:#334155; margin:18px 0 0;">Terima kasih atas partisipasi Anda dalam proses rekrutmen <strong>PT Sejahtera Sehat Karyautama</strong> untuk posisi <strong>[lowongan]</strong>.</p>
+        <p style="font-size:14px; line-height:1.8; color:#334155; margin:14px 0 0;">Melalui email ini, kami mengundang Anda untuk mengikuti <strong>Tes Online</strong> dengan detail berikut:</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px; background-color:{bgSoft}; border:1px solid {border}; border-radius:10px;">
+          <tr>
+            <td style="padding:14px 18px; border-bottom:1px solid {border};">
+              <div style="font-size:11px; color:{textMuted};">HARI / TANGGAL</div>
+              <div style="font-size:14px; font-weight:bold; color:#1e293b; margin-top:2px;">[tanggal-tes]</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:14px 18px; border-bottom:1px solid {border};">
+              <div style="font-size:11px; color:{textMuted};">WAKTU</div>
+              <div style="font-size:14px; font-weight:bold; color:#1e293b; margin-top:2px;">[waktu-tes]</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:14px 18px;">
+              <div style="font-size:11px; color:{textMuted};">MEDIA</div>
+              <div style="font-size:14px; font-weight:bold; color:#1e293b; margin-top:2px;">[media-tes]</div>
+            </td>
+          </tr>
+        </table>
+        <div style="text-align:center; margin-top:30px;">
+          <a href="[link-konfirmasi]" style="display:inline-block; background-color:{primary}; color:{buttonText}; padding:13px 34px; border-radius:8px; font-size:14px; font-weight:bold; text-decoration:none;">Konfirmasi Kehadiran</a>
+        </div>
+        <p style="font-size:13px; line-height:1.7; color:{textMuted}; margin:24px 0 0;">Mohon lakukan konfirmasi kehadiran sebelum batas waktu yang ditentukan. Tautan Zoom dan akun ujian akan kami kirimkan setelah Anda mengonfirmasi.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:{footerBg}; border-top:1px solid {border}; padding:22px 34px; text-align:center;">
+        <div style="font-size:12px; color:{textMuted};">Hormat kami,</div>
+        <div style="font-size:13px; font-weight:bold; color:#334155; margin-top:2px;">Tim Rekrutmen PT Sejahtera Sehat Karyautama</div>
+        <div style="font-size:12px; color:{textMuted}; margin-top:6px;">+62 811-9989-6331 &nbsp;&bull;&nbsp; recruitment@sejahterasehatkaryautama.co.id</div>
+      </td>
+    </tr>
+  </table>
+</div>`,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "tpl-html-undangan-zoom",
+    name: "Undangan Zoom Ujian (HTML)",
+    subject: "Tautan Zoom Ujian Seleksi - [lowongan]",
+    body: `<div style="background-color:#f1f5f9; padding:28px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px; margin:0 auto; font-family:Arial, Helvetica, sans-serif; background-color:#ffffff; border-radius:14px; overflow:hidden;">
+    <tr>
+      <td style="background-color:{headerBg}; padding:30px 32px; text-align:center;">
+        <div style="font-size:11px; letter-spacing:3px; color:rgba(255,255,255,0.8);">PT SEJAHTERA SEHAT KARYAUTAMA</div>
+        <div style="font-size:22px; font-weight:bold; color:#ffffff; margin-top:6px;">Tautan Zoom Ujian Seleksi</div>
+        <div style="width:48px; height:3px; background-color:{accent}; margin:12px auto 0;"></div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:34px 34px;">
+        <div style="font-size:13px; color:{textMuted};">Yth. Peserta Seleksi,</div>
+        <div style="font-size:18px; font-weight:bold; color:#1e293b; margin-top:2px;">[nama-kandidat]</div>
+        <p style="font-size:14px; line-height:1.8; color:#334155; margin:18px 0 0;">Selamat sore. Terima kasih atas konfirmasi Anda untuk mengikuti ujian seleksi calon pegawai di <strong>PT Sejahtera Sehat Karyautama</strong> untuk posisi <strong>[lowongan]</strong>.</p>
+        <p style="font-size:14px; line-height:1.8; color:#334155; margin:14px 0 0;">Berikut detail akses rapat Zoom:</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px; background-color:{bgSoft}; border:1px solid {border}; border-radius:10px;">
+          <tr>
+            <td style="padding:14px 18px; border-bottom:1px solid {border};">
+              <div style="font-size:11px; color:{textMuted};">WAKTU</div>
+              <div style="font-size:14px; font-weight:bold; color:#1e293b; margin-top:2px;">[waktu-tes]</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:14px 18px; border-bottom:1px solid {border};">
+              <div style="font-size:11px; color:{textMuted};">ID RAPAT</div>
+              <div style="font-size:14px; font-weight:bold; color:#1e293b; margin-top:2px;">[id-zoom]</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:14px 18px; border-bottom:1px solid {border};">
+              <div style="font-size:11px; color:{textMuted};">KODE SANDI</div>
+              <div style="font-size:14px; font-weight:bold; color:#1e293b; margin-top:2px;">[password-zoom]</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:14px 18px;">
+              <div style="font-size:11px; color:{textMuted};">TAUTAN ZOOM</div>
+              <div style="font-size:13px; font-weight:bold; color:{primary}; margin-top:2px; word-break:break-all;">[link-zoom]</div>
+            </td>
+          </tr>
+        </table>
+        <div style="text-align:center; margin-top:30px;">
+          <a href="[link-zoom]" style="display:inline-block; background-color:{primary}; color:{buttonText}; padding:13px 34px; border-radius:8px; font-size:14px; font-weight:bold; text-decoration:none;">Masuk Zoom Meeting</a>
+        </div>
+        <p style="font-size:13px; line-height:1.7; color:{textMuted}; margin:24px 0 0;">Mohon bergabung tepat waktu serta pastikan perangkat, koneksi internet, kamera, dan audio dalam kondisi baik sebelum ujian dimulai.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:{footerBg}; border-top:1px solid {border}; padding:22px 34px; text-align:center;">
+        <div style="font-size:12px; color:{textMuted};">Hormat kami,</div>
+        <div style="font-size:13px; font-weight:bold; color:#334155; margin-top:2px;">Tim Rekrutmen PT Sejahtera Sehat Karyautama</div>
+        <div style="font-size:12px; color:{textMuted}; margin-top:6px;">+62 811-9989-6331 &nbsp;&bull;&nbsp; recruitment@sejahterasehatkaryautama.co.id</div>
+      </td>
+    </tr>
+  </table>
+</div>`,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "tpl-html-akun-tes",
+    name: "Informasi Akun Tes (HTML)",
+    subject: "Akun Tes Online - [lowongan]",
+    body: `<div style="background-color:#f1f5f9; padding:28px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px; margin:0 auto; font-family:Arial, Helvetica, sans-serif; background-color:#ffffff; border-radius:14px; overflow:hidden;">
+    <tr>
+      <td style="background-color:{headerBg}; padding:30px 32px; text-align:center;">
+        <div style="font-size:11px; letter-spacing:3px; color:rgba(255,255,255,0.8);">PT SEJAHTERA SEHAT KARYAUTAMA</div>
+        <div style="font-size:22px; font-weight:bold; color:#ffffff; margin-top:6px;">Informasi Akun Tes Online</div>
+        <div style="width:48px; height:3px; background-color:{accent}; margin:12px auto 0;"></div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:34px 34px;">
+        <div style="font-size:13px; color:{textMuted};">Yth. Peserta Seleksi,</div>
+        <div style="font-size:18px; font-weight:bold; color:#1e293b; margin-top:2px;">[nama-kandidat]</div>
+        <p style="font-size:14px; line-height:1.8; color:#334155; margin:18px 0 0;">Berikut adalah detail akun tes online Anda untuk posisi <strong>[lowongan]</strong>. Gunakan akun ini untuk masuk ke platform ujian:</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px; background-color:{bgSoft}; border:1px solid {border}; border-radius:10px;">
+          <tr>
+            <td style="padding:18px 20px; border-bottom:1px solid {border};">
+              <div style="font-size:11px; color:{textMuted};">USERNAME</div>
+              <div style="font-size:16px; font-weight:bold; color:#1e293b; margin-top:2px;">[username]</div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:18px 20px;">
+              <div style="font-size:11px; color:{textMuted};">PASSWORD</div>
+              <div style="font-size:16px; font-weight:bold; color:{primary}; margin-top:2px;">[password]</div>
+            </td>
+          </tr>
+        </table>
+        <div style="text-align:center; margin-top:30px;">
+          <a href="https://app.sejahterasehatkaryautama.co.id/" style="display:inline-block; background-color:{primary}; color:{buttonText}; padding:13px 34px; border-radius:8px; font-size:14px; font-weight:bold; text-decoration:none;">Masuk Platform Ujian</a>
+        </div>
+        <p style="font-size:13px; line-height:1.7; color:{textMuted}; margin:24px 0 0;">Mohon coba login dengan akun di atas untuk memastikan akun aktif, lalu lengkapi biodata pelamar sebelum batas waktu yang ditentukan.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:{footerBg}; border-top:1px solid {border}; padding:22px 34px; text-align:center;">
+        <div style="font-size:12px; color:{textMuted};">Hormat kami,</div>
+        <div style="font-size:13px; font-weight:bold; color:#334155; margin-top:2px;">Tim Rekrutmen PT Sejahtera Sehat Karyautama</div>
+        <div style="font-size:12px; color:{textMuted}; margin-top:6px;">+62 811-9989-6331 &nbsp;&bull;&nbsp; recruitment@sejahterasehatkaryautama.co.id</div>
+      </td>
+    </tr>
+  </table>
+</div>`,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "tpl-html-konfirmasi-resume",
+    name: "Konfirmasi & Perbarui Resume (HTML)",
+    subject: "Konfirmasi Lamaran [lowongan] - PT SSK",
+    body: `<div style="background-color:#f1f5f9; padding:28px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px; margin:0 auto; font-family:Arial, Helvetica, sans-serif; background-color:#ffffff; border-radius:14px; overflow:hidden;">
+    <tr>
+      <td style="background-color:{headerBg}; padding:30px 32px; text-align:center;">
+        <div style="font-size:11px; letter-spacing:3px; color:rgba(255,255,255,0.8);">PT SEJAHTERA SEHAT KARYAUTAMA</div>
+        <div style="font-size:22px; font-weight:bold; color:#ffffff; margin-top:6px;">Konfirmasi & Perbarui Resume</div>
+        <div style="width:48px; height:3px; background-color:{accent}; margin:12px auto 0;"></div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:34px 34px;">
+        <div style="font-size:13px; color:{textMuted};">Yth.</div>
+        <div style="font-size:18px; font-weight:bold; color:#1e293b; margin-top:2px;">[nama-kandidat]</div>
+        <p style="font-size:14px; line-height:1.8; color:#334155; margin:18px 0 0;">Terima kasih atas lamaran Anda pada posisi <strong>[lowongan]</strong> di <strong>PT Sejahtera Sehat Karyautama</strong>.</p>
+        <p style="font-size:14px; line-height:1.8; color:#334155; margin:14px 0 0;">Kami memerlukan konfirmasi Anda apakah masih bersedia untuk melanjutkan proses rekrutmen. Apabila bersedia, mohon untuk mengonfirmasi dan memperbarui resume Anda melalui tombol berikut:</p>
+        <div style="text-align:center; margin-top:30px;">
+          <a href="[link-konfirmasi]" style="display:inline-block; background-color:{primary}; color:{buttonText}; padding:13px 34px; border-radius:8px; font-size:14px; font-weight:bold; text-decoration:none;">Konfirmasi & Perbarui Resume</a>
+        </div>
+        <p style="font-size:13px; line-height:1.7; color:{textMuted}; margin:24px 0 0;">Apabila menemui kendala, silakan hubungi tim rekrutmen kami melalui WhatsApp <strong>+62 811-9989-6331</strong>.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:{footerBg}; border-top:1px solid {border}; padding:22px 34px; text-align:center;">
+        <div style="font-size:12px; color:{textMuted};">Hormat kami,</div>
+        <div style="font-size:13px; font-weight:bold; color:#334155; margin-top:2px;">Tim Rekrutmen PT Sejahtera Sehat Karyautama</div>
+        <div style="font-size:12px; color:{textMuted}; margin-top:6px;">+62 811-9989-6331 &nbsp;&bull;&nbsp; recruitment@sejahterasehatkaryautama.co.id</div>
+      </td>
+    </tr>
+  </table>
+</div>`,
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: "tpl-html-pengumuman",
+    name: "Pengumuman Umum (HTML)",
+    subject: "Pengumuman Penting - [lowongan]",
+    body: `<div style="background-color:#f1f5f9; padding:28px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:640px; margin:0 auto; font-family:Arial, Helvetica, sans-serif; background-color:#ffffff; border-radius:14px; overflow:hidden;">
+    <tr>
+      <td style="background-color:{headerBg}; padding:30px 32px; text-align:center;">
+        <div style="font-size:11px; letter-spacing:3px; color:rgba(255,255,255,0.8);">PT SEJAHTERA SEHAT KARYAUTAMA</div>
+        <div style="font-size:22px; font-weight:bold; color:#ffffff; margin-top:6px;">Pengumuman Resmi</div>
+        <div style="width:48px; height:3px; background-color:{accent}; margin:12px auto 0;"></div>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:34px 34px;">
+        <div style="font-size:13px; color:{textMuted};">Yth.</div>
+        <div style="font-size:18px; font-weight:bold; color:#1e293b; margin-top:2px;">[nama-kandidat]</div>
+        <p style="font-size:14px; line-height:1.8; color:#334155; margin:18px 0 0;">Kami sampaikan informasi terbaru sehubungan dengan proses rekrutmen Anda di <strong>PT Sejahtera Sehat Karyautama</strong> untuk posisi <strong>[lowongan]</strong>.</p>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px; background-color:{bgSoft}; border:1px solid {border}; border-radius:10px;">
+          <tr>
+            <td style="padding:20px 22px; font-size:14px; line-height:1.8; color:#334155;">[isi-pengumuman]</td>
+          </tr>
+        </table>
+        <div style="text-align:center; margin-top:30px;">
+          <a href="[link-konfirmasi]" style="display:inline-block; background-color:{primary}; color:{buttonText}; padding:13px 34px; border-radius:8px; font-size:14px; font-weight:bold; text-decoration:none;">Lihat Detail</a>
+        </div>
+        <p style="font-size:13px; line-height:1.7; color:{textMuted}; margin:24px 0 0;">Demikian kami sampaikan. Atas perhatian dan kerja sama Anda, kami ucapkan terima kasih.</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="background-color:{footerBg}; border-top:1px solid {border}; padding:22px 34px; text-align:center;">
+        <div style="font-size:12px; color:{textMuted};">Hormat kami,</div>
+        <div style="font-size:13px; font-weight:bold; color:#334155; margin-top:2px;">Tim Rekrutmen PT Sejahtera Sehat Karyautama</div>
+        <div style="font-size:12px; color:{textMuted}; margin-top:6px;">+62 811-9989-6331 &nbsp;&bull;&nbsp; recruitment@sejahterasehatkaryautama.co.id</div>
+      </td>
+    </tr>
+  </table>
+</div>`,
+    updatedAt: new Date().toISOString(),
+  },
 ];
 
 function toEmailTemplate(doc: any): EmailTemplate {
@@ -137,6 +380,30 @@ export async function loadTemplates(): Promise<EmailTemplate[]> {
 
       await syncToLocal(seed);
       docs = await EmailTemplateModel.find().sort({ createdAt: 1 }).lean();
+    } else {
+      const current = docs.map(toEmailTemplate);
+      const merged = mergeDefaults(current);
+      const missing = merged.filter((m) => !current.some((c) => c.id === m.id));
+
+      if (missing.length > 0) {
+        await EmailTemplateModel.bulkWrite(
+          missing.map((tpl) => ({
+            updateOne: {
+              filter: { templateId: tpl.id },
+              update: {
+                $set: {
+                  templateId: tpl.id,
+                  name: tpl.name,
+                  subject: tpl.subject,
+                  body: tpl.id === "invitation-gelombang3" ? getBodyFixed(tpl.body) : tpl.body,
+                },
+              },
+              upsert: true,
+            },
+          }))
+        );
+        docs = await EmailTemplateModel.find().sort({ createdAt: 1 }).lean();
+      }
     }
 
     return docs.map(toEmailTemplate);
