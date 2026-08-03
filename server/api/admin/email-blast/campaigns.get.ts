@@ -88,6 +88,7 @@ function formatCampaign(campaign: any, logCountsMap?: Map<string, any>) {
     from: campaign.from || "",
     templateSubject: campaign.templateSubject || "",
     testEmail: campaign.testEmail || null,
+    noreply: campaign.noreply ?? false,
     total: campaign.total,
     sent: campaign.sent,
     failed: campaign.failed,

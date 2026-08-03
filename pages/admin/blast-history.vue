@@ -125,6 +125,14 @@
           <template #templateSubject-data="{ row }">
             <span class="text-xs text-gray-500 max-w-[180px] truncate block">{{ row.templateSubject || '-' }}</span>
           </template>
+          <template #noreply-data="{ row }">
+            <UBadge
+              :color="row.noreply ? 'gray' : 'green'"
+              variant="soft"
+              size="xs"
+              :label="row.noreply ? 'Ya' : 'Tidak'"
+            />
+          </template>
           <template #actions-data="{ row }">
             <UButton
               size="xs"
@@ -209,6 +217,9 @@
             :loading="logLoading"
             :empty-state="{ icon: 'i-heroicons-inbox', label: 'Tidak ada log' }"
           >
+            <template #recipientName-data="{ row }">
+              <span class="text-sm text-gray-700">{{ row.recipientName || row.recipientData?.["nama-kandidat"] || row.recipientData?.nama || "-" }}</span>
+            </template>
             <template #status-data="{ row }">
               <UBadge
                 :color="row.status === 'sent' ? 'green' : row.status === 'failed' ? 'red' : 'gray'"
@@ -282,6 +293,7 @@ const tableColumns = [
   { key: "progress", label: "Progres" },
   { key: "sent", label: "Terkirim", class: "text-right" },
   { key: "failed", label: "Gagal", class: "text-right" },
+  { key: "noreply", label: "No-Reply" },
   { key: "duration", label: "Durasi" },
   { key: "actions", label: "" },
 ];
@@ -385,14 +397,25 @@ const logStatusTabs = [
   { label: "Gagal", value: "failed" },
 ];
 
-const logColumns = [
+const recipientFields = ref<string[]>([]);
+
+function humanizeField(key: string) {
+  return key
+    .split(/[-_]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+const logColumns = computed(() => [
   { key: "recipientEmail", label: "Email" },
   { key: "recipientName", label: "Nama" },
-  { key: "recipientData.lowongan", label: "Lowongan" },
+  ...recipientFields.value
+    .filter((f) => f !== "email" && f !== "nama" && f !== "nama-kandidat")
+    .map((f) => ({ key: `recipientData.${f}`, label: humanizeField(f) })),
   { key: "status", label: "Status" },
   { key: "error", label: "Error" },
   { key: "waktu", label: "Waktu" },
-];
+]);
 
 function openLogDetail(campaign: any) {
   logCampaign.value = campaign;
@@ -429,9 +452,11 @@ async function fetchLogs() {
     logTotal.value = res?.data?.total || 0;
     logSentCount.value = res?.data?.sentCount || 0;
     logFailedCount.value = res?.data?.failedCount || 0;
+    recipientFields.value = res?.data?.recipientFields || [];
   } catch {
     logItems.value = [];
     logTotal.value = 0;
+    recipientFields.value = [];
   } finally {
     logLoading.value = false;
   }

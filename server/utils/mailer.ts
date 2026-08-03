@@ -76,6 +76,11 @@ export function getSenderAddress() {
   return smtp?.from || smtp?.user || "no-reply@example.com";
 }
 
+export function getReplyToAddress() {
+  const smtp = getSmtpConfig();
+  return smtp?.replyTo || undefined;
+}
+
 export function renderEmailTemplate(
   template: "invitation" | "account",
   payload: TemplatePayload,

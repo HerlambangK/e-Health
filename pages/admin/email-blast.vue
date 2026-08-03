@@ -438,7 +438,7 @@
               />
             </UFormGroup>
             <UFormGroup label="Nama" required>
-              <UInput v-model="manualForm.nama" placeholder="Nama penerima" :class="inputClass(manualForm.nama, true)" />
+              <UInput v-model="manualForm[namePlaceholder]" placeholder="Nama penerima" :class="inputClass(manualForm[namePlaceholder], true)" />
             </UFormGroup>
             <UFormGroup
               v-for="entry in mappingEntries.filter(e => !e.required && e.id !== 'email' && e.id !== 'nama-kandidat')"
@@ -566,6 +566,11 @@
                 <UFormGroup label="Nama Campaign" required>
                   <UInput v-model="campaignName" placeholder="Contoh: Konfirmasi Resume Juni 2026" />
                 </UFormGroup>
+                <UCheckbox
+                  v-model="noreply"
+                  label="Kirim sebagai No-Reply (penerima tidak bisa membalas)"
+                  class="mt-3"
+                />
                 <div class="mt-3 flex flex-col gap-2">
                   <UButton
                     color="primary"
@@ -696,6 +701,9 @@
             :loading="logLoading"
             :empty-state="{ icon: 'i-heroicons-inbox', label: 'Tidak ada log' }"
           >
+            <template #recipientName-data="{ row }">
+              <span class="text-sm text-gray-700">{{ row.recipientName || row.recipientData?.["nama-kandidat"] || row.recipientData?.nama || "-" }}</span>
+            </template>
             <template #status-data="{ row }">
               <UBadge
                 :color="row.status === 'sent' ? 'green' : row.status === 'failed' ? 'red' : 'gray'"
@@ -1210,12 +1218,20 @@ type ManualRecipient = {
 
 const manualForm = reactive<Record<string, any>>({
   email: "",
-  nama: "",
+});
+
+const namePlaceholder = computed(() => {
+  const entry = mappingEntries.value.find((e) => e.id === "nama-kandidat");
+  return entry?.placeholder || "nama-kandidat";
 });
 
 const manualRecipients = ref<ManualRecipient[]>([]);
 const manualError = ref("");
 const manualSendingId = ref<string | null>(null);
+
+function createManualId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
 
 const manualColumns = computed(() => {
   const cols = mappingEntries.value.map((e) => ({ key: e.id, label: e.label }));
@@ -1228,7 +1244,8 @@ function validateManualForm() {
   if (!manualForm.email || !isValidEmail(manualForm.email)) {
     return "Email tidak valid.";
   }
-  if (!manualForm.nama.trim()) {
+  const nameVal = manualForm[namePlaceholder.value];
+  if (!nameVal?.trim()) {
     return "Nama wajib diisi.";
   }
   for (const entry of mappingEntries.value) {
@@ -1270,7 +1287,6 @@ function addManualRecipient() {
     manualForm[entry.placeholder] = "";
   }
   manualForm.email = "";
-  manualForm.nama = "";
 }
 
 function removeManualRecipient(id: string) {
@@ -1544,6 +1560,7 @@ async function deleteTemplate() {
 
 const testEmail = ref("");
 const campaignName = ref("");
+const noreply = ref(false);
 const activeCampaign = ref<any>(null);
 const campaigns = ref<any[]>([]);
 let pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -1627,6 +1644,7 @@ async function sendBlast() {
       subject: templateSubject.value || undefined,
       body: templateBody.value,
       testEmail: testEmail.value || undefined,
+      noreply: noreply.value,
       recipients: validRecipients.value.map((r) => ({ ...r })),
     };
 
@@ -1762,14 +1780,25 @@ const logStatusTabs = [
   { label: "Gagal", value: "failed" },
 ];
 
-const logColumns = [
+const recipientFields = ref<string[]>([]);
+
+function humanizeField(key: string) {
+  return key
+    .split(/[-_]/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+}
+
+const logColumns = computed(() => [
   { key: "recipientEmail", label: "Email" },
   { key: "recipientName", label: "Nama" },
-  { key: "recipientData.lowongan", label: "Lowongan" },
+  ...recipientFields.value
+    .filter((f) => f !== "email" && f !== "nama" && f !== "nama-kandidat")
+    .map((f) => ({ key: `recipientData.${f}`, label: humanizeField(f) })),
   { key: "status", label: "Status" },
   { key: "error", label: "Error" },
   { key: "waktu", label: "Waktu" },
-];
+]);
 
 function openLogDetail(campaign: any) {
   logCampaign.value = campaign;
@@ -1806,9 +1835,11 @@ async function fetchLogs() {
     logTotal.value = res?.data?.total || 0;
     logSentCount.value = res?.data?.sentCount || 0;
     logFailedCount.value = res?.data?.failedCount || 0;
+    recipientFields.value = res?.data?.recipientFields || [];
   } catch {
     logItems.value = [];
     logTotal.value = 0;
+    recipientFields.value = [];
   } finally {
     logLoading.value = false;
   }

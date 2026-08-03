@@ -1,7 +1,7 @@
 import { Validator } from "#nuxt-server-utils";
 import EmailBlastSchema from "~/schemas/EmailBlast.schema";
 import { sendApiError, sendSuccess } from "~/server/utils/response";
-import { createTransporter, getSenderAddress } from "~/server/utils/mailer";
+import { createTransporter, getSenderAddress, getReplyToAddress } from "~/server/utils/mailer";
 import { findTemplate } from "~/server/utils/emailTemplates";
 import EmailCampaign from "~/server/models/EmailCampaign";
 import EmailLog from "~/server/models/EmailLog";
@@ -26,8 +26,12 @@ async function runBlast(campaignId: string, recipients: any[]) {
   const campaign = await EmailCampaign.findById(campaignId);
   if (!campaign) return;
 
-  const { templateSubject, templateBody, from, testEmail } = campaign;
+  const { templateSubject, templateBody, from, testEmail, noreply } = campaign;
   const transporter = await createTransporter();
+  const replyToAddress = getReplyToAddress();
+  const noreplyFrom = replyToAddress ? `"No-Reply SSK" <${replyToAddress}>` : undefined;
+  const senderFrom = noreply ? noreplyFrom || from : from;
+  const replyTo = noreply ? replyToAddress : undefined;
 
   let batchCount = 0;
   let accSent = 0;
@@ -68,7 +72,8 @@ async function runBlast(campaignId: string, recipients: any[]) {
           const target = testEmail || payload.email;
 
         await transporter.sendMail({
-          from,
+          from: senderFrom,
+          replyTo,
           to: target,
           subject: resolvedSubject,
           text: resolvedBody,
@@ -97,7 +102,7 @@ async function runBlast(campaignId: string, recipients: any[]) {
         logBatch.push({
           campaignId,
           recipientEmail: recipient.email ?? "",
-          recipientName: recipient.nama ?? "",
+          recipientName: recipient["nama-kandidat"] || recipient.nama || "",
           recipientData,
           subject: result.value.resolvedSubject,
           body: result.value.resolvedBody,
@@ -117,7 +122,7 @@ async function runBlast(campaignId: string, recipients: any[]) {
         logBatch.push({
           campaignId,
           recipientEmail: recipient.email ?? "",
-          recipientName: recipient.nama ?? "",
+          recipientName: recipient["nama-kandidat"] || recipient.nama || "",
           recipientData,
           subject: resolvedSubject,
           body: resolvedBody,
@@ -193,12 +198,13 @@ export default defineEventHandler(async (event) => {
     const body = await readBody(event);
     Validator.validateSchema(EmailBlastSchema, body);
 
-    const { name, templateId, subject, body: templateBody, recipients, testEmail } = body as {
+    const { name, templateId, subject, body: templateBody, recipients, testEmail, noreply } = body as {
       name: string;
       templateId?: string;
       subject?: string;
       body: string;
       testEmail?: string;
+      noreply?: boolean;
       recipients: Array<Record<string, string>>;
     };
 
@@ -244,6 +250,7 @@ export default defineEventHandler(async (event) => {
       templateBody: bodyTemplate,
       from,
       testEmail: testEmail || null,
+      noreply: noreply ?? false,
       total: validRecipients.length,
       sent: 0,
       failed: 0,

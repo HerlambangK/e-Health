@@ -47,6 +47,7 @@ function formatCampaign(campaign: any) {
     elapsedSeconds,
     estimatedRemainingSeconds,
     testEmail: campaign.testEmail || null,
+    noreply: campaign.noreply ?? false,
     startedAt: campaign.createdAt,
     completedAt: campaign.completedAt || null,
   };
