@@ -1,3 +1,4 @@
+import { Types } from "mongoose";
 import { sendApiError, sendSuccess } from "~/server/utils/response";
 import EmailLog from "~/server/models/EmailLog";
 import { parsePagination } from "~/server/utils/pagination";
@@ -14,7 +15,13 @@ export default defineEventHandler(async (event) => {
       return sendApiError(event, 400, "missing_campaign_id", "Parameter campaignId wajib diisi.");
     }
 
-    const filter: Record<string, any> = { campaignId };
+    if (!Types.ObjectId.isValid(campaignId)) {
+      return sendApiError(event, 400, "invalid_campaign_id", "Parameter campaignId tidak valid.");
+    }
+
+    const campaignObjectId = new Types.ObjectId(campaignId);
+
+    const filter: Record<string, any> = { campaignId: campaignObjectId };
     if (status && status !== "all") {
       filter.status = status;
     }
@@ -35,7 +42,7 @@ export default defineEventHandler(async (event) => {
         .lean(),
       EmailLog.countDocuments(filter),
       EmailLog.aggregate([
-        { $match: { campaignId } },
+        { $match: { campaignId: campaignObjectId } },
         { $group: { _id: "$status", count: { $sum: 1 } } },
       ]),
       EmailLog.aggregate([
