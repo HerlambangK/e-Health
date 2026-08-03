@@ -369,12 +369,22 @@
           <div class="mt-4 grid gap-6 lg:grid-cols-[1fr,1.2fr]">
             <div class="min-w-0 space-y-4">
               <UFormGroup label="Pilih Template">
-                <USelectMenu
-                  v-model="selectedTemplateId"
-                  :options="templateOptions"
-                  placeholder="Pilih template"
-                  value-attribute="value"
-                />
+                <div class="max-h-72 space-y-2 overflow-y-auto pr-1">
+                  <label
+                    v-for="t in templates"
+                    :key="t.id"
+                    class="flex cursor-pointer items-center gap-2.5 rounded-lg border p-3 text-sm transition"
+                    :class="selectedTemplateId === t.id ? 'border-green-600 bg-green-50/50 ring-1 ring-green-600' : 'border-gray-200 hover:border-gray-300'"
+                    @click="selectedTemplateId = t.id"
+                  >
+                    <UCheckbox :model-value="selectedTemplateId === t.id" />
+                    <span class="min-w-0 flex-1">
+                      <span class="block truncate font-medium text-gray-800">{{ t.name }}</span>
+                      <span class="block truncate text-xs text-gray-400">{{ t.subject }}</span>
+                    </span>
+                    <UBadge v-if="isHtmlBody(t.body)" color="green" variant="soft" size="xs">HTML</UBadge>
+                  </label>
+                </div>
               </UFormGroup>
 
               <UFormGroup label="Pilih Warna">
@@ -392,8 +402,6 @@
                   </label>
                 </div>
               </UFormGroup>
-
-              <UCheckbox v-model="showTemplatePreview" label="Tampilkan preview email" />
 
               <UFormGroup label="Nama Template">
                 <UInput v-model="templateName" placeholder="Nama template" />
@@ -433,10 +441,10 @@
             </div>
           </div>
 
-          <div v-if="showTemplatePreview" class="mt-6">
+          <div v-if="selectedTemplateId" class="mt-6">
             <div class="mb-2 flex items-center justify-between">
               <span class="text-xs font-semibold text-gray-700">Preview Email</span>
-              <span class="text-xs text-gray-400">Contoh dengan data placeholder</span>
+              <span class="text-xs text-gray-400">Frame & konten tersinkron dengan template yang dipilih dan kolom Body</span>
             </div>
             <div class="rounded-xl border border-gray-200 bg-gray-50 p-3">
               <div class="mb-2 text-xs text-gray-500">
@@ -1519,9 +1527,6 @@ async function deleteMappingConfig() {
 }
 
 const templates = computed(() => (templatesResponse.value as any)?.data ?? []);
-const templateOptions = computed(() =>
-  templates.value.map((item: any) => ({ label: item.name, value: item.id }))
-);
 
 const selectedTemplateId = ref<string | null>(null);
 const templateName = ref("");
@@ -1529,7 +1534,6 @@ const templateSubject = ref("");
 const templateBody = ref("");
 
 const selectedPalette = ref("hijau");
-const showTemplatePreview = ref(false);
 
 const SAMPLE_VALUES: Record<string, string> = {
   "nama-kandidat": "Budi Santoso",
