@@ -12,6 +12,7 @@ node_modules
 # Logs
 logs
 *.log
+!server/api/admin/email-blast/logs/
 
 # Misc
 .DS_Store
