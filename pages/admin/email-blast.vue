@@ -471,10 +471,18 @@
 
             <div class="min-w-0">
               <UFormGroup label="Body">
-                <UTextarea v-model="templateBody" rows="12" placeholder="Tulis body template" />
+                <UTextarea
+                  :model-value="mergedBody"
+                  rows="12"
+                  placeholder="Tulis body template"
+                  @update:model-value="updateBody"
+                />
               </UFormGroup>
               <p v-if="isHtmlBody(templateBody)" class="mt-2 text-xs text-gray-400">
                 Template ini berformat HTML/CSS. Placeholder data dan warna akan diganti otomatis saat dikirim.
+              </p>
+              <p v-else class="mt-2 text-xs text-gray-400">
+                Nilai terisi dari "Isi Konten" langsung tampil di sini (live merge). Ubah nilainya di kolom "Isi Konten".
               </p>
             </div>
           </div>
@@ -496,26 +504,6 @@
               ></iframe>
               <pre v-else class="whitespace-pre-wrap rounded-lg border border-gray-200 bg-white p-4 text-sm text-gray-700">{{ templatePreview.body }}</pre>
             </div>
-          </div>
-
-          <div class="mt-6">
-            <div class="mb-2 flex items-center justify-between">
-              <span class="text-xs font-semibold text-gray-700">Placeholder & Nilai Terisi</span>
-              <span class="text-xs text-gray-400">Nilai yang akan tampil di dalam email template</span>
-            </div>
-            <div class="grid gap-1.5 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:grid-cols-2">
-              <div
-                v-for="(val, ph) in templatePreviewPayload"
-                :key="ph"
-                class="flex items-center justify-between gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
-              >
-                <span class="font-mono text-xs text-gray-500">[{{ ph }}]</span>
-                <span class="truncate text-gray-700" :title="val">{{ val }}</span>
-              </div>
-            </div>
-            <p class="mt-1.5 text-xs text-gray-400">
-              Nilai yang diisi di "Isi Konten" menimpa data Excel. Semua nilai tersinkron live dengan preview di atas.
-            </p>
           </div>
         </div>
       </template>
@@ -1636,6 +1624,23 @@ const effectiveFieldValues = computed<Record<string, string>>(() => {
   }
   return out;
 });
+
+const mergedBody = computed(() =>
+  applyPlaceholders(templateBody.value || "", effectiveFieldValues.value)
+);
+
+function updateBody(value: string) {
+  let raw = value || "";
+  const filled = [...effectiveFieldValues.value.entries()].sort(
+    (a, b) => b[1].length - a[1].length
+  );
+  for (const [ph, val] of filled) {
+    if (val && raw.includes(val)) {
+      raw = raw.split(val).join(`[${ph}]`);
+    }
+  }
+  templateBody.value = raw;
+}
 
 const SAMPLE_VALUES: Record<string, string> = {
   "nama-kandidat": "Budi Santoso",
