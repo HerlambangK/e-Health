@@ -460,13 +460,6 @@
                 Mode test aktif. Semua email akan dikirim ke <strong>{{ testEmail }}</strong>.
                 Kosongkan test email jika ingin mengirim ke email di tabel.
               </UAlert>
-
-              <div class="rounded-lg border border-gray-100 bg-gray-50/40 p-3 text-xs text-gray-600">
-                Placeholder tersedia:
-                <div class="mt-2 flex flex-wrap gap-2">
-                  <UBadge v-for="entry in mappingEntries" :key="entry.id" color="gray" variant="soft">{{ `[${entry.placeholder}]` }}</UBadge>
-                </div>
-              </div>
             </div>
 
             <div class="min-w-0">
@@ -474,7 +467,7 @@
                 <UTextarea
                   :model-value="mergedBody"
                   rows="12"
-                  placeholder="Tulis body template"
+                  :placeholder="availablePlaceholders"
                   @update:model-value="updateBody"
                 />
               </UFormGroup>
@@ -1629,6 +1622,13 @@ const mergedBody = computed(() =>
   applyPlaceholders(templateBody.value || "", effectiveFieldValues.value)
 );
 
+const availablePlaceholders = computed(() => {
+  const set = new Set<string>();
+  for (const entry of mappingEntries.value) set.add(entry.placeholder);
+  for (const f of TEMPLATE_FIELDS) set.add(f.placeholder);
+  return `Placeholder tersedia: ${[...set].join(", ")}`;
+});
+
 function updateBody(value: string) {
   let raw = value || "";
   const filled = [...effectiveFieldValues.value.entries()].sort(
@@ -1702,6 +1702,7 @@ watch(
       templateName.value = tpl.name;
       templateSubject.value = tpl.subject;
       templateBody.value = tpl.body;
+      templateFieldValues.value = { ...(tpl.fields || {}) };
     }
   },
   { immediate: true }
@@ -1712,6 +1713,7 @@ function createNewTemplate() {
   templateName.value = "Template Baru";
   templateSubject.value = "";
   templateBody.value = "";
+  templateFieldValues.value = {};
 }
 
 async function saveTemplate() {
@@ -1723,6 +1725,7 @@ async function saveTemplate() {
           name: templateName.value,
           subject: templateSubject.value,
           body: templateBody.value,
+          fields: { ...templateFieldValues.value },
         },
       });
       toast.add({ title: "Template diperbarui", color: "green" });
@@ -1733,6 +1736,7 @@ async function saveTemplate() {
           name: templateName.value,
           subject: templateSubject.value,
           body: templateBody.value,
+          fields: { ...templateFieldValues.value },
         },
       });
       selectedTemplateId.value = created?.data?.id || null;

@@ -5,6 +5,7 @@ export interface IEmailTemplate extends Document {
   name: string;
   subject: string;
   body: string;
+  fields?: Record<string, string>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,6 +16,7 @@ const EmailTemplateSchema = new Schema<IEmailTemplate>(
     name: { type: String, required: true },
     subject: { type: String, default: "" },
     body: { type: String, required: true },
+    fields: { type: Object, default: {} },
   },
   { timestamps: true }
 );

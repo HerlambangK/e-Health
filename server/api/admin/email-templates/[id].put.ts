@@ -20,6 +20,7 @@ export default defineEventHandler(async (event) => {
       name: body.name ?? templates[index].name,
       subject: body.subject ?? templates[index].subject,
       body: body.body ?? templates[index].body,
+      fields: body.fields ?? templates[index].fields ?? {},
       updatedAt: new Date().toISOString(),
     };
 

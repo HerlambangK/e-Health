@@ -7,6 +7,7 @@ export type EmailTemplate = {
   name: string;
   subject: string;
   body: string;
+  fields?: Record<string, string>;
   updatedAt: string;
 };
 
@@ -293,6 +294,7 @@ function toEmailTemplate(doc: any): EmailTemplate {
     name: doc.name,
     subject: doc.subject,
     body: doc.body,
+    fields: doc.fields || {},
     updatedAt: doc.updatedAt?.toISOString?.() || new Date().toISOString(),
   };
 }
@@ -434,6 +436,7 @@ export async function saveTemplates(templates: EmailTemplate[]) {
       name: tpl.name,
       subject: tpl.subject,
       body: tpl.body,
+      fields: tpl.fields || {},
     }));
 
     await EmailTemplateModel.bulkWrite(
@@ -471,6 +474,7 @@ export async function upsertTemplate(template: EmailTemplate): Promise<EmailTemp
           name: template.name,
           subject: template.subject,
           body: template.body,
+          fields: template.fields || {},
         },
       },
       { upsert: true, new: true }

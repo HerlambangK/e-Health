@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
       name: String(body.name),
       subject: String(body.subject),
       body: String(body.body),
+      fields: body.fields || {},
       updatedAt: new Date().toISOString(),
     };
 
