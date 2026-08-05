@@ -427,31 +427,42 @@ export async function saveTemplates(templates: EmailTemplate[]) {
 
   await syncToLocal(fixed);
 
-  try {
-    const ids = fixed.map((t) => t.id);
-    await EmailTemplateModel.deleteMany({ templateId: { $nin: ids } });
+  const ids = fixed.map((t) => t.id);
 
-    const upsertOps = fixed.map((tpl) => ({
-      templateId: tpl.id,
-      name: tpl.name,
-      subject: tpl.subject,
-      body: tpl.body,
-      fields: tpl.fields || {},
-    }));
+  const upsertOps = fixed.map((tpl) => ({
+    templateId: tpl.id,
+    name: tpl.name,
+    subject: tpl.subject,
+    body: tpl.body,
+    fields: tpl.fields || {},
+  }));
 
-    await EmailTemplateModel.bulkWrite(
-      upsertOps.map((doc) => ({
-        updateOne: {
-          filter: { templateId: doc.templateId },
-          update: { $set: doc },
-          upsert: true,
-        },
-      }))
-    );
-  } catch (error) {
-    console.error("[EmailTemplates] MongoDB error on save:", (error as any)?.message);
-    throw error;
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      await EmailTemplateModel.deleteMany({ templateId: { $nin: ids } });
+      await EmailTemplateModel.bulkWrite(
+        upsertOps.map((doc) => ({
+          updateOne: {
+            filter: { templateId: doc.templateId },
+            update: { $set: doc },
+            upsert: true,
+          },
+        }))
+      );
+      return;
+    } catch (error) {
+      lastError = error;
+      console.error(
+        `[EmailTemplates] MongoDB error on save (attempt ${attempt}/3):`,
+        (error as any)?.message
+      );
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
+      }
+    }
   }
+  throw lastError;
 }
 
 export async function findTemplate(id: string): Promise<EmailTemplate | undefined> {
