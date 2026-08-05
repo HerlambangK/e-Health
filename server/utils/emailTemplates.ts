@@ -449,7 +449,8 @@ export async function saveTemplates(templates: EmailTemplate[]) {
       }))
     );
   } catch (error) {
-    console.warn("[EmailTemplates] MongoDB error on save, templates only saved locally:", (error as any)?.message);
+    console.error("[EmailTemplates] MongoDB error on save:", (error as any)?.message);
+    throw error;
   }
 }
 

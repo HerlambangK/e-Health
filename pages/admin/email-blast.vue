@@ -467,10 +467,25 @@
                 <UTextarea
                   :model-value="mergedBody"
                   rows="12"
-                  :placeholder="availablePlaceholders"
+                  placeholder="Tulis body template..."
                   @update:model-value="updateBody"
                 />
               </UFormGroup>
+              <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                <span class="text-xs text-gray-400">Parameter yang digunakan:</span>
+                <template v-if="templatePlaceholders.length">
+                  <UBadge
+                    v-for="ph in templatePlaceholders"
+                    :key="ph"
+                    color="gray"
+                    variant="soft"
+                    size="xs"
+                  >
+                    [{{ ph }}]
+                  </UBadge>
+                </template>
+                <span v-else class="text-xs text-gray-400">Belum ada parameter.</span>
+              </div>
               <p v-if="isHtmlBody(templateBody)" class="mt-2 text-xs text-gray-400">
                 Template ini berformat HTML/CSS. Placeholder data dan warna akan diganti otomatis saat dikirim.
               </p>
@@ -1406,6 +1421,7 @@ async function sendManualRecipient(recipient: ManualRecipient) {
     for (const entry of mappingEntries.value) {
       recipientData[entry.placeholder] = recipient[entry.placeholder] || undefined;
     }
+    Object.assign(recipientData, effectiveFieldValues.value);
 
     const payload = {
       name: `Manual-${new Date().toLocaleString("id-ID")}`,
@@ -1413,7 +1429,7 @@ async function sendManualRecipient(recipient: ManualRecipient) {
       subject: templateSubject.value || undefined,
       body: templateBody.value,
       testEmail: testEmail.value || undefined,
-      palette: selectedPalette.value || undefined,
+      palette: effectivePaletteId.value || undefined,
       recipients: [recipientData],
     };
 
@@ -1621,13 +1637,6 @@ const effectiveFieldValues = computed<Record<string, string>>(() => {
 const mergedBody = computed(() =>
   applyPlaceholders(templateBody.value || "", effectiveFieldValues.value)
 );
-
-const availablePlaceholders = computed(() => {
-  const set = new Set<string>();
-  for (const entry of mappingEntries.value) set.add(entry.placeholder);
-  for (const f of TEMPLATE_FIELDS) set.add(f.placeholder);
-  return `Placeholder tersedia: ${[...set].join(", ")}`;
-});
 
 function updateBody(value: string) {
   let raw = value || "";
