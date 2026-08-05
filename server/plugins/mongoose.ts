@@ -17,7 +17,13 @@ export default defineNitroPlugin(async () => {
 
   if (!connectionPromise) {
     mongoose.set("strictQuery", true);
-    connectionPromise = mongoose.connect(mongodbUri);
+    mongoose.set("bufferTimeoutMS", 30000);
+    connectionPromise = mongoose.connect(mongodbUri, {
+      serverSelectionTimeoutMS: 30000,
+      connectTimeoutMS: 30000,
+      socketTimeoutMS: 120000,
+      maxPoolSize: 5,
+    });
   }
 
   await connectionPromise;
