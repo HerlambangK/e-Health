@@ -358,16 +358,18 @@ async function syncDeletedToLocal(ids: string[]) {
 }
 
 export async function readDeletedIds(): Promise<string[]> {
+  const mongoIds: string[] = [];
   try {
     const docs = await EmailTemplateDeletedModel.find().lean();
-    return docs.map((d) => d.templateId);
+    mongoIds.push(...docs.map((d) => d.templateId));
   } catch (error) {
     console.warn(
       "[EmailTemplates] MongoDB read-deleted error, falling back to local:",
       (error as any)?.message
     );
-    return readDeletedFromLocal();
   }
+  const localIds = await readDeletedFromLocal();
+  return [...new Set([...mongoIds, ...localIds])];
 }
 
 async function markDeleted(id: string) {
