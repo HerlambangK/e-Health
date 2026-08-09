@@ -13,9 +13,6 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       return sendApiError(event, 400, "validation_error", "Template id is required");
     }
-    if (!body?.name) {
-      return sendApiError(event, 400, "validation_error", "name is required");
-    }
 
     const existing = await findTemplate(id);
     if (!existing) {
@@ -25,10 +22,19 @@ export default defineEventHandler(async (event) => {
     const updatedTemplate: EmailTemplate = {
       ...existing,
       id,
-      name: String(body.name),
-      subject: body.subject ? String(body.subject) : "",
-      body: getBodyFixed(body.body ? String(body.body) : ""),
-      fields: body.fields && typeof body.fields === "object" ? body.fields : {},
+      name:
+        body?.name !== undefined && body.name !== null && String(body.name).trim() !== ""
+          ? String(body.name)
+          : existing.name,
+      subject:
+        body?.subject !== undefined && body.subject !== null
+          ? String(body.subject)
+          : existing.subject,
+      body:
+        body?.body !== undefined && body.body !== null && String(body.body).trim() !== ""
+          ? getBodyFixed(String(body.body))
+          : existing.body,
+      fields: body?.fields && typeof body.fields === "object" ? body.fields : existing.fields || {},
       updatedAt: new Date().toISOString(),
     };
 

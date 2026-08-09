@@ -4,17 +4,21 @@ import { getBodyFixed, upsertTemplate, type EmailTemplate } from "~/server/utils
 export default defineEventHandler(async (event) => {
   try {
     const body = await readBody(event);
-    if (!body?.name || !body?.subject || !body?.body) {
-      return sendApiError(event, 400, "validation_error", "name, subject, body are required");
+    if (!body?.name || !body?.body) {
+      return sendApiError(event, 400, "validation_error", "name and body are required");
     }
 
-    const id = `tpl-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const id =
+      body?.id && typeof body.id === "string" && body.id.trim()
+        ? body.id.trim()
+        : `tpl-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+
     const newTemplate: EmailTemplate = {
       id,
       name: String(body.name),
-      subject: String(body.subject),
+      subject: body?.subject !== undefined && body.subject !== null ? String(body.subject) : "",
       body: getBodyFixed(String(body.body)),
-      fields: body.fields && typeof body.fields === "object" ? body.fields : {},
+      fields: body?.fields && typeof body.fields === "object" ? body.fields : {},
       updatedAt: new Date().toISOString(),
     };
 
