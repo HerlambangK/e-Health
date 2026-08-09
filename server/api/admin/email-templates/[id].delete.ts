@@ -1,5 +1,5 @@
 import { sendApiError, sendSuccess } from "~/server/utils/response";
-import { loadTemplates, saveTemplates } from "~/server/utils/emailTemplates";
+import { deleteTemplate, findTemplate } from "~/server/utils/emailTemplates";
 
 export default defineEventHandler(async (event) => {
   try {
@@ -8,16 +8,17 @@ export default defineEventHandler(async (event) => {
       return sendApiError(event, 400, "validation_error", "Template id is required");
     }
 
-    const templates = await loadTemplates();
-    const filtered = templates.filter((item) => item.id !== id);
-    if (filtered.length === templates.length) {
+    const existing = await findTemplate(id);
+    if (!existing) {
       return sendApiError(event, 404, "not_found", "Template not found");
     }
 
-    await saveTemplates(filtered);
+    await deleteTemplate(id);
     return sendSuccess(event, { id });
-  } catch (error) {
-    console.error(error);
-    return sendApiError(event, 500, "server_error", "Failed to delete template");
+  } catch (error: any) {
+    console.error("[EmailTemplates] DELETE error:", error);
+    return sendApiError(event, 500, "server_error", "Failed to delete template", {
+      message: error?.message || String(error),
+    });
   }
 });

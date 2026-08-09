@@ -289,6 +289,16 @@
               </UButton>
               <UButton
                 size="xs"
+                color="green"
+                variant="soft"
+                icon="i-heroicons-plus"
+                class="w-full sm:w-auto"
+                @click="addRow"
+              >
+                Tambah Baris
+              </UButton>
+              <UButton
+                size="xs"
                 variant="soft"
                 color="red"
                 :disabled="selectedRows.length === 0"
@@ -296,6 +306,16 @@
                 @click="bulkDelete"
               >
                 Hapus Terpilih ({{ selectedRows.length }})
+              </UButton>
+              <UButton
+                size="xs"
+                variant="soft"
+                color="red"
+                :disabled="editableRows.length === 0"
+                class="w-full sm:w-auto"
+                @click="clearAllRows"
+              >
+                Hapus Semua
               </UButton>
             </div>
           </div>
@@ -437,7 +457,7 @@
                   </div>
                 </div>
                 <p class="mt-2 text-xs text-gray-400">
-                  Kosongkan untuk memakai data Excel. Nilai yang diisi akan menimpa data Excel dan langsung tampil di preview.
+                  Nilai di sini sebagai default. Bila data penerima/Excel berisi nilai yang sama, nilai tersebut yang dipakai.
                 </p>
               </UFormGroup>
 
@@ -894,6 +914,9 @@ const patternMap: Record<string, RegExp[]> = {
   username: [/username/],
   password: [/password/],
   "link-konfirmasi": [/link/, /konfirmasi/],
+  "tanggal-tes": [/tanggal tes/],
+  "waktu-tes": [/waktu/],
+  "media-tes": [/media/],
   "tanggal-melamar": [/tanggal/, /melamar/],
   "nomor-hp": [/nomor hp/, /hp/, /telepon/],
   "pesan-konfirmasi": [/pesan/],
@@ -997,6 +1020,7 @@ function saveToLocalStorage() {
   try {
     const data = {
       rows: rows.value,
+      editableRows: editableRows.value,
       columns: columns.value,
       mappingEntries: mappingEntries.value.map((e) => ({ ...e })),
       selectedSheet: selectedSheet.value,
@@ -1015,12 +1039,14 @@ function loadFromLocalStorage(): boolean {
     if (!data.rows?.length) return false;
 
     rows.value = data.rows || [];
+    editableRows.value = data.editableRows?.length
+      ? data.editableRows.map((row: any) => ({ ...row }))
+      : (data.rows || []).map((row: any) => ({ ...row }));
     columns.value = data.columns || [];
     mappingEntries.value = data.mappingEntries || [];
     selectedSheet.value = data.selectedSheet || "";
     headerRowIndex.value = data.headerRowIndex || 1;
     if (data.fileName) selectedFileName.value = data.fileName;
-    editableRows.value = (data.rows || []).map((row: any) => ({ ...row }));
     autoParse.value = true;
     mappingTouched.value = true;
 
@@ -1417,11 +1443,12 @@ async function sendManualRecipient(recipient: ManualRecipient) {
   recipient.statusLabel = "Mengirim...";
 
   try {
+    await persistFieldsOnSend();
     const recipientData: Record<string, any> = {};
     for (const entry of mappingEntries.value) {
       recipientData[entry.placeholder] = recipient[entry.placeholder] || undefined;
     }
-    Object.assign(recipientData, effectiveFieldValues.value);
+    const mergedData = mergeParams(effectiveFieldValues.value, recipientData);
 
     const payload = {
       name: `Manual-${new Date().toLocaleString("id-ID")}`,
@@ -1430,7 +1457,7 @@ async function sendManualRecipient(recipient: ManualRecipient) {
       body: templateBody.value,
       testEmail: testEmail.value || undefined,
       palette: effectivePaletteId.value || undefined,
-      recipients: [recipientData],
+      recipients: [mergedData],
     };
 
     const res: any = await $fetch("/api/admin/email-blast", {
@@ -1468,11 +1495,28 @@ async function sendManualRecipient(recipient: ManualRecipient) {
   }
 }
 
+function addRow() {
+  editableRows.value.push({});
+  editPage.value = 1;
+  saveToLocalStorage();
+}
+
+function clearAllRows() {
+  if (editableRows.value.length === 0) return;
+  if (!window.confirm(`Hapus semua ${editableRows.value.length} baris data?`)) return;
+  editableRows.value = [];
+  rows.value = [];
+  selectedRows.value = [];
+  editPage.value = 1;
+  saveToLocalStorage();
+}
+
 function removeRow(index: number) {
   if (index < 0 || index >= editableRows.value.length) return;
   if (!window.confirm("Hapus baris ini dari data?")) return;
   editableRows.value.splice(index, 1);
   selectedRows.value = selectedRows.value.filter((row) => row._rowIndex !== index);
+  saveToLocalStorage();
 }
 
 function bulkDelete() {
@@ -1485,6 +1529,7 @@ function bulkDelete() {
     }
   }
   selectedRows.value = [];
+  saveToLocalStorage();
 }
 
 const previewPage = ref(1);
@@ -1612,27 +1657,44 @@ const TEMPLATE_FIELDS = [
 
 const templateFieldValues = ref<Record<string, string>>({});
 
+function formatFieldValue(f: { placeholder: string; type: string }, raw: string): string {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+  if (f.type === "date") {
+    const d = new Date(`${value}T00:00:00`);
+    if (!isNaN(d.getTime())) {
+      return d.toLocaleDateString("id-ID", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      });
+    }
+  }
+  return value;
+}
+
 const effectiveFieldValues = computed<Record<string, string>>(() => {
   const out: Record<string, string> = {};
   for (const f of TEMPLATE_FIELDS) {
-    const raw = (templateFieldValues.value[f.placeholder] || "").trim();
-    if (!raw) continue;
-    if (f.type === "date") {
-      const d = new Date(`${raw}T00:00:00`);
-      if (!isNaN(d.getTime())) {
-        out[f.placeholder] = d.toLocaleDateString("id-ID", {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        });
-        continue;
-      }
-    }
-    out[f.placeholder] = raw;
+    const formatted = formatFieldValue(f, templateFieldValues.value[f.placeholder]);
+    if (formatted) out[f.placeholder] = formatted;
   }
   return out;
 });
+
+function mergeParams(
+  global: Record<string, any>,
+  specific: Record<string, any>
+): Record<string, string> {
+  const out: Record<string, string> = { ...(global || {}) };
+  for (const [key, value] of Object.entries(specific || {})) {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      out[key] = String(value);
+    }
+  }
+  return out;
+}
 
 const mergedBody = computed(() =>
   applyPlaceholders(templateBody.value || "", effectiveFieldValues.value)
@@ -1675,12 +1737,16 @@ const templatePlaceholders = computed(() => {
 
 const templatePreviewPayload = computed<Record<string, string>>(() => {
   const first = validRecipients.value[0];
-  const payload: Record<string, string> = {};
+  const recipient: Record<string, string> = {};
   for (const ph of templatePlaceholders.value) {
     const val = first?.[ph];
-    payload[ph] = val || SAMPLE_VALUES[ph] || `[${ph}]`;
+    if (val) recipient[ph] = val;
   }
-  return { ...payload, ...effectiveFieldValues.value };
+  const payload = mergeParams(effectiveFieldValues.value, recipient);
+  for (const ph of templatePlaceholders.value) {
+    if (!payload[ph]) payload[ph] = SAMPLE_VALUES[ph] || `[${ph}]`;
+  }
+  return payload;
 });
 
 const templatePreview = computed(() => {
@@ -1726,6 +1792,7 @@ function createNewTemplate() {
 }
 
 async function saveTemplate() {
+  let newTemplateId: string | null = null;
   try {
     if (selectedTemplateId.value) {
       await $fetch(`/api/admin/email-templates/${selectedTemplateId.value}`, {
@@ -1748,17 +1815,42 @@ async function saveTemplate() {
           fields: { ...templateFieldValues.value },
         },
       });
-      selectedTemplateId.value = created?.data?.id || null;
+      newTemplateId = created?.data?.id || null;
       toast.add({ title: "Template disimpan", color: "green" });
     }
-    await refreshTemplates();
   } catch (error: any) {
     toast.add({
       title: "Gagal menyimpan template",
-      description: error?.data?.error?.message || "Coba lagi.",
+      description: error?.data?.error?.details?.message || error?.data?.error?.message || "Coba lagi.",
       color: "red",
     });
   }
+  try {
+    await refreshTemplates();
+    if (newTemplateId) {
+      selectedTemplateId.value = newTemplateId;
+    } else if (!selectedTemplateId.value) {
+      const found = templates.value.find(
+        (tpl: any) => tpl.name === templateName.value && tpl.body === templateBody.value
+      );
+      selectedTemplateId.value = found?.id || null;
+    }
+  } catch {}
+}
+
+async function persistFieldsOnSend() {
+  if (!selectedTemplateId.value) return;
+  try {
+    await $fetch(`/api/admin/email-templates/${selectedTemplateId.value}`, {
+      method: "PUT",
+      body: {
+        name: templateName.value,
+        subject: templateSubject.value,
+        body: templateBody.value,
+        fields: { ...templateFieldValues.value },
+      },
+    });
+  } catch {}
 }
 
 async function deleteTemplate() {
@@ -1824,7 +1916,7 @@ const previewEmail = computed(() => {
   for (const entry of mappingEntries.value) {
     payload[entry.placeholder] = first[entry.placeholder] || "";
   }
-  const merged = { ...payload, ...effectiveFieldValues.value };
+  const merged = mergeParams(effectiveFieldValues.value, payload);
   const subjectText = applyPlaceholders(templateSubject.value || "Email Informasi", merged);
   const bodyText = applyPlaceholders(templateBody.value || "", merged);
   const html = isHtmlBody(bodyText)
@@ -1850,6 +1942,7 @@ async function sendBlast() {
       if (!confirmSend) return;
     }
     isSending.value = true;
+    await persistFieldsOnSend();
     const payload = {
       name: campaignName.value.trim(),
       templateId: selectedTemplateId.value || undefined,
@@ -1858,7 +1951,7 @@ async function sendBlast() {
       testEmail: testEmail.value || undefined,
       noreply: noreply.value,
       palette: effectivePaletteId.value || undefined,
-      recipients: validRecipients.value.map((r) => ({ ...r, ...effectiveFieldValues.value })),
+      recipients: validRecipients.value.map((r) => mergeParams(effectiveFieldValues.value, r)),
     };
 
     const res: any = await $fetch("/api/admin/email-blast", {

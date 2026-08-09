@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import { join } from "path";
 import EmailTemplateModel from "~/server/models/EmailTemplate";
+import EmailTemplateDeletedModel from "~/server/models/EmailTemplateDeleted";
 
 export type EmailTemplate = {
   id: string;
@@ -13,6 +14,7 @@ export type EmailTemplate = {
 
 const DATA_DIR = join(process.cwd(), "server", "data");
 const TEMPLATE_PATH = join(DATA_DIR, "email-templates.json");
+const DELETED_PATH = join(DATA_DIR, "email-templates-deleted.json");
 
 const defaultTemplates: EmailTemplate[] = [
   {
@@ -299,7 +301,7 @@ function toEmailTemplate(doc: any): EmailTemplate {
   };
 }
 
-function getBodyFixed(body: string) {
+export function getBodyFixed(body: string) {
   return body.replace(
     "[nama-kandidat] - [Gelombang 3 / 09.00 WIB]",
     "[nama-kandidat] - Gelombang 3 / 09.00 WIB"
@@ -317,13 +319,14 @@ async function readLocalTemplates(): Promise<EmailTemplate[]> {
     await ensureDataDir();
     const data = await fs.readFile(TEMPLATE_PATH, "utf-8");
     const parsed = JSON.parse(data) as EmailTemplate[];
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      return defaultTemplates;
-    }
-    return parsed.map((tpl) => ({
-      ...tpl,
-      body: tpl.id === "invitation-gelombang3" ? getBodyFixed(tpl.body) : tpl.body,
-    }));
+    const deleted = await readDeletedFromLocal();
+    const source = Array.isArray(parsed) && parsed.length > 0 ? parsed : defaultTemplates;
+    return source
+      .filter((tpl) => !deleted.includes(tpl.id))
+      .map((tpl) => ({
+        ...tpl,
+        body: tpl.id === "invitation-gelombang3" ? getBodyFixed(tpl.body) : tpl.body,
+      }));
   } catch {
     return defaultTemplates;
   }
@@ -336,11 +339,64 @@ async function syncToLocal(templates: EmailTemplate[]) {
   } catch {}
 }
 
-function mergeDefaults(templates: EmailTemplate[]): EmailTemplate[] {
+async function readDeletedFromLocal(): Promise<string[]> {
+  try {
+    await ensureDataDir();
+    const data = await fs.readFile(DELETED_PATH, "utf-8");
+    const parsed = JSON.parse(data);
+    return Array.isArray(parsed) ? parsed.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+async function syncDeletedToLocal(ids: string[]) {
+  try {
+    await ensureDataDir();
+    await fs.writeFile(DELETED_PATH, JSON.stringify([...new Set(ids)], null, 2));
+  } catch {}
+}
+
+export async function readDeletedIds(): Promise<string[]> {
+  try {
+    const docs = await EmailTemplateDeletedModel.find().lean();
+    return docs.map((d) => d.templateId);
+  } catch (error) {
+    console.warn(
+      "[EmailTemplates] MongoDB read-deleted error, falling back to local:",
+      (error as any)?.message
+    );
+    return readDeletedFromLocal();
+  }
+}
+
+async function markDeleted(id: string) {
+  try {
+    await withRetry(
+      () =>
+        EmailTemplateDeletedModel.findOneAndUpdate(
+          { templateId: id },
+          { $setOnInsert: { templateId: id } },
+          { upsert: true, new: true }
+        ),
+      "mark-deleted"
+    );
+  } catch (error) {
+    console.warn(
+      "[EmailTemplates] MongoDB mark-deleted failed, using local:",
+      (error as any)?.message
+    );
+  }
+  const current = await readDeletedFromLocal();
+  await syncDeletedToLocal([...current, id]);
+}
+
+function mergeDefaults(templates: EmailTemplate[], deletedIds: string[] = []): EmailTemplate[] {
   const existingIds = new Set(templates.map((t) => t.id));
+  const deleted = new Set(deletedIds);
   const merged = [...templates];
   for (const tpl of defaultTemplates) {
-    if (!existingIds.has(tpl.id)) {
+    if (!existingIds.has(tpl.id) && !deleted.has(tpl.id)) {
       merged.push({ ...tpl, updatedAt: new Date().toISOString() });
     }
   }
@@ -349,6 +405,7 @@ function mergeDefaults(templates: EmailTemplate[]): EmailTemplate[] {
 
 export async function loadTemplates(): Promise<EmailTemplate[]> {
   try {
+    const deletedIds = await readDeletedIds();
     let docs = await EmailTemplateModel.find().sort({ createdAt: 1 }).lean();
 
     if (docs.length === 0) {
@@ -361,7 +418,9 @@ export async function loadTemplates(): Promise<EmailTemplate[]> {
         seed = defaultTemplates;
       }
 
-      seed = mergeDefaults(seed);
+      seed = mergeDefaults(seed, deletedIds).filter(
+        (tpl) => !deletedIds.includes(tpl.id)
+      );
 
       const upsertOps = seed.map((tpl) => ({
         templateId: tpl.id,
@@ -384,7 +443,7 @@ export async function loadTemplates(): Promise<EmailTemplate[]> {
       docs = await EmailTemplateModel.find().sort({ createdAt: 1 }).lean();
     } else {
       const current = docs.map(toEmailTemplate);
-      const merged = mergeDefaults(current);
+      const merged = mergeDefaults(current, deletedIds);
       const missing = merged.filter((m) => !current.some((c) => c.id === m.id));
 
       if (missing.length > 0) {
@@ -476,43 +535,83 @@ export async function findTemplate(id: string): Promise<EmailTemplate | undefine
   }
 }
 
+async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      console.error(
+        `[EmailTemplates] ${label} error (attempt ${attempt}/3):`,
+        (error as any)?.message
+      );
+      if (attempt < 3) {
+        await new Promise((r) => setTimeout(r, 1000 * attempt));
+      }
+    }
+  }
+  throw lastError;
+}
+
+async function persistToLocal(template: EmailTemplate) {
+  const templates = await readLocalTemplates();
+  const index = templates.findIndex((t) => t.id === template.id);
+  if (index >= 0) {
+    templates[index] = { ...template, updatedAt: new Date().toISOString() };
+  } else {
+    templates.push({ ...template, updatedAt: new Date().toISOString() });
+  }
+  await syncToLocal(templates);
+  return templates;
+}
+
 export async function upsertTemplate(template: EmailTemplate): Promise<EmailTemplate[]> {
   try {
-    await EmailTemplateModel.findOneAndUpdate(
-      { templateId: template.id },
-      {
-        $set: {
-          templateId: template.id,
-          name: template.name,
-          subject: template.subject,
-          body: template.body,
-          fields: template.fields || {},
-        },
-      },
-      { upsert: true, new: true }
+    await withRetry(
+      () =>
+        EmailTemplateModel.findOneAndUpdate(
+          { templateId: template.id },
+          {
+            $set: {
+              templateId: template.id,
+              name: template.name,
+              subject: template.subject,
+              body: getBodyFixed(template.body),
+              fields: template.fields || {},
+            },
+          },
+          { upsert: true, new: true }
+        ),
+      "upsert"
     );
+    await persistToLocal({ ...template, body: getBodyFixed(template.body) });
     return await loadTemplates();
-  } catch {
-    const templates = await readLocalTemplates();
-    const index = templates.findIndex((t) => t.id === template.id);
-    if (index >= 0) {
-      templates[index] = { ...template, updatedAt: new Date().toISOString() };
-    } else {
-      templates.push({ ...template, updatedAt: new Date().toISOString() });
-    }
-    await syncToLocal(templates);
-    return templates;
+  } catch (error) {
+    console.warn(
+      "[EmailTemplates] MongoDB write failed, persisting to local JSON:",
+      (error as any)?.message
+    );
+    return await persistToLocal({ ...template, body: getBodyFixed(template.body) });
   }
 }
 
 export async function deleteTemplate(id: string): Promise<EmailTemplate[]> {
   try {
-    await EmailTemplateModel.deleteOne({ templateId: id });
+    await withRetry(() => EmailTemplateModel.deleteOne({ templateId: id }), "delete");
+    const local = await readLocalTemplates();
+    await syncToLocal(local.filter((t) => t.id !== id));
+    await markDeleted(id);
     return await loadTemplates();
-  } catch {
+  } catch (error) {
+    console.warn(
+      "[EmailTemplates] MongoDB delete failed, removing from local JSON:",
+      (error as any)?.message
+    );
     const templates = await readLocalTemplates();
     const filtered = templates.filter((t) => t.id !== id);
     await syncToLocal(filtered);
+    await markDeleted(id);
     return filtered;
   }
 }
