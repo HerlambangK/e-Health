@@ -1702,15 +1702,18 @@ const mergedBody = computed(() =>
 
 function updateBody(value: string) {
   let raw = value || "";
-  const filled = [...effectiveFieldValues.value.entries()].sort(
-    (a, b) => b[1].length - a[1].length
-  );
-  for (const [ph, val] of filled) {
-    if (val && raw.includes(val)) {
-      raw = raw.split(val).join(`[${ph}]`);
+  try {
+    const filled = Object.entries(effectiveFieldValues.value).sort(
+      (a, b) => b[1].length - a[1].length
+    );
+    for (const [ph, val] of filled) {
+      if (val && raw.includes(val)) {
+        raw = raw.split(val).join(`[${ph}]`);
+      }
     }
+  } finally {
+    templateBody.value = raw;
   }
-  templateBody.value = raw;
 }
 
 const SAMPLE_VALUES: Record<string, string> = {
