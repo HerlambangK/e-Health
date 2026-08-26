@@ -1,359 +1,249 @@
-# e-Health — Sistem Informasi Manajemen Klinik & Rumah Sakit
+# e-Health — Sistem Informasi Manajemen Klinik & Rumah Sakit (SIMPRS)
 
-> **Tech Stack:** Nuxt 3 · Vue 3 · Tailwind CSS · MongoDB · NextAuth.js · Nuxt UI
+> **Tech Stack:** Nuxt 3 (SPA) · Vue 3 · Tailwind CSS · Nuxt UI · MongoDB + Mongoose · NextAuth.js · Socket.IO · Nodemailer
 
 ---
 
 ## Daftar Isi
 
 - [Gambaran Umum](#gambaran-umum)
-- [Tech Stack](#tech-stack)
-- [Struktur Proyek](#struktur-proyek)
-- [Role & Hak Akses](#role--hak-akses)
-- [Alur Autentikasi](#alur-autentikasi)
+- [Tech Stack & Pustaka Utama](#tech-stack--pustaka-utama)
+- [Struktur Proyek Terbaru](#struktur-proyek-terbaru)
+- [Role & Hak Akses (RBAC)](#role--hak-akses-rbac)
+- [Alur Autentikasi & Keamanan](#alur-autentikasi--keamanan)
+- [Sistem Notifikasi & WebSocket](#sistem-notifikasi--websocket)
+- [Halaman Profil Pengguna (`/profile`)](#halaman-profil-pengguna-profile)
 - [Halaman & Fungsinya](#halaman--fungsinya)
 - [API Endpoints](#api-endpoints)
-- [Alur Data](#alur-data)
-- [Fitur Unggulan](#fitur-unggulan)
+- [Arsitektur & Optimasi Backend](#arsitektur--optimasi-backend)
 
 ---
 
 ## Gambaran Umum
 
-Aplikasi **e-Health** adalah SPA (Single Page Application) untuk mengelola operasional klinik/rumah sakit secara digital. Mencakup manajemen pasien, dokter, rekam medis, janji temu, billing, obat, penyakit, mapping ruangan, rute ambulans, hingga email blast.
+Aplikasi **e-Health** adalah sistem Single Page Application (SPA) berbasis web komprehensif untuk mengelola operasional klinik dan rumah sakit secara terintegrasi. Mencakup manajemen pendaftaran pasien, antrian poliklinik terhubung, electronic medical record (EMR), resep & dispensing farmasi, manajemen tempat tidur rawat inap (*bed management*), surat rujukan, billing/invoice, mapping ruangan, visualisasi 3D bangunan rumah sakit, rute ambulans, email blast massal, serta sistem notifikasi in-app dan email real-time.
 
-SSR dimatikan (`ssr: false`), semua rendering terjadi di sisi klien. API berjalan di server Nitro (Nuxt) dengan MongoDB sebagai database.
+SSR dimatikan (`ssr: false`), rendering berjalan di sisi klien dengan backend API yang di-handle oleh server Nitro Nuxt terhubung ke MongoDB Atlas.
 
 ---
 
-## Tech Stack
+## Tech Stack & Pustaka Utama
 
 | Lapisan | Teknologi |
-|---------|-----------|
-| **Framework** | Nuxt 3.9.1, Vue 3.3.10, Vue Router 4.2.5 |
-| **UI** | Nuxt UI 2.11.1, Tailwind CSS, Naive UI, Flowbite |
-| **Auth** | `@sidebase/nuxt-auth` 0.6.4 (wrapper NextAuth.js 4), JWT, Credentials Provider |
-| **Database** | MongoDB + Mongoose 8.0.3 |
-| **Charts** | Chart.js, ECharts, Unovis |
-| **Calendar** | FullCalendar 6.1.10 |
-| **Maps** | Leaflet + OSRM (rute), Mapbox GL (3D) |
-| **Email** | Nodemailer + SMTP |
-| **File** | xlsx (Excel), html2pdf.js |
-| **Form/Validation** | Zod, h3-zod |
-| **Testing** | Vitest |
+|---|---|
+| **Frontend Framework** | Nuxt 3.9.1, Vue 3.3.10, Vue Router 4.2.5 |
+| **Komponen & UI** | `@nuxt/ui` 2.11.1, Tailwind CSS 3, Headless UI, Heroicons, Lucide Icons |
+| **Real-time / WebSocket** | Socket.IO Server (`server/plugins/socket.ts`) & Socket.IO Client (`composables/useSocket.ts`) |
+| **Autentikasi & Session** | `@sidebase/nuxt-auth` 0.6.4 (NextAuth.js v4), JWT Session, Credentials Provider |
+| **Database & ODM** | MongoDB + Mongoose 8.0.3 dengan indeks optimal & query `.lean()` |
+| **Idempotensi & Transaksi** | Custom Idempotency Key Middleware (`server/middleware/idempotent.ts`) + MongoDB Model |
+| **Grafik & Visualisasi** | Apache ECharts (Dynamic Import), Chart.js, Unovis |
+| **Kalender & Jadwal** | FullCalendar 6.1.10 (Dynamic Component) |
+| **Peta & GIS** | Leaflet + OSRM (Rute Navigasi), Mapbox GL 3D (Gedung & Denah) |
+| **Email & Notifikasi** | Nodemailer (SMTP SSL Port 465) + Security Alert Template Engine |
+| **Manipulasi File** | `xlsx` (Excel Export/Import), `html2pdf.js` |
+| **Validasi Skema** | Zod, h3-zod |
 
 ---
 
-## Struktur Proyek
+## Struktur Proyek Terbaru
 
 ```
 e-Health/
-├── app.vue                        # Root — NuxtLayout, NuxtPage, offline banner
-├── error.vue                      # Custom error page (404/500)
-├── nuxt.config.ts                 # Konfigurasi Nuxt
-├── package.json                   # Dependencies & scripts
-├── tailwind.config.ts
+├── app.vue                            # Root — NuxtLayout, NuxtPage, offline banner
+├── error.vue                          # Custom error page (404/500)
+├── nuxt.config.ts                     # Konfigurasi Nuxt, Vite chunks, Nitro tasks
+├── package.json                       # Dependencies & scripts
+├── tailwind.config.ts                 # Tailwind configuration
 │
 ├── components/
-│   ├── admin/                     # Komponen admin (Overview, navburger, RoomMappingCanvas, dll)
-│   ├── dashboard/                 # Dashboard patient (history, CollectionActionMenu)
-│   ├── form/                      # Form dokter & pasien
-│   ├── homepage/                  # Landing page (header, aboutus, map3d, footer, dll)
-│   ├── patient/                   # Diagnosis, visit, riwayat
-│   ├── Wrapper/Auth.vue           # Layout wrapper halaman auth
-│   ├── ColorSwitcher.vue          # Toggle dark/light mode
-│   ├── Logo.vue                   # Logo aplikasi
-│   ├── Navbar.vue                 # Top navigation bar
-│   └── Sidebar.vue                # Sidebar navigasi (bisa di-collapse)
+│   ├── admin/                         # Overview, AdmissionsTrend, UtilizationOverview, RoomMappingCanvas, navburger
+│   ├── antrian/                       # AntrianDisplay (Public Board), AntrianList
+│   ├── dashboard/                     # Patient dashboard (history, CollectionActionMenu)
+│   ├── emr/                           # DiagnosisSearch, MedicationForm, TindakanSearch, VitalSigns
+│   ├── form/                          # Form dokter & pasien
+│   ├── homepage/                      # Landing page (header, aboutus, map3d, footer, logoclient)
+│   ├── patient/                       # Diagnosis, visit, riwayat
+│   ├── ranap/                         # BedMap (Visual Bed), PatientCard
+│   ├── satusehat/                     # SyncLog, SyncStatus
+│   ├── Wrapper/Auth.vue               # Layout wrapper halaman autentikasi
+│   ├── ColorSwitcher.vue              # Toggle dark/light mode
+│   ├── Logo.vue                       # Brand logo component
+│   ├── Navbar.vue                     # Top navigation bar + In-App Notification Bell & Profile Dropdown
+│   └── Sidebar.vue                    # Collapsible sidebar dengan cookie state & tooltips
 │
 ├── composables/
-│   ├── useOffline.ts              # Deteksi koneksi internet
-│   └── usePasien.ts               # CRUD pasien reusable
-│
-├── data/
-│   └── room-mapping.ts            # Definisi peta ruangan
+│   ├── useApiCache.ts                 # In-memory client request caching
+│   ├── useNotifications.ts            # Reactive singleton notification state & fetcher
+│   ├── useOffline.ts                  # Deteksi koneksi internet
+│   ├── usePasien.ts                   # CRUD pasien reusable
+│   ├── useSidebar.ts                  # Cookie-persisted sidebar collapse state
+│   └── useSocket.ts                   # Socket.IO client manager
 │
 ├── layouts/
-│   ├── default.vue                # Layout utama (sidebar + navbar + konten)
-│   └── home.vue                   # Layout landing page (tanpa sidebar)
+│   ├── default.vue                    # Layout aplikasi utama (Sidebar + Navbar + Konten)
+│   └── home.vue                       # Layout landing page & auth (tanpa sidebar)
 │
 ├── middleware/
-│   ├── auth-middleware.ts         # Guard rute — cek auth + role
-│   └── guest.ts                   # Redirect user terauth ke dashboard
+│   ├── auth-middleware.ts             # Client route guard — cek login & role permission
+│   └── guest.ts                       # Redirect user terautentikasi ke dashboard
 │
 ├── pages/
-│   ├── index.vue                  # Landing page
-│   ├── dashboard.vue              # Dashboard pasien
-│   ├── map.vue                    # Rute ambulans
-│   ├── auth/
-│   │   ├── signin.vue             # Login
-│   │   └── signup.vue             # Registrasi
-│   ├── admin/
-│   │   ├── index.vue              # Dashboard admin
-│   │   ├── email-blast.vue        # Kirim email massal
-│   │   ├── map-3d.vue             # Mapbox 3D
-│   │   └── room-mapping.vue       # Mapping ruangan
-│   ├── doctor/
-│   │   └── index.vue              # Daftar dokter
-│   └── patient-record/
-│       ├── index.vue              # Rekam medis
-│       ├── appointment.vue        # Kalender janji temu
-│       ├── billing.vue            # Billing/invoice
-│       ├── list-patient.vue       # Daftar pasien
-│       ├── medical-chart.vue      # Grafik kunjungan
-│       ├── exportData.vue         # Export Excel
-│       └── rekam-medis/
-│           └── [patientId].vue    # Detail rekam medis per pasien
+│   ├── index.vue                      # Landing page publik
+│   ├── dashboard.vue                  # Dashboard pasien
+│   ├── map.vue                        # Navigasi rute ambulans
+│   ├── pendaftaran/                   # Pendaftaran pasien & antrian loket
+│   ├── poli/                          # Poliklinik & antrian dokter
+│   ├── farmasi/                       # Resep & dispensing obat
+│   ├── ranap/                         # Manajemen kamar & rawat inap
+│   ├── rujukan/                       # Surat rujukan pasien
+│   ├── profile/                       # Profil akun, jabatan, dan sinkronisasi email notifikasi
+│   ├── settings/                      # Pengaturan penerima notifikasi & uji coba email
+│   ├── auth/                          # Login (signin.vue) & Registrasi (signup.vue)
+│   ├── admin/                         # Admin dashboard, email blast, map 3D, room mapping
+│   ├── doctor/                        # Master data & jadwal dokter
+│   └── patient-record/                # Rekam medis, kalender appointment, billing invoice, export data
 │
-├── plugins/                       # Chart, Marquee
-├── public/                        # Static assets (images, favicon)
-├── schemas/                       # Zod validation schemas
+├── plugins/
+│   └── socket.client.ts               # Socket.IO client initialization plugin
 │
 ├── server/
-│   ├── api/                       # REST API endpoints
-│   │   ├── auth/                  # NextAuth [...].ts + signup
-│   │   ├── admin/                 # Email templates, email blast
-│   │   ├── appointment/           # CRUD appointment
-│   │   ├── billing/               # CRUD billing
-│   │   ├── dashboard/             # Statistik dashboard
-│   │   ├── dokter/                # CRUD dokter
-│   │   ├── obat/                  # CRUD obat
-│   │   ├── pasien/                # CRUD pasien
-│   │   ├── penyakit/              # CRUD penyakit
-│   │   ├── rekamedis/             # CRUD rekam medis
-│   │   └── routes/                # Data rute ambulans
+│   ├── api/                           # REST API Endpoints
+│   │   ├── admin/                     # Email blast & template
+│   │   ├── antrian/                   # Antrian poli, panggil suara, display
+│   │   ├── appointment/               # CRUD janji temu
+│   │   ├── auth/                      # NextAuth handler + registrasi + security login logger
+│   │   ├── billing/                   # CRUD billing kasir
+│   │   ├── dashboard/                 # Aggregated summary dashboard
+│   │   ├── dokter/                    # Master dokter
+│   │   ├── encounter/                 # Kunjungan pasien EMR
+│   │   ├── farmasi/                   # Antrian farmasi
+│   │   ├── notifications/             # In-app notifications & read markers
+│   │   ├── obat/                      # Master obat
+│   │   ├── pasien/                    # Master pasien
+│   │   ├── penyakit/                  # Master diagnosa penyakit
+│   │   ├── profile/                   # User profile get & put handler
+│   │   ├── ranap/                     # Rawat inap (admission, bed, discharge)
+│   │   ├── rekamedis/                 # Rekam medis EMR
+│   │   ├── resep/                     # Resep dokter & dispensing
+│   │   ├── rujukan/                   # Rujukan internal & eksternal
+│   │   ├── settings/                  # Notification setting CRUD & test notification
+│   │   └── tindakan/                  # Master tindakan medis
 │   ├── middleware/
-│   │   ├── auth.ts                # RBAC server-side tiap request API
-│   │   └── logging.ts             # Logging request
-│   ├── models/                    # Mongoose models (User, Pasien, Dokter, dll)
+│   │   ├── auth.ts                    # RBAC Server-side authorization guard
+│   │   ├── idempotent.ts              # Idempotency Key header middleware
+│   │   └── logging.ts                 # Request logging
+│   ├── models/                        # Mongoose schemas (User, Pasien, Notification, NotificationSetting, IdempotencyKey, dll)
 │   ├── plugins/
-│   │   └── mongoose.ts            # Koneksi MongoDB
-│   └── utils/                     # Helper (hash, mailer, pagination, response, emailTemplates)
+│   │   ├── mongoose.ts                # Koneksi MongoDB Atlas
+│   │   └── socket.ts                  # Socket.IO server engine
+│   ├── tasks/                         # Nitro background tasks
+│   └── utils/                         # Helper (notify, mailer, idempotency, client-info, generate-id, response)
 │
-├── tests/                         # Unit test (permissions)
-└── utils/                         # Shared utilities
-    ├── index.ts                   # Navigasi links, date formatter
-    └── permissions.ts             # RBAC definitions & helpers
+└── utils/
+    ├── index.ts                       # Navigasi links, helper tanggal
+    └── permissions.ts                 # RBAC role matrix & route access rules
 ```
 
 ---
 
-## Role & Hak Akses
+## Role & Hak Akses (RBAC)
 
-### 6 Role User
+Sistem memiliki **7 Role Pengguna** dengan batasan izin:
 
-| Role | Tipe | Deskripsi |
-|------|------|-----------|
-| `admin` | Staff | Akses penuh ke seluruh sistem |
-| `doctor` | Medis | Lihat pasien, baca/tulis rekam medis |
-| `nurse` | Medis | Lihat pasien, baca/edit rekam medis |
-| `receptionist` | Front office | Buat/lihat pasien & janji temu |
-| `billing` | Keuangan | Lihat/edit billing, lihat pasien |
-| `patient` | Pasien | Lihat data sendiri, janji temu, billing |
-
-### Matrix Permission
-
-| Resource | admin | doctor | nurse | receptionist | billing | patient |
-|----------|-------|--------|-------|-------------|---------|---------|
-| pasien | CRUD | R | R | CRU | R | R |
-| dokter | CRUD | R | R | R | R | R |
-| rekamedis | CRUD | CRU | RU | R | – | R |
-| appointment | CRUD | R | R | CRU | R | R |
-| billing | CRUD | – | – | R | RU | R |
-| dashboard | R | R | R | R | R | R |
-| obat | CRUD | R | R | R | – | – |
-| penyakit | CRUD | R | R | R | – | – |
-| admin | CRUD | – | – | – | – | – |
-
-### Route Access per Role
-
-| Route | Allowed Roles |
-|-------|--------------|
-| `/` | Semua (publik) |
-| `/auth/*` | Semua (publik / guest) |
-| `/dashboard` | patient |
-| `/admin/*` | admin |
-| `/doctor` | admin, doctor, nurse, receptionist, billing |
-| `/patient-record/*` | admin, doctor, nurse, receptionist, billing |
-| `/patient-record/billing` | admin, billing, receptionist, patient |
-| `/patient-record/appointment` | admin, doctor, nurse, receptionist, patient |
-| `/patient-record/exportData` | admin |
-| `/map` | admin, doctor, nurse, receptionist |
+| Peran (Role) | Kategori | Hak Akses Utama |
+|---|---|---|
+| `admin` | Administrator | Akses penuh ke semua fitur, pengaturan notifikasi, profile, email blast, dan manajemen user |
+| `doctor` | Medis | EMR rekam medis, antrian poli, peresepan obat, rujukan, admission/discharge rawat inap |
+| `nurse` | Medis | Pendaftaran, tanda vital pasien, antrian poli, monitoring rawat inap, rekam medis |
+| `receptionist`| Front Office | Registrasi pasien, antrian loket, jadwal janji temu (appointment), surat rujukan |
+| `pharmacist` | Farmasi | Resep dokter, dispensing obat, katalog master obat, stok farmasi |
+| `billing` | Kasir/Keuangan | Manajemen invoice tagihan, pembayaran kasir, status klaim billing |
+| `patient` | Pasien | Dashboard pribadi, riwayat pemeriksaan, jadwal kontrol, invoice tagihan mandiri |
 
 ---
 
-## Alur Autentikasi
+## Alur Autentikasi & Keamanan
 
-### Registrasi
+1. **Login Flow**:
+   - Pengguna login via `/auth/signin` (NextAuth Credentials Provider).
+   - Server mengekstrak informasi perangkat klien via `server/utils/client-info.ts` (IP, Browser, OS, Device, Lokasi).
+   - **Login Berhasil**: Memicu notifikasi `login_success` ke database, Socket.IO, dan mengirimkan email verifikasi keamanan login ke email admin/penerima terdaftar.
+   - **Login Gagal**: Memicu notifikasi `login_failed` ke database, Socket.IO, dan mengirimkan email peringatan percobaan login mencurigakan.
 
-```
-Signup Form → Zod Validation → POST /api/auth/signup → Cek duplikat email
-→ Hash password (bcrypt) → Simpan User (role: patient) → Redirect /auth/signin
-```
-
-### Login
-
-```
-Signin Form → Zod Validation → signIn("credentials") → NextAuth [...].ts
-→ Cari user by email → Cek isActive → bcrypt.compare password
-→ Update lastLogin → JWT token → Redirect /dashboard
-```
-
-### Route Guard (Client)
-
-Middleware `auth-middleware.ts` di `definePageMeta`:
-- **Status unauthenticated** → redirect `/auth/signin`
-- **Status inactive** → redirect `/auth/signin`
-- **Role tidak punya akses rute** → redirect ke fallback:
-  - admin → `/admin`
-  - doctor → `/doctor`
-  - nurse / receptionist → `/patient-record`
-  - billing → `/patient-record/billing`
-  - patient → `/dashboard`
-
-### API Guard (Server)
-
-`server/middleware/auth.ts` jalan di setiap request `/api/*` (kecuali `/api/auth`):
-
-```
-Request API → getServerSession → normalizeRole → cek isActive
-→ map path → resource → map method → action
-→ hasPermission(role, resource, action)? → 401/403 atau lanjut
-```
+2. **Route Guard & API Guard**:
+   - **Client**: `middleware/auth-middleware.ts` memeriksa token session dan hak akses peran rute.
+   - **Server**: `server/middleware/auth.ts` memverifikasi token JWT dan mencocokkan `mapResource()` serta `hasPermission(role, resource, action)`.
 
 ---
 
-## Halaman & Fungsinya
+## Sistem Notifikasi & WebSocket
 
-### Publik (tanpa login)
+- **Real-Time Push**: Socket.IO terpasang di `server/plugins/socket.ts` dan di-consume melalui `composables/useSocket.ts` serta `composables/useNotifications.ts`.
+- **Channeling**:
+  - `role:<role>`: Notifikasi khusus untuk peran tertentu (misal: antrian poli untuk dokter, resep masuk untuk apoteker).
+  - `user:<userId>`: Notifikasi privat untuk pengguna tertentu.
+  - `broadcast`: Notifikasi global ke seluruh pengguna online.
+- **Email Forwarding (`server/utils/notify.ts`)**:
+  - Mengirim email via SMTP SSL Port 465.
+  - **Aturan Penerima Ketat**: Notifikasi hanya dikirim ke email yang tersimpan di `NotificationSetting` dan email admin yang tersimpan di profil pengguna (tanpa self-send ke email pengirim).
 
-| Route | Layout | Fungsi |
-|-------|--------|--------|
-| `/` | `home` | Landing page (hero, about, services, 3D preview, client logos, contact form, footer) |
-| `/auth/signin` | `home` | Login form |
-| `/auth/signup` | `home` | Registrasi form |
+---
 
-### Dashboard
+## Halaman Profil Pengguna (`/profile`)
 
-| Route | Role | Layout | Fungsi |
-|-------|------|--------|--------|
-| `/dashboard` | patient | `default` | Ringkasan kesehatan, diagnosis terbaru, rencana perawatan, obat, tanda vital, janji temu berikutnya, riwayat kunjungan, catatan pribadi |
-| `/admin` | admin | `default` | Statistik pasien/dokter, grafik tren kunjungan 7 hari, quick actions |
-
-### Manajemen Data
-
-| Route | Layout | Fungsi |
-|-------|--------|--------|
-| `/patient-record` | `default` | Daftar rekam medis (tabel dengan pasien, dokter, poli, kontrol terakhir) |
-| `/patient-record/list-patient` | `default` | Daftar pasien (search/filter by nama, alamat, telepon, asuransi) |
-| `/patient-record/rekam-medis/[patientId]` | `default` | Detail rekam medis per pasien — diagnosis, penyakit, obat, lab, tanda vital, riwayat kunjungan |
-| `/doctor` | `default` | Daftar dokter (nama, NIP, spesialisasi, poli, jadwal, kehadiran) |
-| `/patient-record/medical-chart` | `default` | Grafik tren kunjungan pasien 7 hari (Chart.js) |
-
-### Operasional
-
-| Route | Layout | Fungsi |
-|-------|--------|--------|
-| `/patient-record/appointment` | `default` | Kalender janji temu (FullCalendar — month/week/day/list), create/edit/detail modal, deteksi bentrok jadwal dokter |
-| `/patient-record/billing` | `default` | Manajemen invoice — daftar billing, create dengan auto-calculate total, status flow: draft → issued → paid → void |
-| `/patient-record/exportData` | `default` | Export 3 dataset ke Excel: Pasien, Dokter, atau Rekam Medis |
-
-### Admin Khusus
-
-| Route | Layout | Fungsi |
-|-------|--------|--------|
-| `/admin/email-blast` | `default` | Upload Excel kandidat, mapping kolom ke placeholder template, kirim email massal via Nodemailer SMTP |
-| `/admin/map-3d` | `default` | Visualisasi 3D RS Jantung IHC Karawang (Mapbox GL) — building footprints, markers, info panel |
-| `/admin/room-mapping` | `default` | Peta interaktif denah ruangan — SVG floor plan, kategori ruangan (public, diagnostic, emergency, support), search/filter, popup info |
-
-### Ekstra
-
-| Route | Layout | Fungsi |
-|-------|--------|--------|
-| `/map` | `default` | Rute ambulans interaktif (Leaflet + OSRM) — multiple vehicle, custom waypoints, animasi kendaraan, draggable waypoints, distance/duration |
+Halaman profil memungkinkan pengguna untuk mengelola data akun secara mandiri:
+- **Informasi Pribadi & Kepegawaian**: Nama Akun, Posisi/Jabatan, Unit Kerja/Departemen, NIP, Nomor HP/WhatsApp.
+- **Email Penerima Notifikasi Utama**: Mengubah alamat email yang otomatis disinkronkan ke tabel `NotificationSetting`.
+- **Toggle Notifikasi**: Memilih apakah akun menerima email notifikasi operasional sistem secara real-time.
+- **Uji Coba Kirim Notifikasi**: Mengetes langsung keandalan pengiriman email notifikasi ke alamat profil yang sedang diedit.
+- **Keamanan Akun**: Penggantian kata sandi dengan validasi keamanan.
 
 ---
 
 ## API Endpoints
 
-### Auth
+### 1. Autentikasi & Profil
+- `*` `/api/auth/[...]` — NextAuth handler
+- `POST` `/api/auth/signup` — Registrasi user baru
+- `GET` `/api/user/profile` / `/api/profile` — Mengambil data profil login
+- `PUT` `/api/user/profile` / `/api/profile` — Memperbarui profil & sinkronisasi email notifikasi
 
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| `*` | `/api/auth/[...]` | NextAuth.js catch-all |
-| `POST` | `/api/auth/signup` | Registrasi user baru |
+### 2. Notifikasi & Pengaturan
+- `GET` `/api/notifications` — Daftar notifikasi in-app
+- `GET` `/api/notifications/unread-count` — Jumlah notifikasi belum dibaca
+- `PUT` `/api/notifications/[id]` — Menandai notifikasi telah dibaca
+- `POST` `/api/notifications/read-all` — Menandai semua notifikasi telah dibaca
+- `GET` `/api/settings/notification-emails` — List penerima email notifikasi
+- `POST` `/api/settings/notification-emails` — Tambah penerima email notifikasi
+- `PUT` `/api/settings/notification-emails/[id]` — Edit penerima notifikasi
+- `DELETE` `/api/settings/notification-emails/[id]` — Hapus penerima notifikasi
+- `POST` `/api/settings/test-notification` — Uji coba kirim notifikasi sistem
 
-### Admin
-
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| `GET` | `/api/admin/email-templates` | List template email |
-| `POST` | `/api/admin/email-templates` | Buat template |
-| `PUT` | `/api/admin/email-templates/[id]` | Update template |
-| `DELETE` | `/api/admin/email-templates/[id]` | Hapus template |
-| `POST` | `/api/admin/email-blast` | Kirim email massal |
-
-### Resource CRUD (setiap resource punya 5 endpoint)
-
-| Resource | Endpoint | Deskripsi |
-|----------|----------|-----------|
-| **Pasien** | `/api/pasien` | CRUD pasien (paginated, filterable) |
-| **Dokter** | `/api/dokter` | CRUD dokter (unique NIP) |
-| **Rekam Medis** | `/api/rekamedis` | CRUD rekam medis (patient-scoped) |
-| **Appointment** | `/api/appointment` | CRUD janji temu (conflict detection) |
-| **Billing** | `/api/billing` | CRUD billing (auto-calculate total) |
-| **Obat** | `/api/obat` | CRUD obat |
-| **Penyakit** | `/api/penyakit` | CRUD penyakit |
-
-### Lainnya
-
-| Method | Endpoint | Deskripsi |
-|--------|----------|-----------|
-| `GET` | `/api/dashboard/summary` | Statistik dashboard (doctor count, patient count, appointments, billing count, visit trend) |
-| `GET` | `/api/routes/ambulance` | Data rute ambulans |
-
-Semua response API mengikuti format standar:
-
-```ts
-{
-  data: T | null,
-  meta?: { page, pageSize, total },
-  error?: { code, message, details? }
-}
-```
+### 3. Operasional SIMPRS
+- `CRUD` `/api/pasien` — Master pasien & pencarian
+- `CRUD` `/api/antrian` — Antrian poli & panggil suara
+- `CRUD` `/api/encounter` — Kunjungan pasien EMR
+- `CRUD` `/api/rekamedis` — Catatan rekam medis
+- `CRUD` `/api/resep` — Resep & dispensing obat
+- `CRUD` `/api/ranap` — Rawat inap & bed management
+- `CRUD` `/api/rujukan` — Surat rujukan
+- `CRUD` `/api/billing` — Invoice tagihan kasir
+- `CRUD` `/api/appointment` — Kalender janji temu
+- `CRUD` `/api/obat`, `/api/dokter`, `/api/penyakit`, `/api/tindakan` — Data master
 
 ---
 
-## Alur Data
+## Arsitektur & Optimasi Backend
 
-```
-MongoDB  ←→  Mongoose Models  ←→  API Routes (Nitro)  ←→  $fetch / useAsyncData  ←→  Pages  ←→  Components
-```
+1. **Idempotensi Transaksi (`Idempotency-Key`)**:
+   - Mencegah *double-billing*, duplikasi pendaftaran, dan duplikasi resep saat jaringan tidak stabil.
+   - Respons di-cache dalam koleksi `IdempotencyKey` dengan TTL otomatis 24 jam.
 
-1. **Model** — Definisi schema Mongoose + interface TypeScript (`server/models/`)
-2. **API** — Handler di `server/api/` dengan:
-   - Validasi Zod (`schemas/`)
-   - Pagination helper (`server/utils/pagination.ts`)
-   - Response standar (`server/utils/response.ts`: `sendSuccess()` / `sendApiError()`)
-   - Patient-scoped filtering untuk role patient
-3. **Middleware** — Server auth (`server/middleware/auth.ts`) intercept tiap request API, cek JWT + permission matrix
-4. **Page** — Panggil API via `$fetch()` atau `useAsyncData()`, render data menggunakan komponen Nuxt UI
+2. **Query Optimization**:
+   - Penambahan indeks gabungan (`compound indexes`) pada model MongoDB.
+   - Penggunaan query `.lean()` pada endpoint read-only untuk meminimalkan beban memori Node.js.
+   - Penggunaan Aggregation Pipeline pada dashboard summary.
 
----
-
-## Fitur Unggulan
-
-| Fitur | Detail Teknis |
-|-------|---------------|
-| **Role-Based Access Control** | Permission matrix di `utils/permissions.ts`, di-enforce di client (`auth-middleware.ts`) dan server (`server/middleware/auth.ts`) |
-| **Deteksi Bentrok Jadwal** | Appointment API cek overlap sebelum create/update, kirim 409 jika bentrok |
-| **Export Excel 3 Dataset** | `xlsx` library — data pasien, dokter, atau rekam medis |
-| **Email Blast** | Upload Excel, mapping kolom ke placeholder template, kirim massal via Nodemailer SMTP dengan hasil sent/skipped/failed |
-| **Kalender Janji Temu** | FullCalendar dengan 4 tampilan (month/week/day/list), create/edit/detail modal |
-| **Mapping Ruangan** | SVG floor plan interaktif dengan kategori ruangan, search/filter, popup info |
-| **Rute Ambulans** | Leaflet + OSRM routing, multiple vehicle, animasi kendaraan, drag-drop waypoint |
-| **3D Map Rumah Sakit** | Mapbox GL 3D dengan building footprints, marker, info panel |
-| **Dark/Light Mode** | `ColorSwitcher.vue` + `useColorMode()` Nuxt UI |
-| **Offline Detection** | `useOffline.ts` composable — banner otomatis saat koneksi putus |
-| **Custom Error Page** | `error.vue` untuk 404 dan error lainnya dengan desain gradient glassmorphism |
-| **Sidebar Collapsible** | Sidebar bisa di-minimize dengan transisi smooth (w-60 ↔ w-16) |
+3. **Vite Dynamic Chunking**:
+   - Pemecahan library besar (ECharts, Mapbox, FullCalendar, XLSX) menjadi chunk terpisah untuk mempercepat *First Contentful Paint* (FCP) dan *Largest Contentful Paint* (LCP).
