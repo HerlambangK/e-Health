@@ -44,5 +44,6 @@ const AntrianSchema = new Schema<IAntrian>(
 
 AntrianSchema.index({ poliId: 1, tanggal: 1, nomorAntrian: 1 });
 AntrianSchema.index({ encounterId: 1 });
+AntrianSchema.index({ status: 1, tanggal: 1 });
 
 export default model<IAntrian>("Antrian", AntrianSchema);

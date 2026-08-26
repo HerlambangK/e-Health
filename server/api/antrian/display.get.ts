@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
     status: { $in: ["waiting", "called", "in_room"] },
   })
     .populate("pasienId", "nama noRM")
-    .sort({ nomorAntrian: 1 });
+    .lean().sort({ nomorAntrian: 1 });
 
   return { data: antrian };
 });

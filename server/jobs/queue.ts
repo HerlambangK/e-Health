@@ -28,6 +28,8 @@ const JobSchema = new Schema<IJob>({
   createdAt: { type: Date, default: Date.now },
 });
 
+JobSchema.index({ status: 1, runAt: 1, priority: 1 });
+
 const JobModel = model<IJob>("Job", JobSchema);
 export { IJob, JobModel };
 

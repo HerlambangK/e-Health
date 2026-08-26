@@ -1,31 +1,45 @@
-import { submitKlaim } from "~/server/integrations/bpjs/vclaim";
 import Billing from "~/server/models/Billing";
+import { submitKlaim } from "~/server/integrations/bpjs/vclaim";
+import pLimit from "p-limit";
 
 export default defineTask({
-  meta: { name: "bpjs-klaim", description: "Submit klaim BPJS yang pending" },
+  meta: { name: "bpjs-klaim", description: "Auto submission klaim BPJS harian" },
   async run() {
-    const pendingBills = await Billing.find({
-      status: "issued",
-      "jenisPembayaran": "BPJS",
-      klaimSubmitted: { $ne: true },
-    }).limit(50);
-
-    let submitted = 0;
-    for (const bill of pendingBills) {
-      try {
-        await submitKlaim({
-          noSEP: bill.noSEP,
-          noKartu: bill.noBPJS,
-          biaya: bill.total,
-          // ... mapping sesuai format VClaim
-        });
-        await Billing.findByIdAndUpdate(bill._id, { klaimSubmitted: true });
-        submitted++;
-      } catch (e) {
-        // Log error, will retry next cycle
-      }
+    const config = useRuntimeConfig();
+    if (!config.bpjs?.consId || !config.bpjs?.secretKey) {
+      return { result: "BPJS credentials not configured in .env. Skipping BPJS claim task." };
     }
 
-    return { result: `Submitted ${submitted} BPJS claims` };
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const billings = await Billing.find({
+        metodePembayaran: "bpjs",
+        statusPembayaran: "lunas",
+        bpjsClaimStatus: { $ne: "submitted" },
+        createdAt: { $gte: today },
+      }).populate("pasienId").populate("encounterId");
+
+      const limit = pLimit(3);
+      await Promise.allSettled(
+        billings.map(b => limit(async () => {
+          try {
+            await submitKlaim({
+              noSep: (b as any).noSep,
+              totalTagihan: b.total,
+              tanggalKlaim: today.toISOString().split("T")[0],
+            });
+            await Billing.findByIdAndUpdate(b._id, { bpjsClaimStatus: "submitted" });
+          } catch (err: any) {
+            console.error(`Gagal submit klaim billing ${b._id}:`, err.message);
+          }
+        }))
+      );
+
+      return { result: `Submitted ${billings.length} BPJS claims` };
+    } catch (err: any) {
+      return { result: `BPJS claim task notice: ${err.message}` };
+    }
   },
 });

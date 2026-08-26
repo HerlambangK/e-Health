@@ -1,10 +1,9 @@
 import Resep from "~/server/models/Resep";
 import { enqueue } from "~/server/jobs/queue";
+import { generateId } from "~/server/utils/generate-id";
 
 function generateNoResep(): string {
-  const year = new Date().getFullYear();
-  const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `RX-${year}-${rand}`;
+  return generateId('RX');
 }
 
 export default defineEventHandler(async (event) => {

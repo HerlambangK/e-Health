@@ -5,7 +5,7 @@ import { sendApiError, sendSuccess } from "~/server/utils/response";
 export default defineEventHandler(async (event) => {
   try {
     const id = event.context.params?.id as string;
-    const billing = await Billing.findById(id).populate({ path: "patientId", select: "nama" });
+    const billing = await Billing.findById(id).populate({ path: "patientId", select: "nama" }).lean();
 
     if (!billing) {
       return sendApiError(event, 404, "not_found", "Billing not found");

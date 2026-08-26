@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const [items, total] = await Promise.all([
-      Dokter.find(filter).skip(skip).limit(pageSize).sort({ createdAt: -1 }),
+      Dokter.find(filter).skip(skip).limit(pageSize).lean().sort({ createdAt: -1 }),
       Dokter.countDocuments(filter),
     ]);
 

@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
         .populate({ path: "dokter", select: "namaDokter poli" })
         .skip(skip)
         .limit(pageSize)
-        .sort({ createdAt: -1 }),
+        .lean().sort({ createdAt: -1 }),
       RekamMedis.countDocuments(filter),
     ]);
 

@@ -5,18 +5,17 @@
 </template>
 
 <script setup lang="ts">
-import { provide, computed } from "vue";
-import { use } from "echarts/core";
-import { CanvasRenderer } from "echarts/renderers";
-import { PieChart } from "echarts/charts";
-import {
-  LegendComponent,
-  TitleComponent,
-  TooltipComponent,
-} from "echarts/components";
+import { provide, computed, onMounted } from "vue";
 import VChart, { THEME_KEY } from "vue-echarts";
 
-use([CanvasRenderer, PieChart, TitleComponent, TooltipComponent, LegendComponent]);
+onMounted(async () => {
+  const { use } = await import("echarts/core");
+  const { CanvasRenderer } = await import("echarts/renderers");
+  const { PieChart } = await import("echarts/charts");
+  const { TitleComponent, LegendComponent, TooltipComponent } = await import("echarts/components");
+  
+  use([CanvasRenderer, PieChart, TitleComponent, TooltipComponent, LegendComponent]);
+});
 
 provide(THEME_KEY, "light");
 

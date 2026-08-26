@@ -7,7 +7,8 @@ export default defineEventHandler(async (event) => {
     const id = event.context.params?.id as string;
     const rekamedis = await RekamMedis.findById(id)
       .populate({ path: "namaPasien", select: "nama" })
-      .populate({ path: "dokter", select: "namaDokter poli" });
+      .populate({ path: "dokter", select: "namaDokter poli" })
+      .lean();
 
     if (!rekamedis) {
       return sendApiError(event, 404, "not_found", "Rekam medis not found");

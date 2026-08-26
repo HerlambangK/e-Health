@@ -7,7 +7,8 @@ export default defineEventHandler(async (event) => {
     .populate("encounterId")
     .populate("dpjpId")
     .populate("dokterKonsulId")
-    .populate("bedId");
+    .populate("bedId")
+    .lean();
 
   if (!ranap) throw createError({ statusCode: 404, message: "Ranap tidak ditemukan" });
 

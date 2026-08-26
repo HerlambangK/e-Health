@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
   const data = await Tindakan.find(filter)
     .populate("dokterId", "namaDokter")
-    .sort({ waktu: -1 });
+    .lean().sort({ waktu: -1 });
 
   return { data };
 });

@@ -7,15 +7,14 @@ import { sendApiError, sendSuccess } from "~/server/utils/response";
 
 export default defineEventHandler(async (event) => {
   try {
-    const [totalDoctors, totalPatients, totalAppointments, totalBilling] = await Promise.all([
+    const [totalDoctors, totalPatients, totalAppointments, totalBilling, completedPatients, pendingPatients] = await Promise.all([
       Dokter.countDocuments(),
       Pasien.countDocuments(),
       Appointment.countDocuments(),
       Billing.countDocuments(),
+      Pasien.countDocuments({ completedStatus: true }),
+      Pasien.countDocuments({ completedStatus: false }),
     ]);
-
-    const completedPatients = await Pasien.countDocuments({ completedStatus: true });
-    const pendingPatients = await Pasien.countDocuments({ completedStatus: false });
 
     const patientDistribution = [
       { label: "Rawat inap", value: 0 },
@@ -42,16 +41,17 @@ export default defineEventHandler(async (event) => {
       day.toLocaleDateString("id-ID", { weekday: "short" })
     );
 
-    const trendCounts = await Promise.all(
-      trendDays.map((day) =>
-        RekamMedis.countDocuments({
-          createdAt: {
-            $gte: startOfDay(day),
-            $lt: startOfDay(addDays(day, 1)),
-          },
-        })
-      )
-    );
+    const sevenDaysAgo = startOfDay(trendDays[0]);
+    const tomorrow = startOfDay(addDays(trendDays[6], 1));
+    const trendAgg = await RekamMedis.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo, $lt: tomorrow } } },
+      { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
+    ]);
+    const trendMap = new Map(trendAgg.map((t: any) => [t._id, t.count]));
+    const trendCounts = trendDays.map(day => {
+      const key = day.toISOString().slice(0, 10);
+      return trendMap.get(key) || 0;
+    });
 
     const summary = {
       totals: {

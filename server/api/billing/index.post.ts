@@ -2,6 +2,8 @@ import { Validator } from "#nuxt-server-utils";
 import BillingSchema from "~/schemas/Billing.schema";
 import Billing from "~/server/models/Billing";
 import { sendApiError, sendSuccess } from "~/server/utils/response";
+import { generateId } from "~/server/utils/generate-id";
+import { notify } from "~/server/utils/notify";
 
 function calculateTotal(items: Array<{ quantity: number; price: number }>) {
   return items.reduce((total, item) => total + item.quantity * item.price, 0);
@@ -14,7 +16,7 @@ export default defineEventHandler(async (event) => {
 
     const total = calculateTotal(body.items || []);
     const invoiceNumber =
-      body.invoiceNumber || `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      body.invoiceNumber || generateId('INV');
 
     const created = await Billing.create({
       ...body,
@@ -22,6 +24,14 @@ export default defineEventHandler(async (event) => {
       total,
       dueDate: body.dueDate ? new Date(body.dueDate) : undefined,
       paidAt: body.paidAt ? new Date(body.paidAt) : undefined,
+    });
+
+    await notify({
+      recipientId: body.pasienId,
+      type: 'billing_update',
+      title: 'Invoice Baru',
+      message: `Invoice ${invoiceNumber} telah dibuat. Total: Rp ${total.toLocaleString('id-ID')}`,
+      data: { billingId: created._id, invoiceNumber, total },
     });
 
     return sendSuccess(event, created, 201);

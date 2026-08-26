@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
         .populate({ path: "patientId", select: "nama" })
         .skip(skip)
         .limit(pageSize)
-        .sort({ createdAt: -1 }),
+        .lean().sort({ createdAt: -1 }),
       Billing.countDocuments(filter),
     ]);
 

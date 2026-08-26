@@ -6,6 +6,7 @@ import { findTemplate } from "~/server/utils/emailTemplates";
 import { buildMailParts } from "~/utils/emailHtml";
 import EmailCampaign from "~/server/models/EmailCampaign";
 import EmailLog from "~/server/models/EmailLog";
+import { notify } from "~/server/utils/notify";
 
 function applyPlaceholders(value: string, payload: Record<string, string>) {
   let output = value;
@@ -177,6 +178,17 @@ async function runBlast(campaignId: string, recipients: any[]) {
       accFailed = 0;
       accNextIndex = 0;
     }
+
+    const io = (globalThis as any).__io;
+    if (io) {
+      io.to(`role:admin`).emit('email_blast_progress', {
+        campaignId: campaign._id,
+        sent: accSent + (await EmailCampaign.findById(campaignId))?.sent,
+        failed: accFailed + (await EmailCampaign.findById(campaignId))?.failed,
+        total: recipients.length,
+        percent: Math.round(((accSent + (await EmailCampaign.findById(campaignId))?.sent) + (accFailed + (await EmailCampaign.findById(campaignId))?.failed)) / recipients.length * 100) || 0,
+      });
+    }
   }
 
   if (accSent > 0 || accFailed > 0) {
@@ -192,6 +204,28 @@ async function runBlast(campaignId: string, recipients: any[]) {
     status: "done",
     completedAt: new Date(),
   });
+
+  const finalCampaign = await EmailCampaign.findById(campaignId);
+  const io = (globalThis as any).__io;
+  if (io && finalCampaign) {
+    io.to(`role:admin`).emit('email_blast_complete', {
+      campaignId: finalCampaign._id,
+      sent: finalCampaign.sent,
+      failed: finalCampaign.failed,
+      total: recipients.length,
+    });
+  }
+  
+  if (finalCampaign) {
+    await notify({
+      recipientRole: 'admin',
+      type: 'email_blast_complete',
+      title: 'Email Blast Selesai',
+      message: `Campaign selesai: ${finalCampaign.sent} terkirim, ${finalCampaign.failed} gagal dari ${recipients.length} penerima`,
+      data: { campaignId: finalCampaign._id, sent: finalCampaign.sent, failed: finalCampaign.failed },
+      channel: 'role',
+    });
+  }
 }
 
 export default defineEventHandler(async (event) => {

@@ -5,18 +5,17 @@
 </template>
 
 <script setup lang="ts">
-import { provide, computed } from "vue";
-import { use } from "echarts/core";
-import { CanvasRenderer } from "echarts/renderers";
-import { LineChart } from "echarts/charts";
-import {
-  GridComponent,
-  LegendComponent,
-  TooltipComponent,
-} from "echarts/components";
+import { provide, computed, onMounted } from "vue";
 import VChart, { THEME_KEY } from "vue-echarts";
 
-use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent]);
+onMounted(async () => {
+  const { use } = await import("echarts/core");
+  const { CanvasRenderer } = await import("echarts/renderers");
+  const { LineChart } = await import("echarts/charts");
+  const { GridComponent, LegendComponent, TooltipComponent } = await import("echarts/components");
+  
+  use([CanvasRenderer, LineChart, GridComponent, TooltipComponent, LegendComponent]);
+});
 provide(THEME_KEY, "light");
 
 const props = defineProps<{

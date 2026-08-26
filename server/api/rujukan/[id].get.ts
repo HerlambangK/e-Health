@@ -4,7 +4,8 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
   const rujukan = await Rujukan.findById(id)
     .populate("pasienId")
-    .populate("poliTujuan");
+    .populate("poliTujuan")
+    .lean();
 
   if (!rujukan) throw createError({ statusCode: 404, message: "Rujukan tidak ditemukan" });
 

@@ -18,7 +18,8 @@ export default defineEventHandler(async (event) => {
     }
     const pasien = await Pasien.findById(id)
       .populate({ path: "dokter", select: "namaDokter" })
-      .populate({ path: "rekamedis", select: "_id" });
+      .populate({ path: "rekamedis", select: "_id" })
+      .lean();
 
     if (!pasien) {
       return sendApiError(event, 404, "not_found", "Pasien not found");

@@ -2,6 +2,7 @@ import Ranap from "~/server/models/Ranap";
 import Bed from "~/server/models/Bed";
 import Encounter from "~/server/models/Encounter";
 import { enqueue } from "~/server/jobs/queue";
+import { notify } from "~/server/utils/notify";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -35,6 +36,16 @@ export default defineEventHandler(async (event) => {
     resourceId: ranap.encounterId.toString(),
     action: "update",
     priority: "high",
+  });
+
+  await notify({
+    recipientId: ranap.pasienId?.toString(),
+    recipientRole: 'billing',
+    type: 'discharge',
+    title: 'Pasien Discharge',
+    message: `Pasien telah di-discharge dari rawat inap`,
+    data: { ranapId: ranap._id },
+    channel: 'role',
   });
 
   return { data: ranap };

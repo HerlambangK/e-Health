@@ -1477,3 +1477,7 @@ onBeforeUnmount(() => {
   }
 });
 </script>
+
+<style>
+@import 'mapbox-gl/dist/mapbox-gl.css';
+</style>

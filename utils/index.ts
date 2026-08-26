@@ -38,8 +38,8 @@ export const dashboardRoutes = [
 	},
 	{
 		label: 'Settings',
-		icon: 'lucide:settings',
-		link: '/settings',
+		icon: 'i-heroicons-cog-6-tooth',
+		to: '/settings',
 	},
 ];
 
@@ -167,6 +167,26 @@ export const accountNavigationLinks = [
 		href: '/rujukan',
 		icon: 'heroicons:arrow-right-circle',
 		roles: ['admin', 'doctor', 'receptionist'],
+	},
+	{
+		name: 'Pengaturan',
+		href: '/settings',
+		icon: 'heroicons:cog-6-tooth',
+		roles: ['admin'],
+	},
+	{
+		name: 'Profil Saya',
+		href: '/profile',
+		icon: 'heroicons:user-circle',
+		roles: [
+			'admin',
+			'doctor',
+			'nurse',
+			'receptionist',
+			'billing',
+			'pharmacist',
+			'patient',
+		],
 	},
 ];
 

@@ -2,11 +2,11 @@ import Ranap from "~/server/models/Ranap";
 import Bed from "~/server/models/Bed";
 import Encounter from "~/server/models/Encounter";
 import { enqueue } from "~/server/jobs/queue";
+import { generateId } from "~/server/utils/generate-id";
+import { notify } from "~/server/utils/notify";
 
 function generateNoRanap(): string {
-  const year = new Date().getFullYear();
-  const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `RNP-${year}-${rand}`;
+  return generateId('RNP');
 }
 
 export default defineEventHandler(async (event) => {
@@ -49,6 +49,16 @@ export default defineEventHandler(async (event) => {
     resourceId: body.encounterId,
     action: "update",
     priority: "high",
+  });
+
+  await notify({
+    recipientId: body.pasienId,
+    recipientRole: 'nurse',
+    type: 'admission',
+    title: 'Pasien Baru Rawat Inap',
+    message: `Pasien baru telah diadmisi ke kamar ${bed.ruang || bed.nama}`,
+    data: { ranapId: ranap._id, bedId: bed._id },
+    channel: 'role',
   });
 
   return { data: ranap };

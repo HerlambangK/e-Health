@@ -1,11 +1,10 @@
 import Encounter from "~/server/models/Encounter";
 import Antrian from "~/server/models/Antrian";
 import { enqueue } from "~/server/jobs/queue";
+import { generateId } from "~/server/utils/generate-id";
 
 function generateNoEncounter(): string {
-  const year = new Date().getFullYear();
-  const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `ENC-${year}-${rand}`;
+  return generateId('ENC');
 }
 
 export default defineEventHandler(async (event) => {

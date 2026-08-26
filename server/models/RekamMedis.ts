@@ -94,7 +94,9 @@ const rekamedisSchema = new Schema<IRekamedis>(
     pasienId: { type: Schema.Types.ObjectId, ref: "Pasien" },
     encounterId: { type: Schema.Types.ObjectId, ref: "Encounter" },
     dokterId: { type: Schema.Types.ObjectId, ref: "Dokter" },
+    /** @deprecated Use pasienId instead */
     namaPasien: { type: Schema.Types.ObjectId, ref: "Pasien" },
+    /** @deprecated Use dokterId instead */
     dokter: { type: Schema.Types.ObjectId, ref: "Dokter" },
     subjektif: {
       keluhanUtama: String,
@@ -166,5 +168,9 @@ const rekamedisSchema = new Schema<IRekamedis>(
   },
   { timestamps: true }
 );
+
+rekamedisSchema.index({ pasienId: 1, createdAt: -1 });
+rekamedisSchema.index({ encounterId: 1 });
+rekamedisSchema.index({ dokterId: 1, createdAt: -1 });
 
 export default model<IRekamedis>("Rekamedis", rekamedisSchema);

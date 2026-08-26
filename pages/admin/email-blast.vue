@@ -863,13 +863,16 @@
 </template>
 
 <script setup lang="ts">
-import * as XLSX from "xlsx";
+import { ref, computed, watch, onMounted, onBeforeUnmount, onUnmounted } from "vue";
 import { EMAIL_PALETTES, applyPlaceholders, isHtmlBody, applyPalette, isHexColor } from "~/utils/emailHtml";
+import { useSocket } from "~/composables/useSocket";
 
 definePageMeta({
   layout: "default",
   middleware: ["auth", "auth-middleware"],
 });
+
+const { on, off } = useSocket();
 
 const accordionItems = [
   { label: "1. Upload Excel", slot: "upload" },
@@ -1081,11 +1084,12 @@ function findHeaderRowIndex(table: any[][]) {
   return 1;
 }
 
-function parseSheet() {
+async function parseSheet() {
   const workbook = workbookRef.value;
   if (!workbook || !selectedSheet.value) return;
 
   const sheet = workbook.Sheets[selectedSheet.value];
+  const XLSX = await import("xlsx");
   const table = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }) as any[][];
 
   if (!table.length) {
@@ -1135,6 +1139,7 @@ async function handleFileChange(event: Event) {
 
   try {
     const data = await file.arrayBuffer();
+    const XLSX = await import("xlsx");
     const workbook = XLSX.read(data, { type: "array" });
     workbookRef.value = workbook;
     sheetNames.value = workbook.SheetNames;
@@ -2064,10 +2069,37 @@ onMounted(() => {
       startPolling();
     }
   });
+
+  on('email_blast_progress', (data: any) => {
+    if (activeCampaign.value && data.campaignId === activeCampaign.value.campaignId) {
+      activeCampaign.value.sent = data.sent;
+      activeCampaign.value.failed = data.failed;
+      activeCampaign.value.progressPercent = data.percent;
+    }
+  });
+  
+  on('email_blast_complete', (data: any) => {
+    if (activeCampaign.value && data.campaignId === activeCampaign.value.campaignId) {
+      stopPolling();
+      isSending.value = false;
+      activeCampaign.value.status = "done";
+      activeCampaign.value.sent = data.sent;
+      activeCampaign.value.failed = data.failed;
+      activeCampaign.value.progressPercent = 100;
+      fetchCampaigns();
+      toast.add({
+        title: "Blast selesai",
+        description: `Terkirim ${data.sent}, gagal ${data.failed}.`,
+        color: "green",
+      });
+    }
+  });
 });
 
 onUnmounted(() => {
   stopPolling();
+  off('email_blast_progress');
+  off('email_blast_complete');
 });
 
 const logModalOpen = ref(false);

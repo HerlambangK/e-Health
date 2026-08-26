@@ -1,4 +1,18 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { config as loadDotenv } from 'dotenv';
+
+for (const file of [
+	'.env',
+	'.env.local',
+	process.env.NODE_ENV === 'production' && '.env.production',
+].filter(Boolean) as string[]) {
+	if (existsSync(resolve(file))) {
+		loadDotenv({ path: resolve(file), override: true });
+	}
+}
+
 export default defineNuxtConfig({
 	ssr: false,
 	devtools: { enabled: true },
@@ -21,17 +35,38 @@ export default defineNuxtConfig({
 		'nuxt-server-utils',
 		'@sidebase/nuxt-auth',
 		'@nuxt/image',
-		// '@vueuse/head',
-		// 'axios',
-		// '@vueuse/head',
-		// "@glidejs/glide",
 	],
-	css: ['mapbox-gl/dist/mapbox-gl.css'],
-	// image: {
-	//   provider: "netlify",
-	//   domains: ["ehospitalku.netlify.app"],
-	// },
-
+	vite: {
+		build: {
+			rollupOptions: {
+				output: {
+					manualChunks(id: string) {
+						// mapbox-gl is excluded — it's dynamically imported and auto-chunked
+						if (
+							id.includes('node_modules/echarts') ||
+							id.includes('node_modules/vue-echarts')
+						)
+							return 'vendor-echarts';
+						if (id.includes('node_modules/@fullcalendar'))
+							return 'vendor-fullcalendar';
+						if (id.includes('node_modules/xlsx')) return 'vendor-xlsx';
+						if (
+							id.includes('node_modules/chart.js') ||
+							id.includes('node_modules/vue-chartjs')
+						)
+							return 'vendor-charts';
+					},
+				},
+			},
+		},
+	},
+	experimental: {
+		treeshakeClientOnly: true,
+	},
+	image: {
+		quality: 80,
+		format: ['webp'],
+	},
 	runtimeConfig: {
 		auth: {
 			origin: process.env.AUTH_ORIGIN,

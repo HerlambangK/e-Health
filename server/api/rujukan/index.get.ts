@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const data = await Rujukan.find(filter)
     .populate("pasienId", "nama noRM")
     .populate("poliTujuan", "nama")
-    .sort({ createdAt: -1 });
+    .lean().sort({ createdAt: -1 });
 
   return { data };
 });

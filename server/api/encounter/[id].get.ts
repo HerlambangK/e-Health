@@ -5,7 +5,8 @@ export default defineEventHandler(async (event) => {
   const encounter = await Encounter.findById(id)
     .populate("pasienId")
     .populate("dokterId")
-    .populate("poliId");
+    .populate("poliId")
+    .lean();
 
   if (!encounter) throw createError({ statusCode: 404, message: "Encounter tidak ditemukan" });
 

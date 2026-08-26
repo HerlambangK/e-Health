@@ -117,5 +117,6 @@ const ResepSchema = new Schema<IResep>(
 
 ResepSchema.index({ encounterId: 1 });
 ResepSchema.index({ status: 1 });
+ResepSchema.index({ pasienId: 1, status: 1 });
 
 export default model<IResep>("Resep", ResepSchema);

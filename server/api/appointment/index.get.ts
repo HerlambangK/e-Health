@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
         .populate({ path: "doctorId", select: "namaDokter poli" })
         .skip(skip)
         .limit(pageSize)
-        .sort({ startAt: 1 }),
+        .lean().sort({ startAt: 1 }),
       Appointment.countDocuments(filter),
     ]);
 

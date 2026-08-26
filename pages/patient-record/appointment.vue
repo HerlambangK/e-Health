@@ -114,10 +114,23 @@
 </template>
 
 <script setup lang="ts">
-import FullCalendar from "@fullcalendar/vue3";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import interactionPlugin from "@fullcalendar/interaction";
 import { normalizeRole } from "~/utils/permissions";
+
+const FullCalendar = defineAsyncComponent(async () => {
+  const [m, dayGrid, interaction] = await Promise.all([
+    import('@fullcalendar/vue3'),
+    import('@fullcalendar/daygrid'),
+    import('@fullcalendar/interaction')
+  ]);
+  
+  dayGridPlugin.value = dayGrid.default || dayGrid;
+  interactionPlugin.value = interaction.default || interaction;
+  
+  return m.default || m;
+});
+
+const dayGridPlugin = shallowRef<any>(null);
+const interactionPlugin = shallowRef<any>(null);
 
 definePageMeta({
   layout: "default",
@@ -271,7 +284,7 @@ function handleEventClick(info: any) {
 }
 
 const calendarOptions = computed(() => ({
-  plugins: [dayGridPlugin, interactionPlugin],
+  plugins: dayGridPlugin.value ? [dayGridPlugin.value, interactionPlugin.value] : [],
   initialView: "dayGridMonth",
   events: calendarEvents.value,
   editable: canUpdate.value,

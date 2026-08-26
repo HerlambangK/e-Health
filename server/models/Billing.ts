@@ -42,4 +42,8 @@ const billingSchema = new Schema<IBilling>(
   { timestamps: true }
 );
 
+billingSchema.index({ pasienId: 1, status: 1 });
+billingSchema.index({ createdAt: -1 });
+billingSchema.index({ invoiceNumber: 1 }, { unique: true });
+
 export default model<IBilling>("Billing", billingSchema);

@@ -814,6 +814,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
 :global(.mapboxgl-ctrl-group) {
   border-radius: 12px;
   overflow: hidden;

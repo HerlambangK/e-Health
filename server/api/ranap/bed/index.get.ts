@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   if (query.kelas) filter.kelas = query.kelas;
   if (query.status) filter.status = query.status;
 
-  const beds = await Bed.find(filter).sort({ ruang: 1, nama: 1 });
+  const beds = await Bed.find(filter).lean().sort({ ruang: 1, nama: 1 });
 
   const total = beds.length;
   const tersedia = beds.filter((b) => b.status === "available").length;

@@ -7,7 +7,8 @@ export default defineEventHandler(async (event) => {
     const id = event.context.params?.id as string;
     const appointment = await Appointment.findById(id)
       .populate({ path: "patientId", select: "nama" })
-      .populate({ path: "doctorId", select: "namaDokter poli" });
+      .populate({ path: "doctorId", select: "namaDokter poli" })
+      .lean();
 
     if (!appointment) {
       return sendApiError(event, 404, "not_found", "Appointment not found");

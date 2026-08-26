@@ -4,7 +4,7 @@ import { sendApiError, sendSuccess } from "~/server/utils/response";
 export default defineEventHandler(async (event) => {
   try {
     const id = event.context.params?.id as string;
-    const dokter = await Dokter.findById(id);
+    const dokter = await Dokter.findById(id).lean();
 
     if (!dokter) {
       return sendApiError(event, 404, "not_found", "Dokter not found");

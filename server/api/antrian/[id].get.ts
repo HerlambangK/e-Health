@@ -5,7 +5,8 @@ export default defineEventHandler(async (event) => {
   const antrian = await Antrian.findById(id)
     .populate("pasienId")
     .populate("poliId")
-    .populate("dokterId");
+    .populate("dokterId")
+    .lean();
 
   if (!antrian) throw createError({ statusCode: 404, message: "Antrian tidak ditemukan" });
 

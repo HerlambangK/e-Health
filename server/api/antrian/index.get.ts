@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     .populate("pasienId", "nama noRM nik")
     .populate("poliId", "nama kode")
     .populate("dokterId", "namaDokter")
-    .sort({ nomorAntrian: 1 });
+    .lean().sort({ nomorAntrian: 1 });
 
   return { data: antrian };
 });

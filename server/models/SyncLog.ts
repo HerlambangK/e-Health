@@ -50,5 +50,6 @@ const SyncLogSchema = new Schema<ISyncLog>(
 
 SyncLogSchema.index({ sistem: 1, status: 1, nextRetryAt: 1 });
 SyncLogSchema.index({ resource: 1, resourceId: 1 });
+SyncLogSchema.index({ status: 1, createdAt: 1 });
 
 export default model<ISyncLog>("SyncLog", SyncLogSchema);

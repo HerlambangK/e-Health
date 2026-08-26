@@ -57,4 +57,6 @@ const DispensingSchema = new Schema<IDispensing>(
   { timestamps: true }
 );
 
+DispensingSchema.index({ resepId: 1 });
+
 export default model<IDispensing>("Dispensing", DispensingSchema);

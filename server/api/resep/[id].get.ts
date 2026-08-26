@@ -5,7 +5,8 @@ export default defineEventHandler(async (event) => {
   const resep = await Resep.findById(id)
     .populate("pasienId")
     .populate("dokterId")
-    .populate("encounterId");
+    .populate("encounterId")
+    .lean();
 
   if (!resep) throw createError({ statusCode: 404, message: "Resep tidak ditemukan" });
 

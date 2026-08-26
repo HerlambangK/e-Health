@@ -1,9 +1,8 @@
 import Rujukan from "~/server/models/Rujukan";
+import { generateId } from "~/server/utils/generate-id";
 
 function generateNoRujukan(): string {
-  const year = new Date().getFullYear();
-  const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
-  return `REF-${year}-${rand}`;
+  return generateId('RJK');
 }
 
 export default defineEventHandler(async (event) => {

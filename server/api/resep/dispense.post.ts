@@ -1,6 +1,7 @@
 import Resep from "~/server/models/Resep";
 import Dispensing from "~/server/models/Dispensing";
 import { enqueue } from "~/server/jobs/queue";
+import { notify } from "~/server/utils/notify";
 
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
@@ -31,6 +32,14 @@ export default defineEventHandler(async (event) => {
 
   resep.status = "dispensed";
   await resep.save();
+
+  await notify({
+    recipientId: resep.pasienId?.toString(),
+    type: 'prescription_ready',
+    title: 'Resep Siap',
+    message: `Resep obat Anda telah siap diambil di apotek`,
+    data: { resepId: resep._id, dispensingId: dispensing._id },
+  });
 
   await enqueue("satusehat-sync", {
     type: "medication",

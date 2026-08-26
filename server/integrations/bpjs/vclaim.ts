@@ -1,6 +1,10 @@
 export async function submitKlaim(data: any): Promise<any> {
   const config = useRuntimeConfig();
-  return $fetch(`${config.bpjs?.vClaimUrl}/klaim/insert`, {
+  if (!config.bpjs?.vClaimUrl || !config.bpjs?.consId) {
+    throw new Error('BPJS VClaim credentials not configured');
+  }
+
+  return $fetch(`${config.bpjs.vClaimUrl.replace(/\/$/, '')}/klaim/insert`, {
     method: "POST",
     headers: {
       "X-cons-id": config.bpjs?.consId as string,
@@ -8,5 +12,6 @@ export async function submitKlaim(data: any): Promise<any> {
       "X-user-key": config.bpjs?.userKey as string,
     },
     body: JSON.stringify(data),
+    timeout: 10000,
   });
 }

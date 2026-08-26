@@ -67,5 +67,6 @@ const RujukanSchema = new Schema<IRujukan>(
 );
 
 RujukanSchema.index({ pasienId: 1, status: 1 });
+RujukanSchema.index({ pasienId: 1, createdAt: -1 });
 
 export default model<IRujukan>("Rujukan", RujukanSchema);

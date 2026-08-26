@@ -511,6 +511,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
 :global(.ihc-marker) {
   display: flex;
   align-items: flex-end;

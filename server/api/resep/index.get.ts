@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const resep = await Resep.find(filter)
     .populate("pasienId", "nama noRM")
     .populate("dokterId", "namaDokter")
-    .sort({ createdAt: -1 });
+    .lean().sort({ createdAt: -1 });
 
   return { data: resep };
 });

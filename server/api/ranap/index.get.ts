@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     .populate("pasienId", "nama noRM nik")
     .populate("dpjpId", "namaDokter")
     .populate("bedId")
-    .sort({ createdAt: -1 });
+    .lean().sort({ createdAt: -1 });
 
   return { data };
 });
