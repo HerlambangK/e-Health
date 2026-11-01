@@ -176,4 +176,3 @@ export default defineEventHandler((event) => {
 
 	return sendSuccess(event, 200, 'Sensor API Spec retrieved', spec);
 });
-
