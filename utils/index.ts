@@ -131,6 +131,18 @@ export const accountNavigationLinks = [
 		icon: 'heroicons:clock',
 		roles: ['admin'],
 	},
+	{
+		name: 'Presensi IoT',
+		href: '/iot',
+		icon: 'heroicons:identification',
+		roles: ['admin', 'doctor', 'nurse', 'receptionist'],
+	},
+	{
+		name: 'Modul IoT Sensor',
+		href: '/iot/sensor',
+		icon: 'heroicons:chart-bar',
+		roles: ['admin', 'doctor', 'nurse'],
+	},
 	// SIMPRS Features
 	{
 		name: 'Pendaftaran',

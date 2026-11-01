@@ -31,6 +31,7 @@ function mapResource(pathname: string): Resource | null {
 	if (pathname.startsWith('/api/sinoap')) return 'sinoap';
 	if (pathname.startsWith('/api/notifications')) return 'notifications';
 	if (pathname.startsWith('/api/settings')) return 'settings';
+	if (pathname.startsWith('/api/iot')) return 'iot';
 	if (
 		pathname.startsWith('/api/profile') ||
 		pathname.startsWith('/api/user/profile')
@@ -58,6 +59,23 @@ export default defineEventHandler(async (event) => {
 
 	if (!pathname.startsWith('/api')) return;
 	if (pathname.startsWith('/api/auth')) return;
+
+	// Bypass auth for IoT devices (ESP32/Arduino polling & status reporting)
+	const isIotDeviceEndpoint =
+		pathname === '/api/wifi-config' ||
+		pathname.startsWith('/api/wifi-config') ||
+		pathname === '/api/iot/presensi' ||
+		pathname === '/api/iot/heartbeat' ||
+		pathname === '/api/iot/device-status' ||
+		pathname === '/api/iot/device-name' ||
+		pathname === '/api/iot/ping' ||
+		pathname === '/api/iot/sensor/telemetry' ||
+		pathname === '/api/iot/presensi/spec' ||
+		pathname === '/api/iot/sensor/spec';
+
+	if (isIotDeviceEndpoint) {
+		return;
+	}
 
 	const session = await getServerSession(event);
 	if (!session) {

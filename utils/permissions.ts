@@ -30,6 +30,7 @@ export type Resource =
 	| 'sinoap'
 	| 'notifications'
 	| 'settings'
+	| 'iot'
 	| 'profile';
 
 export type Action = 'create' | 'read' | 'update' | 'delete';
@@ -60,6 +61,7 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
 		sinoap: allActions,
 		notifications: allActions,
 		settings: allActions,
+		iot: allActions,
 		profile: allActions,
 	},
 	doctor: {
@@ -85,6 +87,7 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
 		sinoap: [],
 		notifications: ['read', 'update'],
 		settings: [],
+		iot: ['read'],
 		profile: ['read', 'update'],
 	},
 	nurse: {
@@ -110,6 +113,7 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
 		sinoap: [],
 		notifications: ['read', 'update'],
 		settings: [],
+		iot: ['read'],
 		profile: ['read', 'update'],
 	},
 	receptionist: {
@@ -135,6 +139,7 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
 		sinoap: [],
 		notifications: ['read', 'update'],
 		settings: [],
+		iot: ['read', 'create'],
 		profile: ['read', 'update'],
 	},
 	pharmacist: {
@@ -160,6 +165,7 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
 		sinoap: ['read'],
 		notifications: ['read', 'update'],
 		settings: [],
+		iot: [],
 		profile: ['read', 'update'],
 	},
 	billing: {
@@ -185,6 +191,7 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
 		sinoap: [],
 		notifications: ['read', 'update'],
 		settings: [],
+		iot: [],
 		profile: ['read', 'update'],
 	},
 	patient: {
@@ -210,6 +217,7 @@ export const ROLE_PERMISSIONS: Record<Role, Record<Resource, Action[]>> = {
 		sinoap: [],
 		notifications: ['read', 'update'],
 		settings: [],
+		iot: [],
 		profile: ['read', 'update'],
 	},
 };

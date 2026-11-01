@@ -13,6 +13,7 @@ export interface UserDocument extends Document {
 	position?: string;
 	department?: string;
 	nip?: string;
+	rfidCardId?: string;
 	avatar?: string;
 	receiveNotifications?: boolean;
 	patientId?: Schema.Types.ObjectId;
@@ -46,6 +47,7 @@ const userSchema = new Schema(
 		position: { type: String, trim: true },
 		department: { type: String, trim: true },
 		nip: { type: String, trim: true },
+		rfidCardId: { type: String, trim: true, sparse: true, index: true },
 		avatar: { type: String, trim: true },
 		receiveNotifications: { type: Boolean, default: true },
 		patientId: { type: Schema.Types.ObjectId, ref: 'Pasien' },
@@ -71,3 +73,4 @@ userSchema.methods.comparePassword = async function (password: string) {
 userSchema.index({ role: 1, isActive: 1 });
 
 export const User = model<UserDocument>('User', userSchema);
+export default User;

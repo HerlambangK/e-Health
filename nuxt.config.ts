@@ -3,6 +3,21 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { config as loadDotenv } from 'dotenv';
 
+// Filter Node 22+ deprecation warning for fs.Stats constructor (DEP0180)
+const originalEmit = process.emit;
+// @ts-expect-error process.emit override for silencing internal bundler deprecation warning
+process.emit = function (name: any, data: any, ...args: any[]) {
+	if (
+		name === 'warning' &&
+		data &&
+		typeof data === 'object' &&
+		(data.code === 'DEP0180' || String(data.message || '').includes('fs.Stats'))
+	) {
+		return false;
+	}
+	return originalEmit.apply(process, [name, data, ...args]);
+};
+
 for (const file of [
 	'.env',
 	'.env.local',

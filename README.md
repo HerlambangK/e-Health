@@ -55,6 +55,8 @@
    - Pembuatan invoice tagihan otomatis (tindakan, obat, administrasi, kamar), integrasi asuransi/BPJS/Tunai, dan cetak kuitansi.
 8. **Email Blast Massal (`/admin/email-blast`)**:
    - Pengiriman pengumuman, promosi kesehatan, atau rekrutmen massal dengan template dinamis dan pelacakan progres real-time.
+9. **Presensi & Perangkat IoT (`/iot`)**:
+   - Monitoring live status hardware mikrokontroler (ON/OFF), deteksi jaringan WiFi terhubung, manajemen Multi-AP pool endpoint (`GET /api/wifi-config`) kompatibel dengan ArduinoJson v7, dan pencatatan presensi masuk/pulang kartu RFID otomatis. Baca dokumentasi lengkap di [`docs/IOT_PRESENSI.md`](docs/IOT_PRESENSI.md).
 
 ---
 
